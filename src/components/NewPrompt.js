@@ -1,29 +1,119 @@
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase/Firebase";
-import { doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove} from "firebase/firestore";
 var randomColor = require("randomcolor"); // import the script
 
-function NewPrompt({ setOpenNewTopic }) {
+function NewPrompt({ setOpenNewTopic, style, params }) {
   const [promptMode, setPromptMode] = useState(1);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [subject, setSubject] = useState("");
+  const [subcolor, subcontent, subpromptmode, subsubject, subtag, subtitle] = params;
+
+  const [title, setTitle] = useState(style === 1 ? subtitle : "");
+  const [content, setContent] = useState(style === 1 ? subcontent : "");
+  const [subject, setSubject] = useState(style === 1 ? subsubject : "");
+  
   const [tag, setTage] = useState("fa-solid fa-calculator")
+  const removeItemFromLocalStorage = (itemToDelete) => {
+    // Retrieve the current set from localStorage
+    const currentSet = JSON.parse(localStorage.getItem("currentSet"));
+  
+    // Check if the current set matches the item to delete
+    if (
+      currentSet.title === itemToDelete.title &&
+      currentSet.content === itemToDelete.content &&
+      currentSet.subject === itemToDelete.subject &&
+      currentSet.promptMode === itemToDelete.promptMode &&
+      currentSet.color === itemToDelete.color &&
+      currentSet.tag === itemToDelete.tag
+    ) {
+      // Remove the item by setting it to null or an empty object/string
+      localStorage.removeItem("currentSet");
+      console.log("Item removed from localStorage");
+    } else {
+      console.log("Item not found in localStorage");
+    }
+  };
 
   const saveToFirestore = async () => {
     try {
       const color = randomColor();
-      await updateDoc(doc(db, "users", localStorage.getItem("email")), {
-        sets: arrayUnion({
+      const userEmail = localStorage.getItem("email");
+      const docRef = doc(db, "users", userEmail);
+  
+      // Fetch the current data from Firestore
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.error("Document not found");
+        return;
+      }
+  
+      let currentSets = docSnap.data().sets || [];
+      
+      if (style === 1) {
+        // Remove the item if style === 1
+        currentSets = currentSets.filter(
+          item =>
+            !(item.title === subtitle &&
+              item.content === subcontent &&
+              item.subject === subsubject &&
+              item.promptMode === subpromptmode &&
+              item.color === subcolor &&
+              item.tag === subtag)
+        );
+        removeItemFromLocalStorage({
+          title: subtitle,
+          content: subcontent,
+          subject: subsubject,
+          promptMode: subpromptmode,
+          color: subcolor,
+          tag: subtag
+        });
+  
+        // Add the new item at the same index
+        const index = docSnap.data().sets.findIndex(
+          item =>
+            item.title === subtitle &&
+            item.content === subcontent &&
+            item.subject === subsubject &&
+            item.promptMode === subpromptmode &&
+            item.color === subcolor &&
+            item.tag === subtag
+        );
+        if (index !== -1) {
+          currentSets.splice(index, 0, {
+            title: title,
+            content: content,
+            subject: subject,
+            promptMode: promptMode,
+            color: subcolor,
+            tag: tag
+          });
+        } else {
+          // If item was not found, just add to the end
+          currentSets.push({
+            title: title,
+            content: content,
+            subject: subject,
+            promptMode: promptMode,
+            color: color,
+            tag: tag
+          });
+        }
+      } else {
+        // If style !== 1, just add to the end
+        currentSets.push({
           title: title,
           content: content,
           subject: subject,
           promptMode: promptMode,
           color: color,
           tag: tag
-        }),
-      });
-      setOpenNewTopic(false);
+        });
+      }
+  
+      // Update the Firestore document
+      await updateDoc(docRef, { sets: currentSets });
+  
+      // Update localStorage
       localStorage.setItem(
         "currentSet",
         JSON.stringify({
@@ -32,14 +122,17 @@ function NewPrompt({ setOpenNewTopic }) {
           subject: subject,
           promptMode: promptMode,
           color: color,
-          tag:tag
+          tag: tag
         })
       );
+  
+      setOpenNewTopic(false);
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setOpenNewTopic(false);
     }
   };
+  
 
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
@@ -100,8 +193,8 @@ function NewPrompt({ setOpenNewTopic }) {
       <div>
         <div style={{ width: "100%", marginBottom: "10px" }}>
           <p style={{ fontSize: "20px", margin: "0px" }}>Title</p>
-          <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
-            Set a title for your AI generated scrolls, so it's easy for you to access
+          <p style={{ marginTop: "4px", fontSize: "12px", color: "gray" }}>
+            Set a title for your AI generated scrolls, so it's easy to access
             later.
           </p>
           <input
@@ -245,7 +338,6 @@ function NewPrompt({ setOpenNewTopic }) {
             padding: "10px",
             borderRadius: "10px",
             cursor: "pointer",
-            boxShadow:"none"
           }}
         >
           Save
