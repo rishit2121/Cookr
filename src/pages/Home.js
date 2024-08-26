@@ -58,7 +58,7 @@ function Home() {
       className="App"
       style={{ display: "flex", height: "100vh", overflow: "hidden",}}
     >
-      <Navbar setMobileDimension={setMobileDimension} />
+      {<Navbar setMobileDimension={setMobileDimension} />}
       {localStorage.getItem("email") ? (
         <div
           style={{

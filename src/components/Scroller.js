@@ -100,7 +100,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error();
       }
 
       const data = await response.json();
@@ -134,7 +134,28 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
   };
 
   return (
-    <div style={{width:'100%', justifyContent:'center', alignItems:'center', display:'flex'}}>
+    <div style={{width:'100%', justifyContent:'center', alignItems:'center', display:'flex', flexDirection:"column"}}>
+     {isFetching && (
+        <p
+          style={{
+            position:"absolute",
+            top:"1%",
+            textAlign: "center",         
+            backgroundColor: "white",
+            padding: "5px 10px",
+            borderRadius: "100px",
+            display:"flex",
+            width:"300px",
+            justifyContent:"space-around",
+            boxShadow:"0px 0px 1px 1px gainsboro",
+            zIndex:"999"
+            
+          }}
+        >
+          Loading More Questions
+          <div className="loader_mini"></div>
+        </p>
+      )}
       {questions.length > 1 ? (
         <div ref={containerRef} style={containerStyle} onScroll={handleScroll}>
           {questions.map((item, index) => (
@@ -173,23 +194,6 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
           <p>Initializing Scroller...</p>
           <div className="loader"></div>
         </div>
-      )}
-       {isLoading && (
-        <p
-          style={{
-            position: "absolute",
-            textAlign: "center",
-            left: "50%",
-            top:"3.5%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            padding: "5px 10px",
-            borderRadius: "100px",
-            
-          }}
-        >
-          Loading More Questions...
-        </p>
       )}
     </div>
   );

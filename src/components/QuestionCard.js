@@ -6,8 +6,6 @@ import correct from "../assets/correct-answer-sound-effect-19.wav";
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"; // Import necessary Firebase methods
 import { db } from "./firebase/Firebase";
 
-
-
 const QuestionCard = ({
   question,
   choices,
@@ -18,6 +16,7 @@ const QuestionCard = ({
   title,
   color,
   fullJSON,
+  isFavorites,
 }) => {
   const cardStyle = {
     cardColor: "whitesmoke",
@@ -84,14 +83,13 @@ const QuestionCard = ({
     }, 500);
   };
 
-
   const handleHeartClick = async () => {
     const existingFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
-  
+
     const userEmail = localStorage.getItem("email"); // Get the user's email
     const userDocRef = doc(db, "users", userEmail); // Reference to the user's document in Firebase
-  
+
     try {
       if (existingFavorites.some((fav) => fav.question === fullJSON.question)) {
         // Remove from favorites in local storage
@@ -100,7 +98,7 @@ const QuestionCard = ({
         );
         setFavorites(updatedFavorites);
         localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-  
+
         // Remove the fullJSON object from the 'cards' field in Firebase
         await updateDoc(userDocRef, {
           cards: arrayRemove(fullJSON),
@@ -118,12 +116,12 @@ const QuestionCard = ({
           color,
           fullJSON,
         };
-  
+
         // Add to favorites in local storage
         const updatedFavorites = [...existingFavorites, newJSON];
         setFavorites(updatedFavorites);
         localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-  
+
         // Add the fullJSON object to the 'cards' field in Firebase
         await updateDoc(userDocRef, {
           cards: arrayUnion(fullJSON),
@@ -134,7 +132,6 @@ const QuestionCard = ({
       alert("Error updating favorites.");
     }
   };
-  
 
   const isFavorite = favorites.some(
     (fav) => fav.question === fullJSON.question
@@ -183,10 +180,10 @@ const QuestionCard = ({
               onClick={handleHeartClick}
               style={{
                 fontSize: "24px",
-                color: isFavorite ? "hotpink" : "gainsboro",
                 cursor: "pointer",
               }}
               className="fa-solid fa-heart"
+              id={isFavorite ? "heart-clicked" : "heart-unclicked"}
             ></i>
           </div>
           <p
@@ -224,31 +221,39 @@ const QuestionCard = ({
         </div>
         <div style={{ overflow: "scroll" }}>
           {choices.map((choice, index) => (
-            <p
+            <button
               className="cardButton"
               key={index}
               style={{
+                display: "block",
+                width: "100%",
                 border: "1px solid gainsboro",
                 padding: "10px",
                 marginBottom: "10px",
                 borderRadius: "10px",
-                fontSize:choice.length>60&&"10px",
-                cursor: isAnswered ? "not-allowed" : "pointer",
-                backgroundColor:
-                  selectedChoice === choice
+                textAlign: "left",
+                boxShadow: "none",
+                fontSize: choice.length > 60 && "10px",
+                cursor: isAnswered || isFavorites ? "not-allowed" : "pointer",
+                backgroundColor: !isFavorites
+                  ? selectedChoice === choice
                     ? selectedChoice === answer
                       ? "palegreen"
                       : "salmon"
                     : isAnswered && choice === answer
                     ? "palegreen"
-                    : cardStyle.buttonColor,
+                    : cardStyle.buttonColor
+                  : choice == answer
+                  ? "palegreen"
+                  : "salmon",
                 opacity: isAnswered && selectedChoice !== choice ? 0.6 : 1,
                 color: cardStyle.textColor,
               }}
+              disabled={isFavorites}
               onClick={() => handleChoiceClick(choice)}
             >
               <Latex>{choice}</Latex>
-            </p>
+            </button>
           ))}
         </div>
 

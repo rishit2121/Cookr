@@ -1,35 +1,34 @@
 import React from "react";
-import {loadStripe} from "@stripe/stripe-js"
+import { loadStripe } from "@stripe/stripe-js";
 import { async } from "@firebase/util";
 
 const Plans = ({ planType }) => {
-
-  const item ={
-    price:"price_1PnC5hKU472eG61vQgz1hUnm",
-    quantity:1
-  }
+  const item = {
+    price: "price_1PnC5hKU472eG61vQgz1hUnm",
+    quantity: 1,
+  };
 
   const checkoutOptions = {
     lineItems: [item],
-    mode:"payment",
-    successUrl:`${window.location.origin}/`,
-    cancelUrl:`${window.location.origin}/`
-  }
-  let stripePromise
+    mode: "payment",
+    successUrl: `${window.location.origin}/`,
+    cancelUrl: `${window.location.origin}/`,
+  };
+  let stripePromise;
 
   const getStripe = () => {
-    if(!stripePromise){
-       stripePromise = loadStripe(`${process.env.REACT_APP_STRIPE_KEY}`)
+    if (!stripePromise) {
+      stripePromise = loadStripe(`${process.env.REACT_APP_STRIPE_KEY}`);
     }
     return stripePromise;
-  }
+  };
 
-  const redirectToCheckout = async () =>{
-    console.log("redirectingToCheckout")
+  const redirectToCheckout = async () => {
+    console.log("redirectingToCheckout");
     const stripe = await getStripe();
-    const {error} = await stripe.redirectToCheckout(checkoutOptions)
-    console.log(error)
-  }
+    const { error } = await stripe.redirectToCheckout(checkoutOptions);
+    console.log(error);
+  };
 
   return (
     <div
@@ -52,13 +51,13 @@ const Plans = ({ planType }) => {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid gainsboro",
-          marginBottom:"100px"
+          marginBottom: "100px",
         }}
       >
-        <h1 style={{ }}>Free</h1>
+        <h1 style={{}}>Free</h1>
         <br></br>
         <br></br>
-        <p style={{ fontSize: "14px" }}>Try it out; get a break from brainrot</p>
+        <p style={{ fontSize: "14px" }}>Get a break from brainrot.</p>
         <br></br>
         <h1
           style={{
@@ -82,11 +81,14 @@ const Plans = ({ planType }) => {
           }}
         >
           <li>✅ Unlimited Scrolling</li>
-          <li>✅ Unlimted Subjects<span style={{fontSize:"10px"}}> (Till September 5th)</span></li>
+          <li>
+            ✅ Unlimted Subjects
+            <span style={{ fontSize: "10px" }}> (Till September 5th)</span>
+          </li>
+          <li>❌ Save Scrolls</li>
           <li>❌ No Ads</li>
           <li>❌ Early Acccess to New Features</li>
           <li>❌ No Priority Customer Support</li>
-          <li>❌ Help us support you</li>
           <li>❌ No Access to Scroller Benefits</li>
         </div>
         <button
@@ -98,7 +100,7 @@ const Plans = ({ planType }) => {
             border: "none",
             color: "white",
             cursor: "pointer",
-            marginTop: "20px",
+            marginTop: "40px",
           }}
         >
           {planType == "free" && "Current"}
@@ -107,7 +109,7 @@ const Plans = ({ planType }) => {
       <div
         style={{
           width: "300px",
-          height: "620px",
+          height: "660px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -118,10 +120,10 @@ const Plans = ({ planType }) => {
           boxShadow: "5px 5px 1px 1px orange",
         }}
       >
-        <h1 style={{textShadow: "0px 0px 10px orange"}}>Scroller+</h1>
+        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller+</h1>
         <br></br>
         <br></br>
-        <p style={{ fontSize: "14px" }}>For those locked out to lock in</p>
+        <p style={{ fontSize: "14px" }}>For those to lock out, to lock in.</p>
         <br></br>
         <h1
           style={{
@@ -130,7 +132,7 @@ const Plans = ({ planType }) => {
             borderBottom: "1px solid orange",
           }}
         >
-          $3
+          $5
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>/month</span>
         </h1>
         <br></br>
@@ -144,13 +146,16 @@ const Plans = ({ planType }) => {
         >
           <li>✅ Unlimited Scrolling</li>
           <li>✅ Unlimited Subjects</li>
-          <li>✅ Access Premade Scrolls <span style={{fontSize:"10px"}}>(Coming Soon)</span></li>
-          <li>✅ Access to Themes <span style={{fontSize:"10px"}}>(Coming Soon)</span></li>
+          <li>✅ Save Scrolls</li>
+          <li>✅ Access to Answer Explanations </li>
+          <li>
+            ✅ Access to Themes{" "}
+            <span style={{ fontSize: "10px" }}>(Coming Soon)</span>
+          </li>
           <li>✅ No Ads</li>
           <li>✅ Early Acccess to New Features</li>
           <li>✅ Priority Customer Support</li>
           <li>✅ Exclusive Newsletter </li>
-
         </div>
         <button
           style={{
@@ -181,7 +186,7 @@ const Plans = ({ planType }) => {
           boxShadow: "5px 5px 1px 1px orange",
         }}
       >
-        <h1 style={{textShadow: "0px 0px 10px orange"}}>Scroller 4 Life</h1>
+        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller 4 Life</h1>
         <span class="sale">-25%</span>
         <br></br>
         <br></br>
@@ -195,7 +200,9 @@ const Plans = ({ planType }) => {
           }}
         >
           $45
-          <span style={{ fontSize: "15px", fontWeight: "normal" }}>/ lifetime</span>
+          <span style={{ fontSize: "15px", fontWeight: "normal" }}>
+            / lifetime
+          </span>
         </h1>
         <br></br>
         <div
@@ -208,8 +215,12 @@ const Plans = ({ planType }) => {
         >
           <li>✅ Everything in Scroller+</li>
           <li>✅ Thank You Letter</li>
-          <li>✅ Support Us</li>
-          <li>✅ Exclusive Perks <span style={{fontSize:"10px"}}>(more details later)</span></li>
+          <li>✅ Own Scroller Forever</li>
+          <li>✅ Access to Answer Explanations </li>
+          <li>
+            ✅ Exclusive Perks{" "}
+            <span style={{ fontSize: "10px" }}>(more details coming soon)</span>
+          </li>
         </div>
         <button
           style={{
@@ -220,7 +231,7 @@ const Plans = ({ planType }) => {
             border: "none",
             color: "white",
             cursor: "pointer",
-            marginTop: "60px",
+            marginTop: "30px",
           }}
         >
           Coming Soon

@@ -5,11 +5,12 @@ import { db } from "./firebase/Firebase";
 import Plans from "./Plans";
 import { useNavigate } from "react-router-dom";
 
-const MyProfile = ({mobileDimension}) => {
+const MyProfile = ({ mobileDimension }) => {
   const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [planType, setPlanType] = useState();
-  const navigate = useNavigate()
+  const [referalCode, setReferalCode] = useState();
+  const navigate = useNavigate();
   useEffect(() => {
     try {
       const document = onSnapshot(
@@ -18,6 +19,7 @@ const MyProfile = ({mobileDimension}) => {
           setName(doc.data().name);
           setEmail(doc.data().email);
           setPlanType(doc.data().plan);
+          setReferalCode(doc.data().myCode)
         }
       );
     } catch (error) {
@@ -31,11 +33,18 @@ const MyProfile = ({mobileDimension}) => {
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
-        justifyContent: "center"
+        justifyContent: "center",
       }}
     >
       <h1 style={{ margin: "40px 50px" }}>My Profile</h1>
-      <div style={{ margin: "0px 50px", display: "flex", width: "500px", flexDirection:mobileDimension&&"column" }}>
+      <div
+        style={{
+          margin: "0px 50px",
+          display: "flex",
+          width: "500px",
+          flexDirection: mobileDimension && "column",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -55,12 +64,17 @@ const MyProfile = ({mobileDimension}) => {
         <div
           style={{ marginLeft: "10px", flexDirection: "column", width: "60%" }}
         >
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{}}>Name</label>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <label style={{}}>Name: </label>
             <p
               style={{
-                fontSize: "24px",
-                outline: "1px solid gainsboro",
+                fontWeight: "bold",
                 padding: "5px",
                 borderRadius: "10px",
               }}
@@ -68,13 +82,17 @@ const MyProfile = ({mobileDimension}) => {
               {name && name}
             </p>
           </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{}}>Email</label>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <label style={{}}>Email: </label>
             <p
               style={{
-                fontSize: "14px",
-                width: "100%",
-                outline: "1px solid gainsboro",
+                fontWeight: "bold",
                 padding: "5px",
                 borderRadius: "10px",
               }}
@@ -82,43 +100,23 @@ const MyProfile = ({mobileDimension}) => {
               {email && email}
             </p>
           </div>
-          <div style={{flexDirection:'row', display:'flex'}}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{}}>Current Plan</label>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <label style={{}}>Referal Code: </label>
             <p
               style={{
-                fontSize: "18px",
-                padding: "5px 25px",
-                background: "orange",
-                borderRadius: "100px",
-                textAlign: "center",
-                marginTop: "10px",
-                width: "fit-content",
+                fontWeight: "bold",
+                padding: "5px",
+                borderRadius: "10px",
               }}
             >
-              {planType && planType}
+              {referalCode && referalCode}
             </p>
-          </div>
-          <div style={{width:'25%'}}></div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{}}>Your Favorites</label>
-            <button
-              style={{
-                fontSize: "18px",
-                padding: "5px 25px",
-                background: "orange",
-                borderRadius: "100px",
-                textAlign: "center",
-                marginTop: "10px",
-                width: "fit-content",
-                outline: "none"
-                
-              }}
-              onClick={async () => navigate("/saved")}
-            >
-              Saved
-            </button>
-          </div>
           </div>
         </div>
       </div>

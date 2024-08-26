@@ -100,8 +100,8 @@ function NewPrompt({ setOpenNewTopic }) {
       <div>
         <div style={{ width: "100%", marginBottom: "10px" }}>
           <p style={{ fontSize: "20px", margin: "0px" }}>Title</p>
-          <p style={{ marginTop: "4px", fontSize: "12px", color: "gray" }}>
-            Set a title for your AI generated scrolls, so it's easy to access
+          <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
+            Set a title for your AI generated scrolls, so it's easy for you to access
             later.
           </p>
           <input
@@ -245,6 +245,7 @@ function NewPrompt({ setOpenNewTopic }) {
             padding: "10px",
             borderRadius: "10px",
             cursor: "pointer",
+            boxShadow:"none"
           }}
         >
           Save

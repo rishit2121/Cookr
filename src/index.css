@@ -99,6 +99,16 @@ p{
     l20-1 0.8s infinite linear alternate,
     l20-2 1.6s infinite linear;
 }
+.loader_mini {
+  margin-top: 0px;
+  width: 10px;
+  aspect-ratio: 1;
+  border-radius: 100%;
+  border: 8px solid orange;
+  animation:
+    l20-1 0.8s infinite linear alternate,
+    l20-2 1.6s infinite linear;
+}
 @keyframes l20-1{
    0%    {clip-path: polygon(50% 50%,0       0,  50%   0%,  50%    0%, 50%    0%, 50%    0%, 50%    0% )}
    12.5% {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100%   0%, 100%   0%, 100%   0% )}
@@ -127,4 +137,35 @@ button:hover{
 }
 .cardButton:hover{
   transform: translateY(2px);
+}
+#heart-unclicked{
+  color: gainsboro;
+  transition: 0.2s;
+}
+#heart-clicked{
+  color: hotpink;
+  text-shadow: 1px 1px 10px hotpink;
+}
+#heart-unclicked:hover{
+  color: hotpink;
+  animation: shake-heart .4s;
+  text-shadow: 1px 1px 10px hotpink;
+}
+
+@keyframes shake-heart {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
