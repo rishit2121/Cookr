@@ -116,6 +116,7 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Home</span>
         </Link>
+        {localStorage.getItem("email")  && (
         <Link
           to={"/library"}
           style={{
@@ -142,6 +143,8 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>My Library</span>
         </Link>
+        )}
+        {localStorage.getItem("email")  && (
         <Link
           to="/saved"
           style={{
@@ -164,6 +167,8 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Favorites</span>
         </Link>
+        )}
+        {localStorage.getItem("email")  && (
         <Link
           to="/profile"
           style={{
@@ -186,6 +191,8 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Profile</span>
         </Link>
+        )}
+        {localStorage.getItem("email")  && (
         <Link
           to="/affiliate"
           style={{
@@ -208,6 +215,7 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Affiliate</span>
         </Link>
+        )}
         <Link
           to="https://forms.gle/aWnQhHmELkT1Mvhw6"
           style={{

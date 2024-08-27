@@ -32,7 +32,50 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       console.log("Item not found in localStorage");
     }
   };
-
+  const deleteItemFromFirestore = async () => {
+    try {
+      const userEmail = localStorage.getItem("email");
+      const docRef = doc(db, "users", userEmail);
+  
+      // Fetch the current data from Firestore
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.error("Document not found");
+        return;
+      }
+  
+      // Get the current sets array
+      let currentSets = docSnap.data().sets || [];
+  
+      // Filter out the item to be deleted
+      currentSets = currentSets.filter(
+        item =>
+          !(item.title === subtitle &&
+            item.content === subcontent &&
+            item.subject === subsubject &&
+            item.promptMode === subpromptmode &&
+            item.color === subcolor &&
+            item.tag === subtag)
+      );
+  
+      // Update the Firestore document with the modified sets array
+      await updateDoc(docRef, { sets: currentSets });
+  
+      // Remove from localStorage if necessary
+      const currentSet = JSON.parse(localStorage.getItem("currentSet"));
+      if (currentSet && currentSet.title === subtitle) {
+        localStorage.removeItem("currentSet");
+      }
+  
+      console.log("Item deleted successfully");
+      setOpenNewTopic(false);
+    } catch (e) {
+      console.error("Error deleting item:", e);
+      setOpenNewTopic(false);
+    }
+  };
+  
+  
   const saveToFirestore = async () => {
     try {
       const color = randomColor();
@@ -328,7 +371,9 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
           </select>
         </div>
       </div>
+      
       <div>
+      {style === 0 && (
         <button
           onClick={() => saveToFirestore(false)}
           style={{
@@ -342,6 +387,38 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
         >
           Save
         </button>
+      )}
+      {style === 1 && (
+        <div style={{display:'flex', flexDirection:'row'}}>
+        <button
+        onClick={() => saveToFirestore(false)}
+        style={{
+          width: "47%",
+          background: "transparent",
+          border: "1px solid gainsboro",
+          padding: "10px",
+          borderRadius: "10px",
+          cursor: "pointer",
+        }}
+      >
+        Save
+      </button>
+      <div style={{width:'6%'}}></div>
+      <button
+        onClick={() => deleteItemFromFirestore()}
+        style={{
+          width: "47%",
+          background: "transparent",
+          border: "1px solid gainsboro",
+          padding: "10px",
+          borderRadius: "10px",
+          cursor: "pointer",
+        }}
+      >
+        Delete
+      </button>
+      </div>
+      )}
       </div>
       {
         <div
