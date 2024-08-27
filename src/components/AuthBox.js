@@ -4,6 +4,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
 import { db } from "./firebase/Firebase";
@@ -23,6 +24,17 @@ const AuthBox = () => {
     e.preventDefault();
   };
 
+  const sendPasswordReset = async () => {
+  
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Password reset email sent!");
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      alert("Please Provide a Valid Email");
+    }
+  };
+  
   const register = async () => {
     try {
       const user = await createUserWithEmailAndPassword(auth, email, password);
@@ -178,7 +190,13 @@ const AuthBox = () => {
             margin: "20px 0px",
           }}
         >
+          <div style={{flexDirection:"row", display:'flex'}}>
           <label>Password</label>
+          <div style={{width:'98%'}}></div>
+          <textbutton onClick={ sendPasswordReset }>
+            <p style={{fontSize:'12px', color: 'orange', textAlign:'center', justifyContent:'center', alignItems:'center', height:'100%'}}>Forgot?</p>
+          </textbutton>
+          </div>
           <input
             style={{
               marginTop: "10px",
