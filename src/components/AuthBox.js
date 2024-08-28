@@ -5,15 +5,18 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification
 } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
 import { db } from "./firebase/Firebase";
-import { addDoc, setDoc, doc } from "firebase/firestore";
+import { addDoc, setDoc, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const AuthBox = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+
   const [name, setName] = useState("");
   const [referalCode, setReferalCode] = useState("");
   const [mode, setMode] = useState(0);
@@ -37,34 +40,56 @@ const AuthBox = () => {
   
   const register = async () => {
     try {
-      const user = await createUserWithEmailAndPassword(auth, email, password);
-      const myCode = Math.floor(Math.random() * 1000000000);
-      console.log(user);
-      await setDoc(doc(db, "users", email), {
-        name: name,
-        email: email,
-        userType: "student",
-        plan: "free",
-        myCode: myCode,
-        sets: [],
-        cards: [],
-      });
-      console.log(document);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Send email verification
+      await sendEmailVerification(user);
+
+      // Show verification message
+      setMode(1)
+      setVerificationMessage("A verification email has been sent to your email address. Please check your inbox.");
+      setError(false)
+
+      console.log("User registered, verification email sent:", user);
       localStorage.setItem("email", email);
-      navigate("/");
+      navigate("/auth");
     } catch (e) {
       console.log(e);
       setError(e.message);
     }
   };
-  useEffect(() => {
-    setError(false);
-  }, [mode]);
 
   const login = async () => {
     try {
-      const user = await signInWithEmailAndPassword(auth, email, password);
-      console.log(user);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      if (!user.emailVerified) {
+        // Sign out the user if their email is not verified
+        await auth.signOut();
+        setError("Please verify your email before logging in.");
+        return;
+      }
+
+      // Check if the Firestore document exists
+      const userDocRef = doc(db, "users", email);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // If the document doesn't exist, create it (first time signing in)
+        const myCode = Math.floor(Math.random() * 1000000000);
+        await setDoc(userDocRef, {
+          name: user.displayName || "", // Use the displayName if available
+          email: email,
+          userType: "student",
+          plan: "free",
+          myCode: myCode,
+          sets: [],
+          cards: [],
+        });
+      }
+
+      console.log("User logged in:", user);
       localStorage.setItem("email", email);
       navigate("/");
     } catch (e) {
@@ -105,11 +130,24 @@ const AuthBox = () => {
           <p>
             Oops!
             {mode == 1
-              ? " We can't find this account!"
-              : " We encountered a problem."}
+              ? error
+              : "There was a problem with the account!"}
           </p>
         </div>
       )}
+      {verificationMessage && 
+      <div style={{
+            height: "50px",
+            width: "300px",
+            backgroundColor: "lightgreen",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <p style={{fontSize:"13px", textAlign:'center', margin:'1px'}}>{verificationMessage}</p>
+      </div>}
       <h2>Hi! 👋</h2>
       <form onSubmit={handleSubmit}>
         {mode == 0 && (
@@ -193,9 +231,11 @@ const AuthBox = () => {
           <div style={{flexDirection:"row", display:'flex'}}>
           <label>Password</label>
           <div style={{width:'98%'}}></div>
+          {mode != 0 && (
           <textbutton onClick={ sendPasswordReset }>
             <p style={{fontSize:'12px', color: 'orange', textAlign:'center', justifyContent:'center', alignItems:'center', height:'100%'}}>Forgot?</p>
           </textbutton>
+          )}
           </div>
           <input
             style={{
@@ -272,7 +312,7 @@ const AuthBox = () => {
 
             <p
               style={{ fontSize: "14px", cursor: "pointer" }}
-              onClick={async () => setMode(0)}
+              onClick={async () =>  setMode(0)}
             >
               Sign Up
             </p>
