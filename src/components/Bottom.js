@@ -1,5 +1,7 @@
 import React from "react";
 import CustomDropdown from "./Dropdown";
+import Download from "./Download";
+
 
 const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension }) => {
   return (
@@ -33,6 +35,9 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension }) => {
         <p style={{ margin: "0px", padding: "15px 20px", fontSize:mobileDimension&&"10px" }}>
           <span style={{ fontWeight: "bold" }}>XP 🏆</span>: {xp}
         </p>
+      </div>
+      <div style={{ display: "flex", padding: "0px 0px 0px 57%", alignItems: "center" }}> 
+        <Download></Download>
       </div>
       {!mobileDimension ? (
         <div

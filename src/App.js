@@ -7,6 +7,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import AffiliatePage from "./pages/Affiliate";
 import SavedQuestions from "./components/Saved"
+import Explore from "./pages/Explore"
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/affiliate" element={<AffiliatePage />} />
         <Route path="/saved" element={<SavedQuestions />} />
-
+        <Route path="/explore" element={<Explore />} />
 
       </Routes>
     </div>

@@ -33,24 +33,24 @@ const loadingStyle = {
   color: "#888",
 };
 
-const AdCard = () => {
-  return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#f0f0f0",
-        scrollSnapAlign: "start",
-        outline:"1px solid gainsboro",
-        borderRadius:"10px"
-      }}
-    >
-      <p style={{ fontSize: "24px", color: "#888" }}>Advertisement</p>
-    </div>
-  );
-};
+// const AdCard = () => {
+//   return (
+//     <div
+//       style={{
+//         height: "100vh",
+//         display: "flex",
+//         justifyContent: "center",
+//         alignItems: "center",
+//         backgroundColor: "#f0f0f0",
+//         scrollSnapAlign: "start",
+//         outline:"1px solid gainsboro",
+//         borderRadius:"10px"
+//       }}
+//     >
+//       <p style={{ fontSize: "24px", color: "#888" }}>Advertisement</p>
+//     </div>
+//   );
+// };
 
 const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
   const containerRef = useRef(null);
@@ -182,7 +182,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
         <div ref={containerRef} style={containerStyle} onScroll={handleScroll}>
           {questions.map((item, index) => (
             <div key={index} ref={(el) => (cardsRef.current[index] = el)}>
-              {index > 0 && index % 3 === 0 && <AdCard />} {/* Insert ad every 3 cards */}
+              {/* {index > 0 && index % 3 === 0 && <AdCard />} Insert ad every 3 cards */}
               <div style={cardContainerStyle}>
                 {!isLoading && (
                   <QuestionCard
