@@ -6,8 +6,11 @@ import Library from "./pages/Library";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import AffiliatePage from "./pages/Affiliate";
-import SavedQuestions from "./components/Saved"
-import Explore from "./pages/Explore"
+import SavedQuestions from "./components/Saved";
+import Explore from "./pages/Explore";
+import Quiz from "./pages/Quiz";
+import Results from "./pages/results";
+
 
 function App() {
   return (
@@ -20,6 +23,9 @@ function App() {
         <Route path="/affiliate" element={<AffiliatePage />} />
         <Route path="/saved" element={<SavedQuestions />} />
         <Route path="/explore" element={<Explore />} />
+        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/results" element={<Results />} />
+
 
       </Routes>
     </div>

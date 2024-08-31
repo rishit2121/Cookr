@@ -168,7 +168,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span>Favorites</span>
         </Link>
         )}
-        {localStorage.getItem("email")  && (
+        {/* {localStorage.getItem("email")  && (
         <Link
           to="/explore"
           style={{
@@ -191,7 +191,7 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Explore</span>
         </Link>
-        )}
+        )} */}
         {localStorage.getItem("email")  && (
         <Link
           to="/profile"
