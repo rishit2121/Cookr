@@ -70,7 +70,7 @@ const MyLibrary = () => {
             >
               <h1 style={{ color: item.color, textOverflow: "clip", padding: "0px 10px" }}>{item.title}</h1>
               <div style={{ display: "flex", flexDirection: "row" }}>
-                <button
+                {/* <button
                   style={{
                     position: "relative",
                     bottom: "10px",
@@ -93,13 +93,13 @@ const MyLibrary = () => {
                   onClick={() => navigate("/quiz", { state: { title: item.title, context: item.content, subject: item.subject, color: item.color, promptMode: item.promptMode, tag: item.tag } })}
                 >
                   Quiz
-                </button>
+                </button> */}
                 <button
                   style={{
                     position: "relative",
                     bottom: "10px",
                     fontSize: "15px",
-                    left: "20px",
+                    left: "10px",
                     width: "25%", // Increased width
                     height: "100%",
                     backgroundColor: item.color,
@@ -123,7 +123,7 @@ const MyLibrary = () => {
                   Edit
                 </button>
                 <i
-                  style={{ position: "relative", bottom: "10px", fontSize: "50px", left: "50px", color: item.color }}
+                  style={{ position: "relative", bottom: "10px", fontSize: "50px", left: "50%", color: item.color }}
                   className={item.tag}
                 ></i>
               </div>
