@@ -173,14 +173,30 @@ const Quiz = () => {
             <div style={{ height: "100%" }}>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <h2>Quiz Questions</h2>
-                <div style={{ marginLeft: "20px", fontSize: "18px", fontWeight: "bold" }}>
-                  Time Left: {formatTime(time)}
-                </div>
+  <div
+    style={{
+      width: "15%",
+      height: "40%",
+      borderRadius: "15px", // Circular shapex
+      border: "2px solid black", // Black border
+      display: "flex",
+      alignItems: "center",
+      marginLeft:"15%",
+      justifyContent: "center",
+      fontSize: "16px",
+      fontWeight: "bold",
+      backgroundColor: "#ffffff", // White background for the circle
+    }}
+  >
+    {formatTime(time)}
+  </div>
+
+
                 {showQuiz && (
                   <button
                     onClick={handleGrade}
                     style={{
-                      marginBottom: "15px",
+                    //   marginBottom: "15px",
                       backgroundColor: "black",
                       color: "white",
                       padding: "10px",
