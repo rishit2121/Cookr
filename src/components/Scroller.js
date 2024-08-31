@@ -8,10 +8,10 @@ const containerStyle = {
   flexDirection: "column",
   height: "100vh",
   width: "100%",
-  overflowY: "scroll",
-  scrollSnapType: "y mandatory",
+  overflowY: "auto", // Change from 'scroll' to 'auto'
+  scrollSnapType: "y mandatory", // Enforce snapping on the y-axis
+  scrollBehavior: "smooth", // Smooth scrolling
   boxSizing: "border-box",
-  scrollBehavior: "smooth",
   padding: "0px",
   margin: "0px",
   alignItems: "center",
@@ -20,8 +20,9 @@ const containerStyle = {
 const cardContainerStyle = {
   display: "flex",
   flexDirection: "column",
-  height: "100vh", // Ensure each card takes up full viewport height
-  scrollSnapAlign: "start",
+  height: "100vh", // Each card takes up full viewport height
+  scrollSnapAlign: "start", // Snap to the start of each card
+  scrollSnapStop: "always", // Stop scrolling at each snap point
 };
 
 const loadingStyle = {
