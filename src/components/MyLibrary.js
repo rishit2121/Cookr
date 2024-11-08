@@ -3,6 +3,9 @@ import NewPrompt from "./NewPrompt";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPen } from '@fortawesome/free-solid-svg-icons';
+
 
 const MyLibrary = () => {
   const [sets, setSets] = useState([]);
@@ -70,14 +73,14 @@ const MyLibrary = () => {
             >
               <h1 style={{ color: item.color, textOverflow: "clip", padding: "0px 10px" }}>{item.title}</h1>
               <div style={{ display: "flex", flexDirection: "row" }}>
-                {/* <button
+                <button
                   style={{
                     position: "relative",
-                    bottom: "10px",
-                    fontSize: "15px",
+                    bottom: "5px",
+                    fontSize: "12px",
                     left: "10px",
-                    width: "25%", // Increased width
-                    height: "100%",
+                    width: "20%", // Increased width
+                    height: "90%",
                     backgroundColor: item.color,
                     color: "white", // Set text color to white
                     outline: "none",
@@ -93,15 +96,15 @@ const MyLibrary = () => {
                   onClick={() => navigate("/quiz", { state: { title: item.title, context: item.content, subject: item.subject, color: item.color, promptMode: item.promptMode, tag: item.tag } })}
                 >
                   Quiz
-                </button> */}
+                </button>
                 <button
                   style={{
                     position: "relative",
-                    bottom: "10px",
+                    bottom: "5px",
                     fontSize: "15px",
-                    left: "10px",
-                    width: "25%", // Increased width
-                    height: "100%",
+                    left: "20px",
+                    width: "20%", // Increased width
+                    height: "90%",
                     backgroundColor: item.color,
                     color: "white", // Set text color to white
                     outline: "none",
@@ -120,10 +123,12 @@ const MyLibrary = () => {
                     setOpenNewTopic(!openNewTopic);
                   }}
                 >
-                  Edit
+                  
+                  <FontAwesomeIcon icon={faPen} style={{height:"70%"}}/>
+
                 </button>
                 <i
-                  style={{ position: "relative", bottom: "10px", fontSize: "50px", left: "50%", color: item.color }}
+                  style={{ position: "relative", bottom: "10px", fontSize: "50px", left: "35%", color: item.color }}
                   className={item.tag}
                 ></i>
               </div>

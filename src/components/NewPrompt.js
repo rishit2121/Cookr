@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase/Firebase";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove} from "firebase/firestore";
+import FileUpload from "./FileUpload"
+import Tesseract from 'tesseract.js';
+// Set up the PDF worker
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import PDFJSWorker from 'pdfjs-dist/legacy/build/pdf.worker.entry';
+
+// Set the worker source
+pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
+
+
+
 var randomColor = require("randomcolor"); // import the script
 
 function NewPrompt({ setOpenNewTopic, style, params }) {
@@ -12,6 +23,114 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
   const [subject, setSubject] = useState(style === 1 ? subsubject : "");
   
   const [tag, setTage] = useState("fa-solid fa-calculator")
+  const [text, setText] = useState('');
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const handleSelect = (option) => {
+    setSelectedOption(option);
+  };
+  function handleFile(event) {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type === 'application/pdf') {
+        // Handle PDF file
+        const fileUrl = URL.createObjectURL(file);
+        setPdfUrl(fileUrl);
+        extractTextFromPdf(file);
+      } else if (file.type.startsWith('image/')) {
+        // Handle image file
+        const fileUrl = URL.createObjectURL(file);
+        setImageUrl(fileUrl);
+        extractTextFromImage(file);
+      } else {
+        alert('Please upload a valid PDF or image file.');
+      }
+    }
+  }
+  // Function to clean up the text
+function cleanText(rawText) {
+  // Remove any JSON-like structures or HTML tags
+  // let cleanedText = rawText.replace(/\{[^}]+\}|\[[^\]]+\]|<[^>]+>/g, '');
+  
+  // // Further clean-up: remove URLs, special characters, and extra whitespace
+  // cleanedText = cleanedText.replace(/https?:\/\/[^\s]+/g, ''); // Remove URLs
+  // cleanedText = cleanedText.replace(/[^\w\s.,!?'"-]/g, '');   // Remove special characters except punctuation
+  // cleanedText = cleanedText.replace(/\s+/g, ' ').trim();      // Replace multiple spaces with a single space and trim
+
+  return rawText;
+}
+  const handleLink = async (link) => {
+    try {
+      const response = await fetch(link);
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+    // Extract all <p> tags
+    const pTags = doc.querySelectorAll('p');
+
+    // Convert NodeList to an array and extract the text content or outer HTML
+    const pTextContents = Array.from(pTags).map(p => p.textContent); // for text content
+    // or
+
+    console.log(link); // Logs an array of text contents of <p> tags
+
+      const textContent = doc.body.innerText || ''; // Extracts text content from the page body
+      setContent(cleanText(pTextContents));
+    } catch (error) {
+
+      console.error('Error fetching text from the website:', error);
+      alert('Failed to fetch text from the provided link.');
+    }
+  };
+  function extractTextFromImage(file) {
+    Tesseract.recognize(
+      file,
+      'eng', // Language
+      {
+        logger: info => console.log(info) // Optional: for logging progress
+      }
+    ).then(({ data: { text } }) => {
+      setContent(text);
+    }).catch(error => {
+      console.error('Error recognizing text from image:', error);
+    });
+  }
+function extractTextFromPdf(file) {
+  const fileReader = new FileReader();
+
+  fileReader.onload = async function () {
+      const typedarray = new Uint8Array(this.result);
+
+      try {
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          const numPages = pdf.numPages;
+          let fullText = '';
+
+          // Function to extract text from each page
+          const extractTextFromPage = async (pageNum) => {
+              const page = await pdf.getPage(pageNum);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              fullText += pageText + '\n';
+
+              if (pageNum < numPages) {
+                  extractTextFromPage(pageNum + 1);
+              } else {
+                  setContent(fullText);
+              }
+          };
+
+          extractTextFromPage(1);
+      } catch (error) {
+          console.error('Error loading PDF document:', error);
+      }
+  };
+
+  fileReader.readAsArrayBuffer(file);
+}
+
   const removeItemFromLocalStorage = (itemToDelete) => {
     // Retrieve the current set from localStorage
     const currentSet = JSON.parse(localStorage.getItem("currentSet"));
@@ -22,7 +141,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       currentSet.content === itemToDelete.content &&
       currentSet.subject === itemToDelete.subject &&
       currentSet.promptMode === itemToDelete.promptMode &&
-      currentSet.color === itemToDelete.color &&
+      // currentSet.color === itemToDelete.color &&
       currentSet.tag === itemToDelete.tag
     ) {
       // Remove the item by setting it to null or an empty object/string
@@ -32,6 +151,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       console.log("Item not found in localStorage");
     }
   };
+  
   const deleteItemFromFirestore = async () => {
     try {
       const userEmail = localStorage.getItem("email");
@@ -90,7 +210,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       }
   
       let currentSets = docSnap.data().sets || [];
-      
+  
       if (style === 1) {
         // Remove the item if style === 1
         currentSets = currentSets.filter(
@@ -102,14 +222,20 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
               item.color === subcolor &&
               item.tag === subtag)
         );
-        removeItemFromLocalStorage({
-          title: subtitle,
-          content: subcontent,
-          subject: subsubject,
-          promptMode: subpromptmode,
-          color: subcolor,
-          tag: subtag
-        });
+  
+        // Wrap the removeItemFromLocalStorage call in a try-catch block
+        try {
+          removeItemFromLocalStorage({
+            title: subtitle,
+            content: subcontent,
+            subject: subsubject,
+            promptMode: subpromptmode,
+            color: subcolor,
+            tag: subtag
+          });
+        } catch (removeError) {
+          console.error("Error removing item from localStorage:", removeError);
+        }
   
         // Add the new item at the same index
         const index = docSnap.data().sets.findIndex(
@@ -130,6 +256,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
             color: subcolor,
             tag: tag
           });
+          console.log("hi")
         } else {
           // If item was not found, just add to the end
           currentSets.push({
@@ -137,7 +264,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
             content: content,
             subject: subject,
             promptMode: promptMode,
-            color: color,
+            color: subcolor,
             tag: tag
           });
         }
@@ -157,17 +284,31 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       await updateDoc(docRef, { sets: currentSets });
   
       // Update localStorage
-      localStorage.setItem(
-        "currentSet",
-        JSON.stringify({
-          title: title,
-          content: content,
-          subject: subject,
-          promptMode: promptMode,
-          color: color,
-          tag: tag
-        })
-      );
+      if(style===1){
+        localStorage.setItem(
+          "currentSet",
+          JSON.stringify({
+            title: title,
+            content: content,
+            subject: subject,
+            promptMode: promptMode,
+            color: subcolor,
+            tag: tag
+          })
+        );
+      } else{
+        localStorage.setItem(
+          "currentSet",
+          JSON.stringify({
+            title: title,
+            content: content,
+            subject: subject,
+            promptMode: promptMode,
+            color: color,
+            tag: tag
+          })
+        );
+      }
   
       setOpenNewTopic(false);
     } catch (e) {
@@ -175,6 +316,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
       setOpenNewTopic(false);
     }
   };
+  
   
 
   const handleTitleChange = (e) => {
@@ -267,6 +409,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
                 width: "100%",
                 boxSizing: "border-box",
                 height: "35vh",
+                position: "relative"
               }}
             >
               <textarea
@@ -284,6 +427,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
                 }}
                 maxLength={6000}
               />
+              <div style={{display:'flex', flexDirection:'column'}}>
               <p
                 style={{
                   textAlign: "end",
@@ -294,81 +438,158 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
               >
                 {content.length}/6000
               </p>
+              <form style={{ position: "absolute", bottom: "5px", left: "5px"}}>
+              <label
+                htmlFor="fileUpload"
+                style={{
+                  background:'white',
+                  display: "inline-block",
+                  padding: "5px 8px", // Reduced padding
+                  borderRadius: "8px", // Reduced border radius
+                  border: "1px solid black",
+                  cursor: "pointer",
+                  backgroundColor: "white",
+                  fontSize: "12px", // Reduced font size
+                  color: "black",
+                  textAlign: "center",
+                  boxSizing: "border-box",
+                  boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.2)", // Shadow added here
+
+                }}
+              >
+                Upload Notes?
+                <input
+  id="fileUpload"
+  type="file"
+  name="file"
+  accept=".pdf, image/*"  // Accepts PDF files and all image formats
+  onChange={handleFile}
+  style={{ display: "none" }}
+/>
+              </label>
+            </form>
+            </div>
             </div>
           </div>
         ) : (
-          <div style={{ width: "100%", marginBottom: "10px" }}>
-            <p style={{ fontSize: "20px", margin: "0px" }}>Subject</p>
-            <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
-              Be as specific as possible for the best results while using
-              Scroller.
-            </p>
-            <div
+          <div
+            style={{
+              outline: "1px solid gainsboro",
+              border: "none",
+              borderRadius: "10px",
+              width: "100%",
+              boxSizing: "border-box",
+              height: "34vh",
+              position: "relative", // Make the container relative for positioning the form
+            }}
+          >
+            <textarea
+              value={subject}
+              onChange={handleSubjectChange}
               style={{
-                outline: "1px solid gainsboro",
+                outline: "none",
                 border: "none",
                 borderRadius: "10px",
                 width: "100%",
                 boxSizing: "border-box",
-                height: "34vh",
+                resize: "none",
+                padding: "10px",
+                height: "90%",
+              }}
+              placeholder="Chain rule for AP Calculus BC..."
+              maxLength={6000}
+            />
+            <p
+              style={{
+                textAlign: "end",
+                fontSize: "12px",
+                color: "gray",
+                padding: "0px 10px",
               }}
             >
-              <textarea
-                value={subject}
-                onChange={handleSubjectChange}
+              {subject.length}/6000
+            </p>
+            <form style={{ position: "absolute", bottom: "10px", left: "10px" }}>
+              <label
+                htmlFor="fileUpload"
                 style={{
-                  outline: "none",
-                  border: "none",
-                  borderRadius: "10px",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  resize: "none",
+                  display: "inline-block",
                   padding: "10px",
-                  height: "90%",
-                }}
-                placeholder="Chain rule for AP Calculus BC..."
-                maxLength={6000}
-              />
-              <p
-                style={{
-                  textAlign: "end",
-                  fontSize: "12px",
-                  color: "gray",
-                  padding: "0px 10px",
+                  borderRadius: "10px",
+                  border: "1px solid gainsboro",
+                  cursor: "pointer",
+                  backgroundColor: "white",
+                  fontSize: "14px",
+                  color: "black",
+                  textAlign: "center",
+                  boxSizing: "border-box",
                 }}
               >
-                {subject.length}/6000
-              </p>
-            </div>
+                Upload Notes?
+                <input
+  id="fileUpload"
+  type="file"
+  name="file"
+  accept=".pdf, image/*"  // Accepts PDF files and all image formats
+  onChange={handleFile}
+  style={{ display: "none" }}
+/>
+              </label>
+            </form>
           </div>
+
         )}
+        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ccc', borderRadius: '5px', padding: '5px' }}>
+          <input
+            type="text"
+            placeholder="Enter website URL"
+            style={{ flex: 1, border: 'none', outline: 'none' }}
+            id="linkInput"
+          />
+          <img
+            src="upload-icon.png" // Replace with your actual upload icon path
+            alt="Upload"
+            style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '5px' }}
+            onClick={() => handleLink(document.getElementById('linkInput').value)}
+          />
+        </div>
+
         <div style={{ width: "100%", marginBottom: "10px" }}>
           <p style={{ fontSize: "20px", margin: "0px" }}>Tag</p>
           <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
-            Fun little decoration for you to add.
-          </p>
-          <select 
-          onChange={async(e)=>setTage(e.target.value)}
-          value={tag}
-          name="subjects" id="subjects" style={{width:"100%", padding:"5px", borderRadius:"10px", border:"none", outline:"none", cursor:"pointer"}}>
-            <option value="fa-solid fa-calculator">🔢 Algebra</option>
-            <option value="fa-solid fa-dna">🧬 Biology</option>
-            <option value="fa-solid fa-infinity">∫ Calculus</option>
-            <option value="fa-solid fa-flask-vial">🧪 Chemistry</option>
-            <option value="fa-solid fa-code">💻 Computer Science</option>
-            <option value="fa-solid fa-book">
-              📚 English Language Arts
-            </option>
-            <option value="fa-solid fa-seedling">
-            ♻️ Environmental Science
-            </option>
-            <option value="fa-solid fa-map">🗺️ Geography</option>
-            <option value="fa-solid fa-stopwatch">🔭 Physics</option>
-            <option value="fa-solid fa-brain">🧠 Psychology</option>
-            <option value="fa-solid fa-chart-simple">📊 Statistics</option>
-            <option value="fa-solid fa-usa-flag">🇺🇸 U.S. History</option>
-            <option value="fa-solid fa-globe">🌎 World History</option>
-          </select>
+              Choose what type of content you would like to see. 
+            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-evenly', margin: '10px 0' }}>
+          <div 
+          onClick={() => handleSelect('questions')} 
+          style={{
+            padding: '10px 30px',
+            borderRadius: '15px', // Makes it fully rounded
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            border: selectedOption === 'questions' ? '2px solid #007bff' : '1px solid black', // Small black outline by default
+            transition: 'border 0.3s',
+          }}
+        >
+          ❓Questions
+        </div>
+        <div style={{width:'1%'}}></div>
+        <div 
+          onClick={() => handleSelect('reels')} 
+          style={{
+            padding: '10px 30px',
+            borderRadius: '15px', // Makes it fully rounded
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            border: selectedOption === 'reels' ? '2px solid #007bff' : '1px solid black', // Small black outline by default
+            transition: 'border 0.3s',
+          }}
+        >
+          🎥 Reels
+        </div>
+
+
+    </div>
         </div>
       </div>
       

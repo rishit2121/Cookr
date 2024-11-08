@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
 import { db } from "./firebase/Firebase";
-import { addDoc, setDoc, doc, getDoc } from "firebase/firestore";
+import { setDoc, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const AuthBox = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [verificationMessage, setVerificationMessage] = useState("");
-
   const [name, setName] = useState("");
   const [referalCode, setReferalCode] = useState("");
-  const [mode, setMode] = useState(0);
-  const navigate = useNavigate();
+  const [mode, setMode] = useState(0); // 0 for registration, 1 for login
   const [error, setError] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
   };
 
   const sendPasswordReset = async () => {
-  
     try {
       await sendPasswordResetEmail(auth, email);
       alert("Password reset email sent!");
@@ -43,19 +43,14 @@ const AuthBox = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Send email verification
       await sendEmailVerification(user);
-
-      // Show verification message
-      setMode(1)
       setVerificationMessage("A verification email has been sent to your email address. Please check your inbox.");
-      setError(false)
-
+      setError(false);
       console.log("User registered, verification email sent:", user);
       localStorage.setItem("email", email);
       navigate("/auth");
     } catch (e) {
-      console.log(e);
+      console.error("Error during registration:", e);
       setError(e.message);
     }
   };
@@ -65,21 +60,18 @@ const AuthBox = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       if (!user.emailVerified) {
-        // Sign out the user if their email is not verified
         await auth.signOut();
         setError("Please verify your email before logging in.");
         return;
       }
 
-      // Check if the Firestore document exists
       const userDocRef = doc(db, "users", email);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        // If the document doesn't exist, create it (first time signing in)
         const myCode = Math.floor(Math.random() * 1000000000);
         await setDoc(userDocRef, {
-          name: user.displayName || "", // Use the displayName if available
+          name: user.displayName || "", 
           email: email,
           userType: "student",
           plan: "free",
@@ -93,26 +85,56 @@ const AuthBox = () => {
       localStorage.setItem("email", email);
       navigate("/");
     } catch (e) {
-      console.log(e);
+      console.error("Error during login:", e);
       setError(e.message);
     }
   };
 
-  const logOut = async () => {
-    await signOut(auth);
+  const googleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+  
+      const userDocRef = doc(db, "users", user.email);
+      const userDoc = await getDoc(userDocRef);
+  
+      if (!userDoc.exists()) {
+        const myCode = Math.floor(Math.random() * 1000000000);
+        await setDoc(userDocRef, {
+          name: user.displayName || "", 
+          email: user.email,
+          userType: "student",
+          plan: "free",
+          myCode: myCode,
+          sets: [],
+          cards: [],
+        });
+      }
+  
+      console.log("User signed in with Google:", user);
+      localStorage.setItem("email", user.email);
+      navigate("/");
+    } catch (e) {
+      console.error("Error during Google sign-in:", e);
+  
+      if (e.code !== 'auth/popup-closed-by-user') {
+        setError(e.message);
+      }
+    }
   };
+  
 
   return (
     <div
       style={{
         backgroundColor: "white",
-        padding: "30px 70px",
+        padding: "20px 70px",
         width: "300px",
         height: "fit-content",
         borderRadius: "10px",
         boxShadow: "0px 1px 1px 1px gainsboro",
-        marginBottom:"100px",
-        
+        marginBottom: "100px",
       }}
     >
       {error && (
@@ -127,11 +149,8 @@ const AuthBox = () => {
             justifyContent: "center",
           }}
         >
-          <p>
-            Oops!
-            {mode == 1
-              ? error
-              : "There was a problem with the account!"}
+          <p style={{padding:'10px', textAlign:'center'}}>
+            Oops! There was a problem with the account!
           </p>
         </div>
       )}
@@ -150,7 +169,7 @@ const AuthBox = () => {
       </div>}
       <h2>Hi! 👋</h2>
       <form onSubmit={handleSubmit}>
-        {mode == 0 && (
+        {mode === 0 && (
           <div>
             <div
               style={{
@@ -181,7 +200,7 @@ const AuthBox = () => {
                 margin: "20px 0px",
               }}
             >
-              <label>Referal Code</label>
+              <label>Referral Code</label>
               <input
                 style={{
                   marginTop: "10px",
@@ -191,7 +210,7 @@ const AuthBox = () => {
                   outline: "1px solid gainsboro",
                 }}
                 type="text"
-                placeholder="Enter the 10 Digit Referal Code"
+                placeholder="Enter the 10 Digit Referral Code"
                 value={referalCode}
                 onChange={(e) => setReferalCode(e.target.value)}
                 maxLength="10"
@@ -228,14 +247,14 @@ const AuthBox = () => {
             margin: "20px 0px",
           }}
         >
-          <div style={{flexDirection:"row", display:'flex'}}>
-          <label>Password</label>
-          <div style={{width:'98%'}}></div>
-          {mode != 0 && (
-          <textbutton onClick={ sendPasswordReset }>
-            <p style={{fontSize:'12px', color: 'orange', textAlign:'center', justifyContent:'center', alignItems:'center', height:'100%'}}>Forgot?</p>
-          </textbutton>
-          )}
+          <div style={{ flexDirection: "row", display: "flex" }}>
+            <label>Password</label>
+            <div style={{ width: "98%" }}></div>
+            {mode !== 0 && (
+              <textbutton onClick={sendPasswordReset}>
+                <p style={{ fontSize: "12px", color: "orange", textAlign: "center", justifyContent: "center", alignItems: "center", height: "100%" }}>Forgot?</p>
+              </textbutton>
+            )}
           </div>
           <input
             style={{
@@ -251,7 +270,7 @@ const AuthBox = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        {mode == 1 ? (
+        {mode === 1 ? (
           <button
             style={{
               width: "100%",
@@ -283,61 +302,65 @@ const AuthBox = () => {
                 width: "100%",
                 padding: "10px",
                 backgroundColor: "black",
-                borderRadius: "100px",
                 border: "none",
                 color: "white",
+                borderRadius: "100px",
                 cursor: "pointer",
               }}
               type="submit"
               onClick={async () => register()}
             >
-              Sign Up
+              Register
             </button>
           </div>
         )}
-
-        <br></br>
-
-        {mode == 1 ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <p style={{ fontSize: "14px", margin: "30px 0px" }}>
-              New to Scroller?{" "}
-            </p>
-
-            <p
-              style={{ fontSize: "14px", cursor: "pointer" }}
-              onClick={async () =>  setMode(0)}
-            >
-              Sign Up
-            </p>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <p style={{ fontSize: "14px", margin: "10px 0px" }}>
-              Have an account already?{" "}
-            </p>
-            <br></br>
-            <p
-              style={{ fontSize: "14px", cursor: "pointer" }}
-              onClick={async () => setMode(1)}
-            >
-              Sign In
-            </p>
-          </div>
-        )}
       </form>
+
+      <div style={{display:'flex', marginTop: "20px", textAlign: "center", alignItems:'center', justifyContent:'center', width:'100%' }}>
+  {/* <p style={{ fontSize: "14px", margin: "10px 0px" }}>or</p> */}
+  <button
+    style={{
+      width: "80%",
+      padding: "10px",
+      backgroundColor: "black",
+      border: "none",
+      color: "white",
+      borderRadius: "10px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+    onClick={googleSignIn}
+  >
+    <img 
+      src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
+      style={{
+        width: "10%",
+        height: "10%",
+        marginRight: "10px",
+      }}
+    >
+    </img>
+    Continue With Google
+  </button>
+  </div>
+
+
+      <p
+        style={{
+          fontSize: "14px",
+          textAlign: "center",
+          marginTop: "20px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          setMode(mode === 0 ? 1 : 0);
+          setError(false);
+        }}
+              >
+        {mode === 0 ? "Have an account already? Log In" : "New here? Create an account"}
+      </p>
     </div>
   );
 };

@@ -17,6 +17,7 @@ const Quiz = () => {
 
   // Fetch questions from the server
   const fetchQuestions = async () => {
+    console.log(location.state)
     setIsFetching(true);
     const options = {
       method: "POST",
@@ -71,6 +72,16 @@ const Quiz = () => {
   const handleNext = () => {
     fetchQuestions(); // Fetch questions when Next is clicked
   };
+  const handleChange = (e) => {
+    const selectedTime = Number(e.target.value);
+    console.log(`Selected Time (minutes): ${selectedTime}`); // Debugging log
+    setTime(selectedTime * 60); // Convert minutes to seconds and update state
+  };
+  
+  // Use useEffect to log the updated time value
+  useEffect(() => {
+    console.log(`Updated Time (seconds): ${time}`);
+  }, [time]); // 
 
   // Handle changes in selected answers
   const handleAnswerChange = (questionIndex, answer) => {
@@ -99,13 +110,16 @@ const Quiz = () => {
       handleGrade(); // Submit quiz when time runs out
       return; // Prevent further execution if time has reached zero
     }
-
+    if(showQuiz===true){
+      console.log('hey')
     const timer = setInterval(() => {
       setTime((prevTime) => prevTime - 1);
     }, 1000);
 
-    return () => clearInterval(timer); // Cleanup interval on component unmount
-  }, [time]);
+    return () => clearInterval(timer);
+    }
+ // Cleanup interval on component unmount
+  });
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -141,32 +155,33 @@ const Quiz = () => {
               <div>How long would you like the test to be?</div>
 
               <div style={{ margin: "20px 0" }}>
-                <select
-                  value={time / 60} // Convert seconds to minutes for display
-                  onChange={(e) => setTime(e.target.value * 60)} // Convert minutes to seconds
-                  style={{
-                    border: "2px solid #ccc",
-                    outline: "none",
-                    borderRadius: "12px",
-                    padding: "10px 15px",
-                    backgroundColor: "#f7f7f7",
-                    fontSize: "16px",
-                    color: "#333",
-                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-                    width: "100%",
-                    maxWidth: "200px",
-                  }}
-                >
-                  <option value="" disabled>Select Time</option>
-                  <option value="5">5 minutes</option>
-                  <option value="10">10 minutes</option>
-                  <option value="15">15 minutes</option>
-                  <option value="20">20 minutes</option>
-                  <option value="30">30 minutes</option>
-                  <option value="45">45 minutes</option>
-                  <option value="60">60 minutes</option>
-                  <option value="90">90 minutes</option>
-                </select>
+              <select
+                value={(time / 60)} // Convert seconds to minutes for display
+                onChange={handleChange}
+                style={{
+                  border: "2px solid #ccc",
+                  outline: "none",
+                  borderRadius: "12px",
+                  padding: "10px 15px",
+                  backgroundColor: "#f7f7f7",
+                  fontSize: "16px",
+                  color: "#333",
+                  boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                  width: "100%",
+                  maxWidth: "200px",
+                }}
+              >
+                <option value="" disabled>Select Time</option>
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="90">90 minutes</option>
+              </select>
+
               </div>
             </>
           ) : (

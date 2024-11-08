@@ -1,0 +1,390 @@
+.home-page {
+    width: 100%;
+    height: auto; /* Allow height to be based on content */
+    min-height: 100vh; /* Ensure the page takes at least the full viewport height */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+  
+.navbar { 
+    background-color: #333;
+    padding: 10px;
+}
+  
+.nav-links {
+    display: flex;
+    justify-content: space-around;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+  
+.nav-links li {
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+  
+.nav-links li:hover {
+    transform: translateY(-5px);
+}
+  
+.top-box {
+    background: linear-gradient(135deg, #fe946d, #d83a00);
+    height: 90%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+  
+.scroller-text {
+    color: white;
+    font-size: 5rem;
+    text-align: center;
+    margin-top: 5%;
+}
+  
+.subtext {
+    color: white;
+    font-size: 1rem;
+    text-align: center;
+}
+  
+.profile-container {
+    position: relative;
+    margin-top: 2%;
+}
+
+.profile-image {
+    width: 52%;
+    height: 58%;
+    scale: 0.8;
+    border-radius: 10%;
+    object-fit: cover;
+}
+
+.corner-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20%;
+    height: 20%;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+}
+
+.button-row {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    color: white;
+    border: none;
+    border-radius: 25px; /* Rounded rectangle */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.get-started {
+    background-color: white; /* Orange */
+    color:black
+}
+
+.learn-more {
+    border: 2px solid white; /* Adjust thickness and color as needed */
+    color: white; /* Ensures text color contrasts with the outline */
+    background-color: transparent; 
+}
+
+.button:hover {
+    opacity: 0.8;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+}
+
+.white-container {
+    background-color: white;
+    padding: 150px 00px 150px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content:center;
+    height:100%;
+    width:100%;
+}
+
+.section {
+    width: 31%;
+    margin-bottom: 20px;
+
+    text-align: center;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    display:flex;
+    margin-left:20%;
+    font-weight: bold; /* Makes the text bold */
+
+}
+
+.section-body {
+    font-size: 1rem;
+    color: #333; /* Dark grey for better readability */
+    text-align:left;
+    margin-left:20%;
+    width:80%;
+}
+
+.section-icon {
+    font-size: 3rem; /* Adjust icon size as needed */
+    color: #ff4500; /* Icon color */
+    margin-bottom: 10px;
+    display:flex;
+    margin-left:20%;
+}
+
+.page-container {
+    width: 97.4%;
+    height: 130vh; /* Full viewport height */
+    background-color: #fb936d; /* Light shade of orange background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #161616; /* Darker orange for the title */
+    margin-bottom: 10px;
+    margin-top:5%;
+}
+
+.page-subtitle {
+    margin-top:10px;
+    font-size: 1.0rem;
+    color: #1d1d1d; /* Lighter orange for the subtitle */
+}
+
+.container {
+    display: flex;
+    flex-direction: row; /* Align items horizontally */
+    padding: 20px;
+    width:80%;
+    gap: 20px; /* Space between the image and text */
+
+}
+
+.image-placeholder {
+    width: 50%; /* Adjust width as needed */
+    height: 200px; /* Adjust height as needed */
+    background-color: #ddd; /* Placeholder color for the image */
+    border-radius: 8px; /* Rounded corners for placeholder */
+}
+
+.text-content {
+    width: 50%; /* Adjust width as needed */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the left */
+    margin-left:2%;
+}
+
+.text-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.text-subtitle {
+    font-size: 1rem;
+    text-align:start;
+    width:90%;
+    color: #666; /* Subtle color for the subtitle */
+}
+
+.faq-page {
+    width: 97%;
+    padding: 20px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.faq-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+    color: #333;
+    text-align: center;
+}
+
+.faq-section {
+    width: 80%;
+    margin-bottom: 20px;
+}
+
+.question {
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #333;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.question::after {
+    content: '▼';
+    font-size: 1rem;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.question.active::after {
+    transform: rotate(180deg);
+}
+
+.answer {
+    font-size: 1rem;
+    color: #666;
+    margin-top: 10px;
+    display: none; /* Hidden by default */
+}
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background-color: #ddd;
+    margin: 10px 0;
+}
+.get-started-section {
+    background: linear-gradient(135deg, #ff7f50, #ff4500);
+    padding: 70px;
+    text-align: center;
+    border-radius: 8px;
+    margin: 0px auto;
+    width: 90.6%;
+
+}
+
+.get-started-title {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.get-started-subtitle {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.get-started-button {
+    background-color: white;
+    color: #ff4500;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.get-started-button:hover {
+    background-color: #ff4500;
+    color: white;
+}
+
+.footer {
+    background-color: white;
+    padding: 40px 20px 0px;
+    text-align: center;
+    border-top: 1px solid #e0e0e0;
+    width:95%;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.footer-column {
+    flex: 1;
+    min-width: 200px;
+    margin: 0 20px;
+    text-align: center;
+}
+
+.footer-column img {
+    max-width: 150px;
+    margin-bottom: 20px;
+}
+
+.footer-column h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.footer-column p,
+.footer-column a {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    display: block;
+    color: #ff4500;
+    text-decoration: none;
+}
+
+.footer-column a:hover {
+    text-decoration: underline;
+}
+
+.footer-bottom {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #777;
+    text-align: center;
+}
+
+.social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.social-button {
+    font-size: 2rem;
+    color: #333;
+    transition: color 0.3s;
+    text-decoration: none;
+}
+
+.social-button:hover {
+    color: #ff4500; /* Change this to the color you want on hover */
+}
+
+
+
+
