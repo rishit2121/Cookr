@@ -1,0 +1,9 @@
+<widget id="com.rs.scroller" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Scroller</name>
+    <description>The TikTok for Learning!</description>
+    <author email="scrollercontact@gmail.com" href="https://home.scrollerstudy.app/">Scroller</author>
+    <content src="index.html" />
+    <allow-navigation href="*" />
+    <preference name="hostname" value="localhost" />
+    <preference name="AndroidInsecureFileModeEnabled" value="true" />
+</widget>

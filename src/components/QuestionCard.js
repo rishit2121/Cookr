@@ -5,6 +5,8 @@ import "katex/dist/katex.min.css";
 import correct from "../assets/correct-answer-sound-effect-19.wav";
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"; // Import necessary Firebase methods
 import { db } from "./firebase/Firebase";
+import ShareButtons from './share_buttons'; // Adjust the path according to your file structure
+
 
 const QuestionCard = ({
   question,
@@ -27,6 +29,7 @@ const QuestionCard = ({
   const [isAnswered, setIsAnswered] = useState(false);
   const [showPlus10, setShowPlus10] = useState(false);
   const [shake, setShake] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   // Retrieve favorites from local storage, or initialize with an empty array
   const [favorites, setFavorites] = useState(
@@ -82,6 +85,10 @@ const QuestionCard = ({
       setShake(false);
     }, 500);
   };
+    function toggleLiked() {
+        setLiked(prevLiked => !prevLiked);
+    }
+
 
   const handleHeartClick = async () => {
     const existingFavorites =
@@ -137,8 +144,9 @@ const QuestionCard = ({
     (fav) => fav.question === fullJSON.question
   );
 
+
   return (
-    <div>
+    <div style={{display:'flex', flexDirection:"row", marginLeft:'0%', width:"100%",  justifyContent:'center'  }}>
       <div
         style={{
           height: "80vh",
@@ -176,15 +184,20 @@ const QuestionCard = ({
             >
               {title}
             </p>
-            <i
-              onClick={handleHeartClick}
+            <p
               style={{
-                fontSize: "24px",
-                cursor: "pointer",
+                margin: "0px",
+                color: color,
+                backgroundColor: `${color}08`,
+                padding: "1px 15px",
+                outline: `1px solid ${color}`,
+                borderRadius: "100px",
+                width: "fit-content",
               }}
-              className="fa-solid fa-heart"
-              id={isFavorite ? "heart-clicked" : "heart-unclicked"}
-            ></i>
+            >
+              MCQ
+            </p>
+            
           </div>
           <p
             style={{
@@ -258,6 +271,52 @@ const QuestionCard = ({
         </div>
 
         {showPlus10 && <div className="plus10-animation">+10</div>}
+      </div>
+      <div style={{display: 'flex', flexDirection:"column", height:"82vh", backgroundColor:'', margin: "50px 0px", justifyContent:'center'}}>
+      <i
+              onClick={toggleLiked}
+              style={{
+                fontSize: "28px",
+                cursor: "pointer",
+                
+                  marginTop:'33vh',
+                  marginLeft:"10%",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  color: liked ? "" : "black", // Darker outline for unfilled heart
+
+
+              }}
+              className={`${liked ? "fa-solid" : "fa-regular"} fa-heart`}
+              id={liked? "heart-clicked" : "heart-unclicked"}
+            ></i>
+
+
+
+      <ShareButtons title={question} body={choices} />
+      <i
+              onClick={handleHeartClick}
+              style={{
+                fontSize: "28px",
+                cursor: "pointer",
+                
+                  marginTop:'10%',
+                  marginLeft:"20%",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  color: isFavorite ? "" : "black", // Darker outline for unfilled heart
+
+
+              }}
+              className={`${isFavorite ? "fa-solid" : "fa-regular"} fa-bookmark`}
+              id={isFavorite ? "bookmark-clicked" : "bookmark-unclicked"}
+            ></i>
       </div>
     </div>
   );
