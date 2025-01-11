@@ -6,7 +6,10 @@ import { useNavigate } from "react-router-dom";
 function Profile() {
   const [mobileDimension, setMobileDimension] = useState(false);
   const navigate = useNavigate();
-
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
   return (
     <div
       className="App"
@@ -16,7 +19,8 @@ function Profile() {
         <Navbar setMobileDimension={setMobileDimension} />
       </div>
       {localStorage.getItem("email") ? (
-        <div style={{ flex: 1, padding: "10px", overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "10px", overflowY: "auto", backgroundColor: isDarkMode ? "black": "whitesmoke"
+        }}>
           <MyProfile mobileDimension={mobileDimension} />
         </div>
       ) : (

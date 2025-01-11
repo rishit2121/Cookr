@@ -23,9 +23,23 @@ function Home() {
       ? parseInt(localStorage.getItem("streak"))
       : 0
   );
+  const [featured, setFeatured] = useState(
+    localStorage.getItem("featured")
+      ? JSON.parse(localStorage.getItem("featured"))
+      : [] // Default value if nothing is in localStorage
+  );
   const [showCalculator, setShowCalculator] = useState(false);
   const [showPeriodicTable, setShowPeriodicTable] = useState(false);
   const calculatorRef = useRef(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  // Sync dark mode with localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("darkMode", isDarkMode);
+  }, [isDarkMode]);
   const [xp, setXP] = useState(
     localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
   );
@@ -89,9 +103,10 @@ function Home() {
 
   useEffect(() => {
     localStorage.setItem("streak", streak);
+    localStorage.setItem('featured', JSON.stringify(featured));
     localStorage.setItem("xp", xp);
     localStorage.setItem("sets", JSON.stringify(sets));
-  }, [streak, xp, sets]);
+  }, [streak, xp, sets, featured]);
 
   useEffect(() => {
     try {
@@ -108,6 +123,16 @@ function Home() {
       alert("Error");
     }
   }, []);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
+      const data = doc.data()?.sets || [];
+      setFeatured(data);
+      localStorage.setItem('featured', JSON.stringify(data)); // Save valid JSON
+    });
+  
+    return () => unsubscribe();
+  }, []);
+  
   const [activeIndex, setActiveIndex] = useState(null);
 
     const toggleAnswer = (index) => {
@@ -125,13 +150,13 @@ function Home() {
         <div
           style={{
             flex: 1,
-            padding: "10px",
+            padding: "0px",
             overflowY: "auto",
             display: "flex",
             justifyContent: "center",
             flexDirection: "column",
             alignItems: "center",
-            backgroundColor:"whitesmoke"
+            backgroundColor: isDarkMode ? "black": "whitesmoke"
           }}
         >
           {currentSet ? (
@@ -142,18 +167,18 @@ function Home() {
         <div
           style={{
             position: 'absolute',
-            top: '10px',
+            top: '6px',
             right: '10px',
             backgroundColor: 'black',
             // padding: '10px',
             borderRadius: '25px',
-            width:'6.7%',
+            width:'50%', // change back 50%
+            height:"6.7%",
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             alignItems: 'center',
-            justifyContent:'center',
-            height:'25%',
+            // justifyContent:'center',
             overflow:'hidden',
 
           }}
@@ -161,16 +186,17 @@ function Home() {
       <button 
         style={{
           // position: 'absolute',
-          marginTop:'30%',
+          // marginTop:'30%',
           // padding: '10px',
           backgroundColor: 'black',
           color: '#fff',
+          marginLeft:'15%',
           border: 'none',
           borderRadius: '50%',
           width:'6.7%',
           height: '6.7%',
           cursor: 'pointer',
-          fontSize:'30px',
+          fontSize:'20px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -183,17 +209,18 @@ function Home() {
       <button
         style={{
           // position: 'absolute',
-          marginTop:'70%',
+          // marginTop:'70%',
           // padding: '10px',
           backgroundColor: 'black',
           color: '#fff',
+          marginLeft:'15%',
           border: 'none',
           borderRadius: '50%',
           width:'6.7%',
           height: '6.7%',
           cursor: 'pointer',
           display: 'flex',
-          fontSize:'25px',
+          fontSize:'20px',
           justifyContent: 'center',
           alignItems: 'center',
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
@@ -352,14 +379,14 @@ function Home() {
                 alignItems: "center",
               }}
             >
-              <p style={{}}>Pick a subject to get started with your session!</p>
+              <p style={{color: isDarkMode ? "white": "black"}}>Pick a subject to get started with your session!</p>
             </div>
           ) : (
-            <p style={{ textAlign: "center", width: "50%" }}>
+            <p style={{ textAlign: "center", width: "50%", color: isDarkMode ? "white": "black"}}>
               Welcome to Scroller! To get started, add a new subject in{" "}
               <span>
                 <svg
-                  fill="#000000"
+                  fill={isDarkMode ? "#ffffff" : "#000000"}
                   width="20px"
                   height="20px"
                   viewBox="0 0 32 32"

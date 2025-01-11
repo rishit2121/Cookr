@@ -23,13 +23,13 @@ const ShareButtons = ({ title, body }) => {
   };
 
   return (
-    <div style={{ position: 'relative', marginTop: "10%", padding: "10px", }}>
+    <div style={{ position: 'relative', marginTop: "0%", padding: "10px", }}>
       {/* Share Icon Button */}
       <i
         onClick={togglePopup}
         style={{
-            marginLeft:"20%",
-            fontSize:"28px",
+            marginLeft:"5%",
+            fontSize:"19px",
             padding: "0px",
             display: "flex",
             flexDirection: "column",
@@ -46,7 +46,7 @@ const ShareButtons = ({ title, body }) => {
         <div
           style={{
             position: 'absolute',
-            bottom: '40px', // Position the popup above the icon
+            top: '40px', // Position the popup above the icon
             left: '-40px',  // Center the popup relative to the icon
             backgroundColor: 'white',
             padding: '10px',

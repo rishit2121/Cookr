@@ -8,6 +8,10 @@ import { useNavigate } from "react-router-dom";
 const SavedQuestions = () => {
   const navigate = useNavigate();
   const [savedQuestions, setSavedQuestions] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
   const [streak, setStreak] = useState(
     localStorage.getItem("streak")
       ? parseInt(localStorage.getItem("streak"))
@@ -40,12 +44,13 @@ const SavedQuestions = () => {
       style={{ display: "flex", height: "100vh", overflow: "hidden" }}
     >
       <Navbar setMobileDimension={setMobileDimension} />
-      <div style={{ width: "5%" }}></div>
+      <div style={{ width: "5%", backgroundColor: isDarkMode ? "black": "whitesmoke"}}></div>
       {localStorage.getItem("email") ? (
         <div
-          style={{ flex: 1, height: "100%", overflow: "auto", padding: "20px" }}
+          style={{ flex: 1, height: "100%", overflow: "auto", padding: "20px", backgroundColor: isDarkMode ? "black": "whitesmoke"
+          }}
         >
-          <h2>Saved Questions</h2>
+          <h2 style={{color: isDarkMode ? "white": "black"}}>Saved Questions</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0% 20%" }}>
             {savedQuestions.length > 0 ? (
               savedQuestions.map((questionData, index) => (

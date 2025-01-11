@@ -15,6 +15,10 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CancelSubscription from "./components/CancelSubscription"; // New subscription page
 import Reels from "./pages/VideoScroller";
+import Scrolls from "./pages/Scrolls";
+import Featured from "./pages/Featured_Sets";
+
+
 
 function App() {
   return (
@@ -30,9 +34,12 @@ function App() {
           <Route path="/explore" element={<Explore />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/results" element={<Results />} />
+          <Route path="/featured" element={<Featured />} />
           {/* <Route path="/subscribe" element={<SubscribeForm />} /> Add the new subscription route */}
           {/* <Route path="/cancel" element={<CancelSubscription />} /> Add the new subscription route */}
           <Route path="/reels" element={<Reels />} /> Add the new subscription route
+          <Route path="/scrolls" element={<Scrolls />} />
+
 
 
         </Routes>

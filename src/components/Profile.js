@@ -4,6 +4,7 @@ import { getDoc, onSnapshot, doc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
 import Plans from "./Plans";
 import { useNavigate } from "react-router-dom";
+import AdsComponent from './adComponent';
 
 const MyProfile = ({ mobileDimension }) => {
   const [name, setName] = useState();
@@ -11,6 +12,10 @@ const MyProfile = ({ mobileDimension }) => {
   const [planType, setPlanType] = useState();
   const [referalCode, setReferalCode] = useState();
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
   useEffect(() => {
     try {
       const document = onSnapshot(
@@ -36,13 +41,13 @@ const MyProfile = ({ mobileDimension }) => {
         justifyContent: "center",
       }}
     >
-      <h1 style={{ margin: "40px 50px" }}>My Profile</h1>
+      <h1 style={{ margin: "40px 20px", color: isDarkMode ? "white": "black"}}>My Profile</h1>
       <div
         style={{
-          margin: "0px 50px",
+          margin: "0px 10px",
           display: "flex",
-          width: "500px",
-          flexDirection: mobileDimension && "column",
+          width: "60%",
+          flexDirection: mobileDimension && "row",
         }}
       >
         <div
@@ -50,19 +55,20 @@ const MyProfile = ({ mobileDimension }) => {
             display: "flex",
             alignItems: "Center",
             justifyContent: "center",
-            width: "200px",
-            height: "200px",
+            width: "1px",
+            height: "100px",
             background: "whitesmoke",
-            borderRadius: "10px",
-            boxShadow: "0px 0px 4px 1px gainsboro",
+            borderRadius: "100px",
+            boxShadow: "0px 0px 4px 2px black",
             fontSize: "150px",
             fontWeight: "bold",
+            color: isDarkMode ? "white": "black"
           }}
         >
           {name && name.slice(0, 1)}
         </div>
         <div
-          style={{ marginLeft: "10px", flexDirection: "column", width: "60%" }}
+          style={{ marginLeft: "10px", flexDirection: "column", width: "100%" }}
         >
           <div
             style={{
@@ -71,12 +77,13 @@ const MyProfile = ({ mobileDimension }) => {
               alignItems: "center",
             }}
           >
-            <label style={{}}>Name: </label>
+            <label style={{color: isDarkMode ? "white": "black"}}>Name: </label>
             <p
               style={{
                 fontWeight: "bold",
                 padding: "5px",
                 borderRadius: "10px",
+                color: isDarkMode ? "white": "black"
               }}
             >
               {name && name}
@@ -89,12 +96,13 @@ const MyProfile = ({ mobileDimension }) => {
               alignItems: "center",
             }}
           >
-            <label style={{}}>Email: </label>
+            <label style={{color: isDarkMode ? "white": "black"}}>Email: </label>
             <p
               style={{
                 fontWeight: "bold",
                 padding: "5px",
                 borderRadius: "10px",
+                color: isDarkMode ? "white": "black"
               }}
             >
               {email && email}
@@ -107,12 +115,13 @@ const MyProfile = ({ mobileDimension }) => {
               alignItems: "center",
             }}
           >
-            <label style={{}}>Referal Code: </label>
+            <label style={{color: isDarkMode ? "white": "black"}}>Referal Code: </label>
             <p
               style={{
                 fontWeight: "bold",
                 padding: "5px",
                 borderRadius: "10px",
+                color: isDarkMode ? "white": "black"
               }}
             >
               {referalCode && referalCode}
@@ -120,7 +129,7 @@ const MyProfile = ({ mobileDimension }) => {
           </div>
         </div>
       </div>
-      <h1 style={{ margin: "40px 50px" }}>Plans</h1>
+      <h1 style={{ margin: "40px 20px", color: isDarkMode ? "white": "black"}}>Plans</h1>
       <Plans planType={planType} />
     </div>
   );

@@ -33,7 +33,7 @@ const Plans = ({ planType }) => {
   return (
     <div
       style={{
-        margin: "0px 50px",
+        margin: "0px 00px",
         display: "flex",
         width: "92%",
         flexWrap: "wrap",
@@ -51,7 +51,7 @@ const Plans = ({ planType }) => {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid gainsboro",
-          marginBottom: "100px",
+          marginBottom: "50px",
         }}
       >
         <h1 style={{}}>Free</h1>
@@ -118,6 +118,7 @@ const Plans = ({ planType }) => {
           borderRadius: "10px",
           outline: "1px solid black",
           boxShadow: "5px 5px 1px 1px orange",
+          marginBottom: "50px",
         }}
       >
         <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller+</h1>

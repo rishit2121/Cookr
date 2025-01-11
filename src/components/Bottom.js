@@ -13,7 +13,7 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension }) => {
         height: "50px",
         borderTop: "1px solid gainsboro",
         width: "100%",
-        position: "absolute",
+        position: "fixed",
         bottom: "0px",
         right: "0px",
         margin: "0px",
@@ -36,9 +36,9 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension }) => {
           <span style={{ fontWeight: "bold" }}>XP 🏆</span>: {xp}
         </p>
       </div>
-      <div style={{ display: "flex", padding: "0px 0px 0px 57%", alignItems: "center" }}> 
+      {/* <div style={{ display: "flex", padding: "0px 0px 0px 57%", alignItems: "center" }}> 
         <Download></Download>
-      </div>
+      </div> */}
       {!mobileDimension ? (
         <div
           style={{ display: "flex", padding: "0px 20px", alignItems: "center" }}
