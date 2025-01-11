@@ -3,11 +3,30 @@ import { Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
 import { useNavigate } from "react-router-dom";
+import { Toggle } from "./Toggle.js";
+
 
 const Navbar = ({ setMobileDimension }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [darkMode, setDarkMode] = useState(false); // State for theme
   const navigate = useNavigate();
+  const toggleTheme = () => {
+    setDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem("darkMode", newMode);
+      return newMode;
+    });
+    window.location.reload(); // Refresh the page to apply the theme change
+  };
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem("darkMode");
+    if (savedDarkMode === "true") {
+      setDarkMode(true);
+    } else {
+      setDarkMode(false);
+    }
+  }, []);
 
   const logout = () => {
     signOut(auth)
@@ -63,14 +82,16 @@ const Navbar = ({ setMobileDimension }) => {
         >
           {isExpanded ? (
             <svg
+              fill={darkMode ? "#ffffff" : "#000000"}
               xmlns="httpss://www.w3.org/2000/svg"
               viewBox="0 0 384 512"
               height={15}
             >
               <path d="M376.6 84.5c11.3-13.6 9.5-33.8-4.1-45.1s-33.8-9.5-45.1 4.1L192 206 56.6 43.5C45.3 29.9 25.1 28.1 11.5 39.4S-3.9 70.9 7.4 84.5L150.3 256 7.4 427.5c-11.3 13.6-9.5 33.8 4.1 45.1s33.8 9.5 45.1-4.1L192 306 327.4 468.5c11.3 13.6 31.5 15.4 45.1 4.1s15.4-31.5 4.1-45.1L233.7 256 376.6 84.5z" />
             </svg>
+
           ) : (
-            "☰"
+            <p style={{color: darkMode ? "white":"black"}}>☰</p>
           )}
         </div>
       )}
@@ -88,19 +109,28 @@ const Navbar = ({ setMobileDimension }) => {
           transition: "transform 0.3s ease",
           transform:
             isExpanded || !isMobile ? "translateX(0)" : "translateX(-100%)",
-          backgroundColor: "#fcfcfc",
+            backgroundColor: darkMode ? "black" : "#fcfcfc",
         }}
       >
-        <h1 style={{ margin: "50px 15px", textShadow: "2px 2px 5px orange" }}>
-          Scro<span style={{ fontStyle: "italic" }}>ll</span>er
-        </h1>
+      <h1
+        style={{
+          margin: "50px 15px",
+          textShadow: "2px 2px 5px orange",
+          color: darkMode ? "white" : "black", // Dynamic text color
+        }}
+      >
+        Scro<span style={{ fontStyle: "italic" }}>ll</span>er
+      </h1>
+      <div style={{marginTop:''}}>
+        <Toggle isChecked={darkMode} handleChange={() => toggleTheme(darkMode)} />
+      </div>
         <Link
           to={"/"}
           style={{
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: "black",
+            color: darkMode ? "#fff" : "#000",
             textDecoration: "none",
             display: "flex",
             width: "80px",
@@ -108,6 +138,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
+            fill={darkMode ? "#ffffff" : "#000000"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 576 512"
             height={20}
@@ -118,7 +149,7 @@ const Navbar = ({ setMobileDimension }) => {
         </Link>
         {localStorage.getItem("email")  && (
         <Link
-          to={"/library"}
+          to={"/scrolls"}
           style={{
             display: "flex",
             alignItems: "center",
@@ -126,12 +157,52 @@ const Navbar = ({ setMobileDimension }) => {
             color: "black",
             textDecoration: "none",
             display: "flex",
+            width: "85px",
+            color: darkMode ? "#fff" : "#000",
+            justifyContent: "space-between",
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height={20}
+            viewBox="0 0 384 512"
+            fill={darkMode ? "#ffffff" : "#000000"}
+          >
+            <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z" />
+          </svg>
+          <span>
+            Scrolls{" "}
+            <span
+              style={{
+                position: "absolute",
+                fontSize: "10px",
+                background: "orange",
+                borderRadius: "100px",
+                padding: "1px 10px",
+                marginLeft: "5px",
+              }}
+            >
+              Beta
+            </span>
+          </span>
+        </Link>
+        )}
+        {localStorage.getItem("email")  && (
+        <Link
+          to={"/library"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "20px",
+            color: darkMode ? "#fff" : "#000",
+            textDecoration: "none",
+            display: "flex",
             width: "113px",
             justifyContent: "space-between",
           }}
         >
           <svg
-            fill="#000000"
+            fill={darkMode ? "#ffffff" : "#000000"}
             width="20px"
             height="20px"
             viewBox="0 0 32 32"
@@ -146,12 +217,42 @@ const Navbar = ({ setMobileDimension }) => {
         )}
         {localStorage.getItem("email")  && (
         <Link
+          to={"/featured"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "20px",
+            color: darkMode ? "#fff" : "#000",
+            textDecoration: "none",
+            display: "flex",
+            width: "113px",
+            justifyContent: "space-between",
+          }}
+        >
+          <svg
+          fill={darkMode ? "#ffffff" : "#000000"}
+          width="20px"
+          height="20px"
+          viewBox="6 6 13 13"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <title>books</title>
+          <path d="M12 6l-8 4l8 4l8 -4l-8 -4" />
+          <path d="M4 14l8 4l8 -4" />
+        </svg>
+
+          <span style={{fontSize:13}}>Featured Sets</span>
+        </Link>
+        )}
+        {localStorage.getItem("email")  && (
+        <Link
           to="/saved"
           style={{
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: "black",
+            color: darkMode ? "#fff" : "#000",
             textDecoration: "none",
             display: "flex",
             width: "105px",
@@ -159,6 +260,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
+            fill={darkMode ? "#ffffff" : "#000000"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 384 512"
             height={20}
@@ -217,7 +319,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: "black",
+            color: darkMode ? "#fff" : "#000",
             textDecoration: "none",
             display: "flex",
             width: "80px",
@@ -225,6 +327,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
+            fill={darkMode ? "#ffffff" : "#000000"}
             xmlns="https://www.w3.org/2000/svg"
             height={20}
             viewBox="0 0 448 512"
@@ -241,7 +344,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: "black",
+            color: darkMode ? "#fff" : "#000",
             textDecoration: "none",
             display: "flex",
             width: "90px",
@@ -249,6 +352,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
+            fill={darkMode ? "#ffffff" : "#000000"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 320 512"
             height={20}
@@ -264,7 +368,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: "black",
+            color: darkMode ? "#fff" : "#000",
             textDecoration: "none",
             display: "flex",
             width: "127px",
@@ -272,6 +376,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
+            fill={darkMode ? "#ffffff" : "#000000"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 512 512"
             height={20}
@@ -287,7 +392,7 @@ const Navbar = ({ setMobileDimension }) => {
                 display: "flex",
                 alignItems: "center",
                 padding: "20px",
-                color: "black",
+                color: darkMode ? "#fff" : "#000",
                 textDecoration: "none",
                 display: "flex",
                 justifyContent: "space-between",
@@ -297,6 +402,7 @@ const Navbar = ({ setMobileDimension }) => {
               onClick={async () => logout()}
             >
               <svg
+                fill={darkMode ? "#ffffff" : "#000000"}
                 xmlns="https://www.w3.org/2000/svg"
                 height={20}
                 viewBox="0 0 512 512"
@@ -311,7 +417,7 @@ const Navbar = ({ setMobileDimension }) => {
                 display: "flex",
                 alignItems: "center",
                 padding: "20px",
-                color: "black",
+                color: darkMode ? "#fff" : "#000",
                 textDecoration: "none",
                 display: "flex",
                 justifyContent: "space-between",
@@ -321,6 +427,7 @@ const Navbar = ({ setMobileDimension }) => {
               onClick={async () => navigate("/auth")}
             >
               <svg
+                fill={darkMode ? "#ffffff" : "#000000"}
                 xmlns="https://www.w3.org/2000/svg"
                 height={20}
                 viewBox="0 0 512 512"

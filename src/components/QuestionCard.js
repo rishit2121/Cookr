@@ -6,12 +6,16 @@ import correct from "../assets/correct-answer-sound-effect-19.wav";
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"; // Import necessary Firebase methods
 import { db } from "./firebase/Firebase";
 import ShareButtons from './share_buttons'; // Adjust the path according to your file structure
+import Comments from "./mini_components/Comments";
+var randomColor = require("randomcolor"); // import the script
+
 
 
 const QuestionCard = ({
   question,
   choices,
   answer,
+  comment,
   setStreak,
   selectedAnswer,
   setXP,
@@ -35,6 +39,12 @@ const QuestionCard = ({
   const [favorites, setFavorites] = useState(
     JSON.parse(localStorage.getItem("favorites")) || []
   );
+  const [showComments, setShowComments] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
 
   useEffect(() => {
     // Update local storage whenever favorites change
@@ -150,7 +160,7 @@ const QuestionCard = ({
       <div
         style={{
           height: "80vh",
-          width: "370px",
+          width: "376px", // 95% change back
           background: `${color}08`,
           margin: "50px 0px",
           borderRadius: "10px",
@@ -184,7 +194,7 @@ const QuestionCard = ({
             >
               {title}
             </p>
-            <p
+            <div
               style={{
                 margin: "0px",
                 color: color,
@@ -195,8 +205,70 @@ const QuestionCard = ({
                 width: "fit-content",
               }}
             >
-              MCQ
-            </p>
+              <div style={{display: 'flex', flexDirection:"row",  backgroundColor:'', margin: "0px", }}>
+      <i
+              onClick={toggleLiked}
+              style={{
+                fontSize: "19px",
+                cursor: "pointer",
+                
+                  marginTop:'0vh',
+                  marginLeft:"0%",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  color: liked ? "" : `${color}`, // Darker outline for unfilled heart
+
+
+              }}
+              className={`${liked ? "fa-solid" : "fa-regular"} fa-heart`}
+              id={liked? "heart-clicked" : "heart-unclicked"}
+            ></i>
+
+
+
+      <ShareButtons title={question} body={choices} />
+      <svg
+                onClick={async () => setShowComments(!showComments)}
+                style={{ cursor: "pointer",           padding:"7px",
+                }}
+                fill={`${color}80`}
+                width="24px"
+                height="24px"
+                viewBox="0 0 24 24"
+                id="Layer_1"
+                data-name="Layer 1"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  class="cls-1"
+                  d="M21.5,12A9.5,9.5,0,1,0,12,21.5h9.5l-2.66-2.92A9.43,9.43,0,0,0,21.5,12Z"
+                />
+              </svg>
+      {/* <i
+              onClick={handleHeartClick}
+              style={{
+                fontSize: "19px",
+                cursor: "pointer",
+                
+                  marginTop:'0',
+                  marginLeft:"5%",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  color: isFavorite ? "" : `${color}`, // Darker outline for unfilled heart
+
+
+              }}
+              className={`${isFavorite ? "fa-solid" : "fa-regular"} fa-bookmark`}
+              id={isFavorite ? "bookmark-clicked" : "bookmark-unclicked"}
+            ></i> */}
+      </div>
+            </div>
             
           </div>
           <p
@@ -208,7 +280,7 @@ const QuestionCard = ({
                   ? "18px"
                   : "14px",
               marginTop: "20px",
-              color: cardStyle.textColor,
+              color: isDarkMode ? 'white': 'black', //darkmode
               height: "300px",
               overflow: "scroll",
               marginBottom: "10px",
@@ -232,6 +304,7 @@ const QuestionCard = ({
             )}
           </p>
         </div>
+        {showComments&&<Comments comment={comment} randomColor={randomColor} formatBoldText={formatBoldText} />}
         <div style={{ overflow: "scroll" }}>
           {choices.map((choice, index) => (
             <button
@@ -272,7 +345,7 @@ const QuestionCard = ({
 
         {showPlus10 && <div className="plus10-animation">+10</div>}
       </div>
-      <div style={{display: 'flex', flexDirection:"column", height:"82vh", backgroundColor:'', margin: "50px 0px", justifyContent:'center'}}>
+      {/* <div style={{display: 'flex', flexDirection:"column", height:"82vh", backgroundColor:'', margin: "50px 0px", justifyContent:'center'}}>
       <i
               onClick={toggleLiked}
               style={{
@@ -317,7 +390,7 @@ const QuestionCard = ({
               className={`${isFavorite ? "fa-solid" : "fa-regular"} fa-bookmark`}
               id={isFavorite ? "bookmark-clicked" : "bookmark-unclicked"}
             ></i>
-      </div>
+      </div> */}
     </div>
   );
 };

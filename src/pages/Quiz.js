@@ -252,7 +252,10 @@ const Quiz = () => {
                       }}
                     >
                       <div style={{ height: "35%" }}>
-                        <Latex>{question.question}</Latex>
+                      {/* <Latex>
+                        {typeof question.question === 'string' ? question.question : 'Question corrupted'}
+                      </Latex> */}
+
                       </div>
                       <div>
                         {question.choices.map((choice, choiceIndex) => (
@@ -274,7 +277,9 @@ const Quiz = () => {
                               textAlign: "center",
                             }}
                           >
-                            <Latex>{choice}</Latex>
+                            {/* <Latex>
+                        {typeof choice === 'string' ? choice : 'Answers not found'}
+                      </Latex> */}
                           </div>
                         ))}
                       </div>

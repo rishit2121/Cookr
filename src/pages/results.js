@@ -60,19 +60,25 @@ const Results = () => {
               }}
             >
               <div>
-                <Latex>{question.question}</Latex>
+              <Latex>
+                        {typeof question.question === 'string' ? question.question : 'Question corrupted'}
+                      </Latex>
               </div>
               <div>
                 {selectedAnswers[index] === undefined ? (
                   <div style={{ color: "red" }}>You have not selected an answer for this question.</div>
                 ) : (
                 <div>
-                  <strong>Your selected answer:</strong> <Latex>{selectedAnswers[index]}</Latex>
+                  <strong>Your selected answer:</strong> <Latex>
+                        {typeof selectedAnswers[index] === 'string' ? selectedAnswers[index] : 'Question corrupted'}
+                      </Latex>
                   </div>
                 )}
               </div>
               <div>
-                <strong>Correct Answer:</strong> <Latex>{question.answer}</Latex>
+                <strong>Correct Answer:</strong> <Latex>
+                        {typeof question.answer === 'string' ? question.answer : 'Answer is corrupted'}
+                      </Latex>
               </div>
             </div>
           ))}

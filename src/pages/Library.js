@@ -6,6 +6,10 @@ import { useNavigate } from "react-router-dom";
 function Library() {
   const [mobileDimension, setMobileDimension] = useState(false);
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get the initial dark mode state from localStorage, default to false
+    return localStorage.getItem("darkMode") === "true";
+  });
   return (
     <div
       className="App"
@@ -14,7 +18,7 @@ function Library() {
       <div>
         <Navbar setMobileDimension={setMobileDimension}/>
       </div>
-      <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%" }}>
+      <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%", backgroundColor: isDarkMode ? "black": "whitesmoke" }}>
         {localStorage.getItem("email")?<MyLibrary />: <div
           style={{
             position: "absolute",

@@ -23,7 +23,7 @@ const Affiliate = () => {
           padding: "10px 20px",
           margin: "0px 50px",
           display: "flex",
-          width: "500px",
+          width: "90%",
           boxSizing: "border-box",
           backgroundColor: "whitesmoke",
           outline: "1px solid gainsboro",
