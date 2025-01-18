@@ -6,11 +6,8 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   signInWithPopup,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  getRedirectResult
+  GoogleAuthProvider
 } from "firebase/auth";
-import { useEffect, useRef } from "react";
 import { auth } from "./firebase/Firebase";
 import { db } from "./firebase/Firebase";
 import { setDoc, doc, getDoc } from "firebase/firestore";
@@ -93,88 +90,40 @@ const AuthBox = () => {
     }
   };
 
-  const [isRedirectProcessed, setIsRedirectProcessed] = useState(false); // State to track if redirect has been processed
-
   const googleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      
-      // Check if the user is on a phone
-      const isMobile = window.innerWidth < 768;
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
   
-      
-        // Use popup for desktop
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        
-        const userDocRef = doc(db, "users", user.email);
-        const userDoc = await getDoc(userDocRef);
-    
-        if (!userDoc.exists()) {
-          const myCode = Math.floor(Math.random() * 1000000000);
-          await setDoc(userDocRef, {
-            name: user.displayName || "",
-            email: user.email,
-            userType: "student",
-            plan: "free",
-            myCode: myCode,
-            sets: [],
-            cards: [],
-          });
-    
-        console.log("User signed in with Google:", user);
-        localStorage.setItem("email", user.email);
-        navigate("/");
+      const userDocRef = doc(db, "users", user.email);
+      const userDoc = await getDoc(userDocRef);
+  
+      if (!userDoc.exists()) {
+        const myCode = Math.floor(Math.random() * 1000000000);
+        await setDoc(userDocRef, {
+          name: user.displayName || "", 
+          email: user.email,
+          userType: "student",
+          plan: "free",
+          myCode: myCode,
+          sets: [],
+          cards: [],
+        });
       }
+  
+      console.log("User signed in with Google:", user);
+      localStorage.setItem("email", user.email);
+      navigate("/");
     } catch (e) {
       console.error("Error during Google sign-in:", e);
   
-      if (e.code !== "auth/popup-closed-by-user") {
+      if (e.code !== 'auth/popup-closed-by-user') {
         setError(e.message);
       }
     }
   };
-  useEffect(() => {
-    if (!isRedirectProcessed) {
-    console.log("Checking for redirect result...");
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        console.log(result)
-        if (result) {
-          const user = result.user;
-          console.log(result.user)
   
-          // Handle Firestore user logic
-  
-          const userDocRef = doc(db, "users", user.email);
-          const userDoc = await getDoc(userDocRef);
-      
-          if (!userDoc.exists()) {
-            const myCode = Math.floor(Math.random() * 1000000000);
-            await setDoc(userDocRef, {
-              name: user.displayName || "",
-              email: user.email,
-              userType: "student",
-              plan: "free",
-              myCode: myCode,
-              sets: [],
-              cards: [],
-            });
-          }
-      
-          console.log("User signed in with Google:", user);
-          localStorage.setItem("email", user.email);
-          navigate("/");
-        }
-      } catch (e) {
-        console.error("Error after redirect:", e);
-      }
-    };
-  
-    handleRedirectResult();
-  }
-  }, [isRedirectProcessed]);
 
   return (
     <div
