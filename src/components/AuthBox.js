@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -21,12 +21,27 @@ const AuthBox = () => {
   const [mode, setMode] = useState(0); // 0 for registration, 1 for login
   const [error, setError] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
-
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
   };
+  useEffect(() => {
+    // Check the viewport width to determine if it's mobile
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add a resize event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup event listener on component unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const sendPasswordReset = async () => {
     try {
@@ -318,6 +333,7 @@ const AuthBox = () => {
 
       <div style={{display:'flex', marginTop: "20px", textAlign: "center", alignItems:'center', justifyContent:'center', width:'100%' }}>
   {/* <p style={{ fontSize: "14px", margin: "10px 0px" }}>or</p> */}
+  {!isMobile && (
   <button
     style={{
       width: "80%",
@@ -325,7 +341,7 @@ const AuthBox = () => {
       backgroundColor: "black",
       border: "none",
       color: "white",
-      borderRadius: "10px",
+      borderRadius: "15px",
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
@@ -344,7 +360,9 @@ const AuthBox = () => {
     </img>
     Continue With Google
   </button>
+  )}
   </div>
+
 
 
       <p
