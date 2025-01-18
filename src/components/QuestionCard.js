@@ -7,6 +7,8 @@ import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"; //
 import { db } from "./firebase/Firebase";
 import ShareButtons from './share_buttons'; // Adjust the path according to your file structure
 import Comments from "./mini_components/Comments";
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 var randomColor = require("randomcolor"); // import the script
 
 
@@ -34,6 +36,17 @@ const QuestionCard = ({
   const [showPlus10, setShowPlus10] = useState(false);
   const [shake, setShake] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [loading, setLoading] = useState(true);
+const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+
 
   // Retrieve favorites from local storage, or initialize with an empty array
   const [favorites, setFavorites] = useState(
@@ -103,8 +116,8 @@ const QuestionCard = ({
   const handleHeartClick = async () => {
     const existingFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
-
-    const userEmail = localStorage.getItem("email"); // Get the user's email
+    toggleLiked()
+    const userEmail = user; // Get the user's email
     const userDocRef = doc(db, "users", userEmail); // Reference to the user's document in Firebase
 
     try {
@@ -207,7 +220,7 @@ const QuestionCard = ({
             >
               <div style={{display: 'flex', flexDirection:"row",  backgroundColor:'', margin: "0px", }}>
       <i
-              onClick={toggleLiked}
+              onClick={handleHeartClick}
               style={{
                 fontSize: "19px",
                 cursor: "pointer",

@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.2ffca976.css",
-    "main.js": "./static/js/main.8e7c58ba.js",
+    "main.css": "./static/css/main.dadeb492.css",
+    "main.js": "./static/js/main.93484b19.js",
     "static/js/213.1293e711.chunk.js": "./static/js/213.1293e711.chunk.js",
     "static/js/732.92ffc6fe.chunk.js": "./static/js/732.92ffc6fe.chunk.js",
     "static/media/profile.png": "./static/media/profile.0160f81be67579728960.png",
@@ -26,6 +26,7 @@
     "static/media/KaTeX_Main-Italic.woff": "./static/media/KaTeX_Main-Italic.fd947498bc16392e76c2.woff",
     "static/media/KaTeX_Fraktur-Bold.ttf": "./static/media/KaTeX_Fraktur-Bold.4c761b3711973ab04edf.ttf",
     "static/media/KaTeX_Fraktur-Regular.ttf": "./static/media/KaTeX_Fraktur-Regular.ed305b5434865e06ffde.ttf",
+    "static/media/stellar.png": "./static/media/stellar.440e2417393bd56aa8a1.png",
     "static/media/KaTeX_SansSerif-Regular.ttf": "./static/media/KaTeX_SansSerif-Regular.2f7bc363fc5424ebda59.ttf",
     "static/media/KaTeX_Main-BoldItalic.woff": "./static/media/KaTeX_Main-BoldItalic.428978dc7837d46de091.woff",
     "static/media/KaTeX_Math-Italic.woff": "./static/media/KaTeX_Math-Italic.96759856b4e70f3a8338.woff",
@@ -68,13 +69,13 @@
     "static/media/KaTeX_Size3-Regular.woff": "./static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
     "static/media/KaTeX_Size3-Regular.woff2": "./static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "./index.html",
-    "main.2ffca976.css.map": "./static/css/main.2ffca976.css.map",
-    "main.8e7c58ba.js.map": "./static/js/main.8e7c58ba.js.map",
+    "main.dadeb492.css.map": "./static/css/main.dadeb492.css.map",
+    "main.93484b19.js.map": "./static/js/main.93484b19.js.map",
     "213.1293e711.chunk.js.map": "./static/js/213.1293e711.chunk.js.map",
     "732.92ffc6fe.chunk.js.map": "./static/js/732.92ffc6fe.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.2ffca976.css",
-    "static/js/main.8e7c58ba.js"
+    "static/css/main.dadeb492.css",
+    "static/js/main.93484b19.js"
   ]
 }

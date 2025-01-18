@@ -4,12 +4,14 @@ import { signOut } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
 import { useNavigate } from "react-router-dom";
 import { Toggle } from "./Toggle.js";
-
+import { signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Navbar = ({ setMobileDimension }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [darkMode, setDarkMode] = useState(false); // State for theme
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const toggleTheme = () => {
     setDarkMode((prevMode) => {
@@ -19,6 +21,24 @@ const Navbar = ({ setMobileDimension }) => {
     });
     window.location.reload(); // Refresh the page to apply the theme change
   };
+  const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // User is logged in
+        setUser(currentUser.email);
+      } else {
+        // User is logged out
+        setUser(null);
+      }
+      setLoading(false); // Auth state resolved
+    });
+  
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+  
+
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
     if (savedDarkMode === "true") {
@@ -63,10 +83,14 @@ const Navbar = ({ setMobileDimension }) => {
   const toggleNavbar = () => {
     setIsExpanded(!isExpanded);
   };
+  // if (loading) {
+  //   return <p>Loading...</p>; // Show loading indicator while resolving auth state
+  // }
 
   return (
+    // user ? (
     <>
-      {localStorage.getItem("email") && isMobile && (
+      {user && isMobile && (
         <div
           style={{
             fontSize: "24px",
@@ -121,9 +145,11 @@ const Navbar = ({ setMobileDimension }) => {
       >
         Scro<span style={{ fontStyle: "italic" }}>ll</span>er
       </h1>
+      {user &&(
       <div style={{marginTop:''}}>
         <Toggle isChecked={darkMode} handleChange={() => toggleTheme(darkMode)} />
       </div>
+      )}
         <Link
           to={"/"}
           style={{
@@ -147,7 +173,7 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Home</span>
         </Link>
-        {localStorage.getItem("email")  && (
+        {user  && (
         <Link
           to={"/scrolls"}
           style={{
@@ -187,7 +213,7 @@ const Navbar = ({ setMobileDimension }) => {
           </span>
         </Link>
         )}
-        {localStorage.getItem("email")  && (
+        {user  && (
         <Link
           to={"/library"}
           style={{
@@ -215,7 +241,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span>My Library</span>
         </Link>
         )}
-        {localStorage.getItem("email")  && (
+        {user  && (
         <Link
           to={"/featured"}
           style={{
@@ -245,7 +271,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span style={{fontSize:13}}>Featured Sets</span>
         </Link>
         )}
-        {localStorage.getItem("email")  && (
+        {user  && (
         <Link
           to="/saved"
           style={{
@@ -312,7 +338,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span>Explore</span>
         </Link>
         )} */}
-        {localStorage.getItem("email")  && (
+        {user  && (
         <Link
           to="/profile"
           style={{
@@ -337,7 +363,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span>Profile</span>
         </Link>
         )}
-        {localStorage.getItem("email")  && (
+        {/* {user  && (
         <Link
           to="/affiliate"
           style={{
@@ -361,9 +387,9 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Affiliate</span>
         </Link>
-        )}
+        )} */}
         <Link
-          to="httpss://forms.gle/aWnQhHmELkT1Mvhw6"
+          to="https://forms.gle/aWnQhHmELkT1Mvhw6"
           style={{
             display: "flex",
             alignItems: "center",
@@ -386,7 +412,7 @@ const Navbar = ({ setMobileDimension }) => {
           <span>Report Bugs</span>
         </Link>
         <div style={{ position: "absolute", bottom: "50px" }}>
-          {localStorage.getItem("email") ? (
+          {user ? (
             <div
               style={{
                 display: "flex",
@@ -440,6 +466,9 @@ const Navbar = ({ setMobileDimension }) => {
         </div>
       </div>
     </>
+    // ):(
+    //   <div></div>
+    // )
   );
 };
 

@@ -5,6 +5,8 @@ import { db } from "./firebase/Firebase";
 import Plans from "./Plans";
 import { useNavigate } from "react-router-dom";
 import AdsComponent from './adComponent';
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const MyProfile = ({ mobileDimension }) => {
   const [name, setName] = useState();
@@ -12,6 +14,16 @@ const MyProfile = ({ mobileDimension }) => {
   const [planType, setPlanType] = useState();
   const [referalCode, setReferalCode] = useState();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState("rishit.agrawal121@gmail.com");
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
@@ -19,7 +31,7 @@ const MyProfile = ({ mobileDimension }) => {
   useEffect(() => {
     try {
       const document = onSnapshot(
-        doc(db, "users", localStorage.getItem("email")),
+        doc(db, "users", user),
         (doc) => {
           setName(doc.data().name);
           setEmail(doc.data().email);
@@ -105,7 +117,7 @@ const MyProfile = ({ mobileDimension }) => {
                 color: isDarkMode ? "white": "black"
               }}
             >
-              {email && email}
+              {user && user}
             </p>
           </div>
           <div

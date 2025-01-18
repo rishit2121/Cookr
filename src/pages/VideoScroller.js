@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../components/Navbar";
-
+import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 // Card data
 const cardData = [
   {
@@ -322,6 +323,16 @@ const VideoScroller = ({}) => {
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false); // New state for scrolling
   const [mobileDimension, setMobileDimension] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
 
   useEffect(() => {
     const handleLoadVoices = () => {
@@ -368,7 +379,7 @@ const VideoScroller = ({}) => {
 
   return (
     <div className="App" style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {localStorage.getItem("email") ? (
+      {user ? (
         <div>
         <Navbar setMobileDimension={setMobileDimension} />
       </div>

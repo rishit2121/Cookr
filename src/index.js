@@ -12,6 +12,9 @@ const startApp = () => {
     </HashRouter>
   );
 };
+// Disable all console error and warning messages
+console.error = () => {};
+console.warn = () => {};
 
 if (window.cordova) {
   console.log("Cordova detected. Waiting for deviceready...");
