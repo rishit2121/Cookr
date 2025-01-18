@@ -9,25 +9,59 @@ import {
     arrayUnion,
     arrayRemove,
   } from "firebase/firestore";
+  import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+  import { onAuthStateChanged } from "firebase/auth";
 
 var randomColor = require("randomcolor"); // import the script
 
 
 const Features= ({ mobileDimension }) => {
+  const [isVisible, setIsVisible] = useState(window.innerWidth >1100);
   const [sets, setSets] = useState([]);
   const [newPrompt, setNewPrompt] = useState("");
   const [openNewTopic, setOpenNewTopic] = useState(false);
   const [style, setStyle] = useState(0); // Manage the style with useState
   const [params, setParams] = useState([]); // Manage the params with useState
+  const [currentsets, setCurrentSets] = useState([]);
+  const [selected, setSelected] = useState("Community Sets");
+  const [filteredSets, setFilteredSets] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
-  const [currentsets, setCurrentSets] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState("rishit.agrawal121@gmail.com");
+
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsVisible(window.innerWidth > 1100);
+    };
+
+    // Add resize event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
+        const data = doc.data();
+        setSets(data?.sets || []); // Default to an empty array if no sets are found
+      });
+  
+      return () => unsubscribe(); // Cleanup listener on unmount
+    } catch (error) {
+      alert("Error fetching sets");
+    }
+  }, []);
   useEffect(() => {
     try {
         const document = onSnapshot(
-            doc(db, "users", localStorage.getItem("email")),
+            doc(db, "users", user),
             (doc) => {
                 setCurrentSets(doc.data().sets);
             }
@@ -35,7 +69,62 @@ const Features= ({ mobileDimension }) => {
     } catch (error) {
       alert("Error");
     }
+  }, [user]);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
   }, []);
+
+
+  const handleDelete = async (item) => {
+    try {
+      // Reference to the 'featured' document
+      const featuredDocRef = doc(db, 'sets', 'featured'); // Adjust collection and document name as needed
+      
+      // Remove the item from the 'sets' array
+      await updateDoc(featuredDocRef, {
+        sets: arrayRemove(item), // 'item' is the specific item to remove from the array
+      });
+  
+      console.log('Item successfully deleted from sets!');
+      // Optionally, update the local state to reflect the deletion or re-fetch the list
+    } catch (error) {
+      console.error('Error deleting item from sets:', error);
+    }
+  };
+
+  // Function to handle the "My Sets" filtering
+  const filterMySets = () => {
+    const userEmail = user;
+    const mySets = sets.filter((item) => item.author === userEmail);
+    setFilteredSets(mySets);
+  };
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+  const handleClick = (text) => {
+    setSelected(text);
+
+    if (text === "My Sets") {
+      filterMySets();
+    }
+  };
+
+
+  const getStyle = (text) => ({
+    display: "flex",
+    width: text === "Community Sets" ? "140px" : "100px",
+    justifyContent: text === "My Sets" ? "center" : "flex-start",
+    alignItems: "center",
+    fontWeight: selected === text ? "bold" : "normal",
+    position: "relative", // Needed for the underline
+    cursor: "pointer",
+  });
+  
 
   const isSetAdded = (title) => {
     console.log(currentsets)
@@ -53,7 +142,7 @@ const Features= ({ mobileDimension }) => {
         luminosity: "dark",
       });
       const selectedMode = 1;
-      const userEmail = localStorage.getItem("email");
+      const userEmail = user;
       const docRef = doc(db, "users", userEmail);
       
       // Fetch the current data from Firestore
@@ -123,18 +212,6 @@ const Features= ({ mobileDimension }) => {
     return path;
   };
 
-  useEffect(() => {
-    try {
-      const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
-        const data = doc.data();
-        setSets(data?.sets || []); // Default to an empty array if no sets are found
-      });
-  
-      return () => unsubscribe(); // Cleanup listener on unmount
-    } catch (error) {
-      alert("Error fetching sets");
-    }
-  }, []);
   
 
   // Function to change style and params when a button is clicked
@@ -152,7 +229,107 @@ const Features= ({ mobileDimension }) => {
         alignItems: mobileDimension ? "center" : "flex-start",
       }}
     >
-      <h1 style={{ margin: "40px 50px",color: isDarkMode ? "#fff" : "#000" }}>Explore Featured Sets</h1>
+        <div
+            style={{
+            display: "flex",
+            flexDirection: "row",
+            width: "100%",
+            }}
+        >
+        <h1 style={{ margin: "5px 50px", color: isDarkMode ? "#fff" : "#000" }}>
+        Explore Featured Sets
+        </h1>
+        {isVisible && (
+        <div style={{
+            position: "absolute",
+            right: "20px", // Adjust this value for spacing from the screen edge
+            top: "10px", // Align with the title
+            padding: "10px 15px",
+            width:'30%',
+            height:'5%'}}>
+        <button
+            style={{
+              borderRadius: "10px",
+              backgroundColor: "#FF8C00",
+              position: "absolute",
+              right: "88%",
+              width: "50px",
+              height: "50px",
+              justifyContent: "center",
+              alignItems: "center",
+              border: "none", // Removed outline
+              cursor: "pointer", // Optional: for better UX
+              color: "white", // Text color
+              fontSize: "30px", // Size of "+"
+            }}
+            onClick={handleNewClick}
+          >
+            +
+          </button>
+        <input
+        type="text"
+        placeholder="Search..."
+        style={{
+            position: "absolute",
+            right: "0px", // Adjust this value for spacing from the screen edge
+            borderRadius: "20px",
+            backgroundColor: "#f0f0f0", // Light gray background
+            border: "1px solid #808080", // Dark gray outline
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Subtle shadow
+            color: "#333", // Text color
+            outline: "none", // Remove default focus outline
+            fontSize: "16px",
+            width:'80%',
+            height:'50px',
+            paddingLeft: "20px",
+        }}
+        value={searchQuery}
+        onChange={handleSearchChange}
+        />
+        </div>
+        )}
+    </div>
+    <div style={{display:'flex', flexDirection:'row', margin: "20px 50px",width:'300px'}}>
+    <p
+        style={getStyle("Community Sets")}
+        onClick={() => handleClick("Community Sets")}
+      >
+        Community Sets
+        {selected === "Community Sets" && (
+          <span
+            style={{
+              position: "absolute",
+              bottom: "-4px", // Adjust the vertical position of the underline
+              left: "0",
+              width: "100%",
+              height: "3px", // Thickness of the underline
+              backgroundColor: "black", // Color of the underline
+              borderRadius: "2px",
+            }}
+          ></span>
+        )}
+      </p>
+      <div style={{display:'flex', width:'30px'}}></div>
+      <p
+        style={getStyle("My Sets")}
+        onClick={() => handleClick("My Sets")}
+      >
+        My Sets
+        {selected === "My Sets" && (
+          <span
+            style={{
+              position: "absolute",
+              bottom: "-4px", // Adjust the vertical position of the underline
+              left: "0",
+              width: "100%",
+              height: "3px", // Thickness of the underline
+              backgroundColor: "black", // Color of the underline
+              borderRadius: "2px",
+            }}
+          ></span>
+        )}
+      </p>
+    </div>
       <div
         style={{
           margin: "5px 50px",
@@ -164,9 +341,20 @@ const Features= ({ mobileDimension }) => {
           
         }}
       >
-        
         {Array.isArray(sets) &&
-            sets.map((item, index) => (
+    sets
+      .filter((item) => {
+        // Filter based on selected sets (My Sets or Community Sets)
+        const isMySet = selected === "My Sets" ? item.author === user : true;
+        
+        // Filter based on search query (matching title or content)
+        const isSearchMatch =
+          item.Title.toLowerCase().includes(searchQuery.toLowerCase()) 
+        //   item.content.toLowerCase().includes(searchQuery.toLowerCase());
+
+        return isMySet && isSearchMatch;
+      })
+      .map((item, index) => (
             <div>
               <div
                 key={index}
@@ -184,6 +372,7 @@ const Features= ({ mobileDimension }) => {
                 }}
               >
                 <div style={{display:'flex', flexDirection:'row', width:"400px"}}>
+                <div>
                 <p
                   style={{
                     color: item.color,
@@ -201,13 +390,18 @@ const Features= ({ mobileDimension }) => {
                 >
                   {item.Title.slice(0,12)}
                 </p>
-                <div style={{display:'flex',marginTop:'10px',marginRight:'10px',justifyContent: "flex-end", width:'100px' }}>
+                
+                </div>
+                {item.author === "Stellar" && (
+                <button style={{ background: 'none', border: 'none', outline: 'none',display:'flex',marginTop:'10px',marginRight:'10px',justifyContent: "flex-end", width:'70px', zIndex:50.0}} onClick={() => (window.location.href = 'https://stellarlearning.app/')}>
                 <img 
                     src={Stellar} 
                     alt="Description of image" 
                     style={{ width: "85px", height: "25px", borderRadius: "10px",}}
                 />
-                </div>
+                </button>
+                )}
+     
                 </div>
 
                 {/* Updated SVG to fit inside the div */}
@@ -225,6 +419,26 @@ const Features= ({ mobileDimension }) => {
                 >
                   <path d={generateBlob(400, 250)} fill={`${item.color}19`} />
                 </svg>
+                {item.author === user && (
+                <button 
+                    style={{ 
+                        margin: "10px 10px",
+                        color: "#ffffff", // Explicit white color for text
+                        background: "#ff4d4d", // Fallback to a dark background
+                        boxShadow: `0px 0px 10px 1px ${item.color || "#000000"}`, // Subtle glow
+                        padding: "7px 20px",
+                        borderRadius: "100px",
+                        textAlign: "center",
+                        display: "inline-block",
+                        zIndex:20,
+                        marginTop:'90px',
+                        border: "0px solid gainsboro",
+                    }} 
+                    onClick={() => handleDelete(item)}
+                >
+                    Delete
+                </button>
+                )}
                 {isSetAdded(item.Title) ? (
                     <p
                     style={{
@@ -263,7 +477,7 @@ const Features= ({ mobileDimension }) => {
                 )}
               </div>
             </div>
-          ))}
+        ))}
       </div>
 
       {openNewTopic && (
@@ -271,6 +485,7 @@ const Features= ({ mobileDimension }) => {
           setOpenNewTopic={setOpenNewTopic}
           style={style}
           params={params}
+          type={3}
         />
       )}
     </div>

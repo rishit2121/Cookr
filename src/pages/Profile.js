@@ -2,6 +2,10 @@ import Navbar from "../components/Navbar";
 import MyProfile from "../components/Profile";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import {useEffect, useRef } from "react";
+
 
 function Profile() {
   const [mobileDimension, setMobileDimension] = useState(false);
@@ -10,6 +14,16 @@ function Profile() {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
   return (
     <div
       className="App"
@@ -18,7 +32,7 @@ function Profile() {
       <div>
         <Navbar setMobileDimension={setMobileDimension} />
       </div>
-      {localStorage.getItem("email") ? (
+      {user ? (
         <div style={{ flex: 1, padding: "10px", overflowY: "auto", backgroundColor: isDarkMode ? "black": "whitesmoke"
         }}>
           <MyProfile mobileDimension={mobileDimension} />

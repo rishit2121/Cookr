@@ -1,8 +1,9 @@
 import MyLibrary from "../components/MyLibrary";
 import Navbar from "../components/Navbar";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 function Library() {
   const [mobileDimension, setMobileDimension] = useState(false);
   const navigate = useNavigate();
@@ -10,6 +11,16 @@ function Library() {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
+  const [loading, setLoading] = useState(true);
+const [user, setUser] = useState(null);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
   return (
     <div
       className="App"
@@ -19,7 +30,7 @@ function Library() {
         <Navbar setMobileDimension={setMobileDimension}/>
       </div>
       <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%", backgroundColor: isDarkMode ? "black": "whitesmoke" }}>
-        {localStorage.getItem("email")?<MyLibrary />: <div
+        {user?<MyLibrary />: <div
           style={{
             position: "absolute",
             left: "50%",

@@ -62,11 +62,11 @@
 		</data>
 		<key>embedded.mobileprovision</key>
 		<data>
-		K+Yuv/K4Kpcw6nixmGAlLmhkins=
+		IsFulP4lRYTLefBhPsAsvsB0IwQ=
 		</data>
 		<key>www/asset-manifest.json</key>
 		<data>
-		TYD9cud4nkpU0aWaum0RWfrPMQ0=
+		CLaIMHyKgy7t1beZJMLbatu3Qdc=
 		</data>
 		<key>www/cordova.js</key>
 		<data>
@@ -82,7 +82,7 @@
 		</data>
 		<key>www/index.html</key>
 		<data>
-		UDfBkTUnv9zLwg0bLeBOwFynTGE=
+		T8BVnnpecbFH7lICkivaTjJoFUs=
 		</data>
 		<key>www/manifest.json</key>
 		<data>
@@ -100,13 +100,13 @@
 		<data>
 		BEzmj4PuhUNHX+oW9uOnPSihxtU=
 		</data>
-		<key>www/static/css/main.2ffca976.css</key>
+		<key>www/static/css/main.dadeb492.css</key>
 		<data>
-		ehj2fdkYhkFph/+mWzKIWQ28sRM=
+		4Na93xXuq3gYFfZINiBTrg6Z2bU=
 		</data>
-		<key>www/static/css/main.2ffca976.css.map</key>
+		<key>www/static/css/main.dadeb492.css.map</key>
 		<data>
-		xzdQ9+DD+/+e0A3FW+fXurmhK20=
+		ulO6q65qUXLWJQNmUCJYPUbrNIo=
 		</data>
 		<key>www/static/js/213.1293e711.chunk.js</key>
 		<data>
@@ -128,17 +128,17 @@
 		<data>
 		Pj1IYAq4MMGhEUCr1IcaYYNUThQ=
 		</data>
-		<key>www/static/js/main.07103e9b.js</key>
+		<key>www/static/js/main.93484b19.js</key>
 		<data>
-		DDqsSb/qPZ8OataCa74k202ICU8=
+		4eK0fP7niG/9p0ROPBv/TrXEw9M=
 		</data>
-		<key>www/static/js/main.07103e9b.js.LICENSE.txt</key>
+		<key>www/static/js/main.93484b19.js.LICENSE.txt</key>
 		<data>
 		rJ42o/jyNL6GsRe3NRAif9gH1mc=
 		</data>
-		<key>www/static/js/main.07103e9b.js.map</key>
+		<key>www/static/js/main.93484b19.js.map</key>
 		<data>
-		0luRRXiPSWfYcMHwQCrlYW1xLJU=
+		O7cbXjkPRelpU7n8PleRT8J2hek=
 		</data>
 		<key>www/static/media/KaTeX_AMS-Regular.73ea273a72f4aca30ca5.woff2</key>
 		<data>
@@ -388,6 +388,10 @@
 		<data>
 		QqabAu6PNaRifELTq54o4Vv4w10=
 		</data>
+		<key>www/static/media/stellar.440e2417393bd56aa8a1.png</key>
+		<data>
+		N15FLOFteIqF0ST61j/vrqd0fxk=
+		</data>
 		<key>www/static/media/text.d35f64e20b17f0cd27bb.png</key>
 		<data>
 		usm3G6gck7apbvneZcJEZJop5Zg=
@@ -483,14 +487,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+aSxwmL9XFjHv6a02m7D+cBa1a4q8rmFfIsVCji4DZU=
+			3+o3NszEBVC8axLAIQ49TKLKmKWXfftZDODsLmOB+k0=
 			</data>
 		</dict>
 		<key>www/asset-manifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			9+B6nGv974IA7Zz8MKcQI+PtJo209egeDX3QI5G4eYA=
+			zZx7rur4/rlEJJU5kGtbQAZZiVpVpQWeA5UAQAqX+Lg=
 			</data>
 		</dict>
 		<key>www/cordova.js</key>
@@ -518,7 +522,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Cc/xA0ziNZh2w64+nMix6zk7GublLmg5vnTAikzxVcA=
+			ah3uVfsXUbCva2SaVt905YnKqnanqhi/XGHhKGL2CkM=
 			</data>
 		</dict>
 		<key>www/manifest.json</key>
@@ -549,18 +553,18 @@
 			kNJLw79pisHhc3OVAimMzKcq3x9WT6sF9IS4xI0crdI=
 			</data>
 		</dict>
-		<key>www/static/css/main.2ffca976.css</key>
+		<key>www/static/css/main.dadeb492.css</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			1nVqwzqVZQ6K/m2Rfo2NH7utfQBtvPoxDpo7jCUeHWw=
+			lIR8HuLu1lwYO4Qw/t/9Wk7VbMAZcEvPXC/7dJCpdLU=
 			</data>
 		</dict>
-		<key>www/static/css/main.2ffca976.css.map</key>
+		<key>www/static/css/main.dadeb492.css.map</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Fg1CU/PzI6hhvVaHHD59fZvNYqWB8cKLFwLRKR0Biw4=
+			Xmr7CNsPDpxeNDqg3gjVCRtYwqnHK0YbKVutTBBVo3A=
 			</data>
 		</dict>
 		<key>www/static/js/213.1293e711.chunk.js</key>
@@ -598,25 +602,25 @@
 			ZXtUMADZ9eJ97elMawC0THVSUc0yI3ndvN0PGc4iGcM=
 			</data>
 		</dict>
-		<key>www/static/js/main.07103e9b.js</key>
+		<key>www/static/js/main.93484b19.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			XuIbiPlFwr73IyLZrp0BKVYl9L0csDzP9Y4wS0z7NxM=
+			tPMbf8yCW6aBcnBg+pKFbrfqaUpxQ9O2Or0UsLWgDvw=
 			</data>
 		</dict>
-		<key>www/static/js/main.07103e9b.js.LICENSE.txt</key>
+		<key>www/static/js/main.93484b19.js.LICENSE.txt</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			ARJ8/ZmaBK8Rm/5RsKaA17SjORaBEDuWkBAL6SV1Fzc=
 			</data>
 		</dict>
-		<key>www/static/js/main.07103e9b.js.map</key>
+		<key>www/static/js/main.93484b19.js.map</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7qjXuldxVATys7xSecpNH1T2T5BvzPcyhRD4bR1iFkU=
+			fcvaEpWfz9crj+wql14/f3lG1mVvGf9ik2I0hvqL1OE=
 			</data>
 		</dict>
 		<key>www/static/media/KaTeX_AMS-Regular.73ea273a72f4aca30ca5.woff2</key>
@@ -1051,6 +1055,13 @@
 			<key>hash2</key>
 			<data>
 			WW3HNEXYt9rgcVRIN+Njxijo+rEeZ+kx1HvSZ9k7Q8g=
+			</data>
+		</dict>
+		<key>www/static/media/stellar.440e2417393bd56aa8a1.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			S3I8Io7QHljM7Ts0n1BmgauIi5eyU4Lm12SYoP4hFhc=
 			</data>
 		</dict>
 		<key>www/static/media/text.d35f64e20b17f0cd27bb.png</key>

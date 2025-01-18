@@ -4,6 +4,8 @@ import { db } from "./firebase/Firebase";
 import QuestionCard from "./QuestionCard";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const SavedQuestions = () => {
   const navigate = useNavigate();
@@ -21,12 +23,22 @@ const SavedQuestions = () => {
   const [xp, setXP] = useState(
     localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
   );
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
 
   useEffect(() => {
-    if (localStorage.getItem("email")) {
-      const userEmail = localStorage.getItem("email");
+    if (user) {
+      const userEmail = user;
       const userDocRef = doc(db, "users", userEmail);
-
+  
       const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           setSavedQuestions(docSnapshot.data().cards || []);
@@ -34,9 +46,12 @@ const SavedQuestions = () => {
           console.log("No such document!");
         }
       });
+  
+      // Cleanup subscription on unmount or when user changes
       return () => unsubscribe();
     }
-  }, []);
+  }, [user]);
+  
 
   return (
     <div
@@ -45,7 +60,7 @@ const SavedQuestions = () => {
     >
       <Navbar setMobileDimension={setMobileDimension} />
       <div style={{ width: "5%", backgroundColor: isDarkMode ? "black": "whitesmoke"}}></div>
-      {localStorage.getItem("email") ? (
+      {user ? (
         <div
           style={{ flex: 1, height: "100%", overflow: "auto", padding: "20px", backgroundColor: isDarkMode ? "black": "whitesmoke"
           }}

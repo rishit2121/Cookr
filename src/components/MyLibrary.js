@@ -8,6 +8,8 @@ import {
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const MyLibrary = ({ mobileDimension }) => {
   const [sets, setSets] = useState([]);
@@ -15,15 +17,26 @@ const MyLibrary = ({ mobileDimension }) => {
   const [openNewTopic, setOpenNewTopic] = useState(false);
   const [style, setStyle] = useState(0); // Manage the style with useState
   const [params, setParams] = useState([]); // Manage the params with useState
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
   // Updated generateBlob function with dynamic width and height
   const deleteItemFromFirestore = async (subtitle,subcontent,subsubject,subpromptmode,subselectedmode,subcolor,subtag) => {
     console.log('tryna delete...')
     try {
-      const userEmail = localStorage.getItem("email");
+      const userEmail = user;
       const docRef = doc(db, "users", userEmail);
 
       // Fetch the current data from Firestore
@@ -91,17 +104,36 @@ const MyLibrary = ({ mobileDimension }) => {
   };
 
   useEffect(() => {
-    try {
-      const document = onSnapshot(
-        doc(db, "users", localStorage.getItem("email")),
-        (doc) => {
-          setSets(doc.data().sets);
+    if (user) {
+      const unsubscribe = onSnapshot(
+        doc(db, "users", user),
+        (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            setSets(docSnapshot.data().sets || []);
+            console.log(docSnapshot.data().sets)
+            console.log(user)
+          } else {
+            console.log("Document does not exist");
+            setSets([]); // Clear sets if the document doesn't exist
+          }
+        },
+        (error) => {
+          console.error("Error fetching document:", error);
+          alert("Error");
         }
       );
-    } catch (error) {
-      alert("Error");
+  
+      // Cleanup subscription when user changes or component unmounts
+      return () => unsubscribe();
+    } else {
+      // Reset sets if user is null
+      setSets([]);
     }
-  }, []);
+  }, [user]);
+  
+  // if (loading) {
+  //   return null; // Show loading indicator while resolving auth state
+  // }
 
   // Function to change style and params when a button is clicked
   const handleNewClick = () => {
@@ -111,6 +143,7 @@ const MyLibrary = ({ mobileDimension }) => {
   };
 
   return (
+    user ? (
     <div
       style={{
         display: "flex",
@@ -276,6 +309,9 @@ const MyLibrary = ({ mobileDimension }) => {
         />
       )}
     </div>
+    ):(
+      <div></div>
+    )
   );
 };
 

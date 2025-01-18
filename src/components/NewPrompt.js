@@ -10,13 +10,16 @@ import {
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import PDFJSWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
+import { YoutubeTranscript } from 'youtube-transcript';
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 // Set the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
 
 var randomColor = require("randomcolor"); // import the script
 
-function NewPrompt({ setOpenNewTopic, style, params }) {
+function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
   const [promptMode, setPromptMode] = useState(1);
   const [
     subcolor,
@@ -34,6 +37,67 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
   const [tag, setTage] = useState("fa-solid fa-calculator");
   const [pdfUrl, setPdfUrl] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+
+  function extractVideoId(url) {
+    // Regex to match YouTube URLs
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  }
+  
+  function isYouTubeUrl(url) {
+    // Check if the URL contains 'youtube.com' or 'youtu.be'
+    return /youtube\.com|youtu\.be/.test(url);
+  }
+  const fetchTranscriptUsingAPI = async (videoUrl) => {
+    if (!isYouTubeUrl(videoUrl)) {
+      handleLink(videoUrl)
+      return;
+    }
+    
+    const videoId = extractVideoId(videoUrl);
+    const apiKey = 'AIzaSyAX8pq_aqGJIOe36SGciWVu9_0Z9ra1PrE'; // Replace with your actual API key
+    const url = `https://www.googleapis.com/youtube/v3/captions?videoId=${videoId}&key=${apiKey}`;
+  
+    try {
+      // Fetch captions data
+      const response = await fetch(url);
+      const data = await response.json();
+  
+      // Check if captions are available
+      if (data.items && data.items.length > 0) {
+        const captionId = data.items[0].id;  // Get the first available caption ID
+        console.log('Caption ID:', captionId);
+  
+        // Now fetch the actual caption text (subtitles) using the caption ID
+        const captionUrl = `https://www.googleapis.com/youtube/v3/captions/${captionId}?key=${apiKey}`;
+        const captionResponse = await fetch(captionUrl);
+        const captionData = await captionResponse.text();
+  
+        console.log('Transcript:', captionData); // This will contain the caption text
+  
+        // You can now set the transcript to your state or handle it
+        setContent(captionData);
+      } else {
+        console.error('No captions available for this video.');
+      }
+    } catch (err) {
+      console.error('Error fetching captions:', err);
+    }
+  };
+
+
+
   const handleLink = async (link) => {
     try {
       const response = await fetch(link);
@@ -148,7 +212,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
 
   const deleteItemFromFirestore = async () => {
     try {
-      const userEmail = localStorage.getItem("email");
+      const userEmail = user;
       const docRef = doc(db, "users", userEmail);
 
       // Fetch the current data from Firestore
@@ -193,12 +257,20 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
   };
 
   const saveToFirestore = async () => {
+    console.log("WSG")
+    console.log(user)
     try {
       const color = randomColor({
         luminosity: "dark",
       });
-      const userEmail = localStorage.getItem("email");
-      const docRef = doc(db, "users", userEmail);
+      const userEmail = user;
+      var docRef;
+      console.log(type)
+      if(type==3){
+        docRef = doc(db, "sets", "featured");
+      }else{
+        docRef = doc(db, "users", userEmail);
+      }
       // Fetch the current data from Firestore
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
@@ -206,7 +278,10 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
         return;
       }
       let currentSets = docSnap.data().sets || [];
+      console.log("howd we eend up here")
       if (style === 1) {
+        console.log("howd we eend up here")
+
         // Remove the item if style === 1
         currentSets = currentSets.filter(
           (item) =>
@@ -248,6 +323,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
               item.tag === subtag
           );
         if (index !== -1) {
+          console.log("we in the iffff")
           currentSets.splice(index, 0, {
             title: title,
             content: content,
@@ -257,35 +333,75 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
             tag: tag,
             scrollGenerationMode: selectedMode,
           });
-          console.log("hi");
         } else {
+
           // If item was not found, just add to the end
+          if(type==3){
+            currentSets.push({
+              Title: title,
+              Mode: 1,
+              content: content,
+              subject: subject,
+              author:user,
+              promptMode: promptMode,
+              color: subcolor,
+              tag: tag,
+              scrollGenerationMode: selectedMode,
+              link:''
+            });
+          }else{
+            currentSets.push({
+              title: title,
+              content: content,
+              subject: subject,
+              promptMode: promptMode,
+              color: randomColor(),
+              tag: tag,
+              scrollGenerationMode: selectedMode,
+            });
+        }
+        }
+      } else {
+        // If style !== 1, just add to the end
+        if(type==3){
+          console.log('yohooo')
+          currentSets.push({
+            Title: title,
+            Mode: 1,
+            color:color,
+            featured:true,
+            content: content,
+            subject: subject,
+            author:user,
+            promptMode: promptMode,
+            tag: tag,
+            scrollGenerationMode: selectedMode,
+            link:''
+          });
+        }else{
           currentSets.push({
             title: title,
             content: content,
             subject: subject,
             promptMode: promptMode,
-            color: subcolor,
+            color: randomColor(),
             tag: tag,
             scrollGenerationMode: selectedMode,
           });
-        }
-      } else {
-        // If style !== 1, just add to the end
-        currentSets.push({
-          title: title,
-          content: content,
-          subject: subject,
-          promptMode: promptMode,
-          color: color,
-          tag: tag,
-          scrollGenerationMode: selectedMode,
-        });
+      }
       }
 
       // Update the Firestore document
-      await updateDoc(docRef, { sets: currentSets });
+  
 
+      try {
+        console.log(currentSets)
+        console.log("Updating Document:", docRef.path);
+        await updateDoc(docRef, { sets: currentSets });
+        console.log("Firestore updated successfully");
+      } catch (updateError) {
+        console.error("Error during Firestore update:", updateError);
+      }
       // Update localStorage
       if (
         localStorage.getItem("currentSet") == null ||
@@ -564,7 +680,7 @@ function NewPrompt({ setOpenNewTopic, style, params }) {
             src="upload-icon.png" // Replace with your actual upload icon path
             alt="Upload"
             style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '5px' }}
-            onClick={() => handleLink(document.getElementById('linkInput').value)}
+            onClick={() => fetchTranscriptUsingAPI(document.getElementById('linkInput').value)}
           />
         </div>
         <div style={{ width: "100%", marginBottom: "10px", marginTop:'15px'}}>

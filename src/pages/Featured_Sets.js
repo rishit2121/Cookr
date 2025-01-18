@@ -2,10 +2,24 @@ import Feature from "../components/feature";
 import Navbar from "../components/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useRef } from "react";
+
 
 function Featured() {
   const [mobileDimension, setMobileDimension] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+//   const [user, setUser] = useState(null);
+//   useEffect(() => {
+//     // Listen for authentication state changes
+//     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+//       setUser(currentUser.email);
+//       setLoading(false); // Auth state resolved
+//     });
+//     return () => unsubscribe(); // Cleanup listener
+//   }, []);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
@@ -19,7 +33,7 @@ function Featured() {
         <Navbar setMobileDimension={setMobileDimension}/>
       </div>
       <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%", backgroundColor: isDarkMode ? "black": "whitesmoke" }}>
-        {localStorage.getItem("email")?<Feature />: <div
+        {localStorage.getItem('email')?<Feature />: <div
           style={{
             position: "absolute",
             left: "50%",

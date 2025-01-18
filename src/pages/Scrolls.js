@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import VideoScroller from "../components/VideoScroller";
 import HomeScreenTutorial from "../components/mini_components/HomeScreenTutorial";
 import ScrollerLogInHomeScreen from "../components/mini_components/ScrollerLogInHomeScreen";
+import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 function Scrolls() {
   const [streak, setStreak] = useState(
@@ -24,6 +26,16 @@ function Scrolls() {
   const [xp, setXP] = useState(
     localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
   );
+  const [loading, setLoading] = useState(true);
+const [user, setUser] = useState(null);
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
   const [sets, setSets] = useState();
   const [currentSet, setCurrentSet] = useState(
     localStorage.getItem("currentSet")
@@ -42,9 +54,9 @@ function Scrolls() {
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("email")) {
+      if (user) {
         const document = onSnapshot(
-          doc(db, "users", localStorage.getItem("email")),
+          doc(db, "users", user),
           (doc) => {
             // Get the sets and filter only scrollGenerationMode 1 sets
             const filteredSets = doc
@@ -66,7 +78,7 @@ function Scrolls() {
       style={{ display: "flex", height: "100vh", overflow: "hidden" }}
     >
       {<Navbar setMobileDimension={setMobileDimension} />}
-      {localStorage.getItem("email") ? (
+      {user ? (
         <div
           style={{
             flex: 1,
@@ -77,7 +89,6 @@ function Scrolls() {
             flexDirection: "column",
             alignItems: "center",
             backgroundColor: isDarkMode ? "black": "whitesmoke"
-
           }}
         >
           {currentSet ? (
