@@ -102,32 +102,7 @@ const AuthBox = () => {
       // Check if the user is on a phone
       const isMobile = window.innerWidth < 768;
   
-      if (isMobile) {
-        // Use redirect for mobile
-        await signInWithRedirect(auth, new GoogleAuthProvider());
-        const result2 = await getRedirectResult(auth);
-        const user = result2.user;
-        
-        const userDocRef = doc(db, "users", user.email);
-        const userDoc = await getDoc(userDocRef);
-    
-        if (!userDoc.exists()) {
-          const myCode = Math.floor(Math.random() * 1000000000);
-          await setDoc(userDocRef, {
-            name: user.displayName || "",
-            email: user.email,
-            userType: "student",
-            plan: "free",
-            myCode: myCode,
-            sets: [],
-            cards: [],
-          });
-        }
-    
-        console.log("User signed in with Google:", user);
-        localStorage.setItem("email", user.email);
-        navigate("/");
-      } else {
+      
         // Use popup for desktop
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
@@ -146,7 +121,6 @@ const AuthBox = () => {
             sets: [],
             cards: [],
           });
-        }
     
         console.log("User signed in with Google:", user);
         localStorage.setItem("email", user.email);
