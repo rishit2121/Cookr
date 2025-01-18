@@ -75,6 +75,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
     ) {
       fetchQuestions();
     }
+    console.log(questions)
   }, []);
 
   const handleScroll = () => {
@@ -86,17 +87,17 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
     const newIndex = Math.floor(container.scrollTop / window.innerHeight) + 1;
     setCurrentIndex(newIndex);
     console.log(newIndex)
-    if (newIndex % 4 === 0 && !processedAdIndices.current.has(newIndex)) {
-      // Disable scrolling for 3 seconds
-      processedAdIndices.current.add(newIndex); // Mark as processed
-      setIsScrollingDisabled(true);
-      container.style.overflowY = "hidden";
+    // if (newIndex % 4 === 0 && !processedAdIndices.current.has(newIndex)) {
+    //   // Disable scrolling for 3 seconds
+    //   processedAdIndices.current.add(newIndex); // Mark as processed
+    //   setIsScrollingDisabled(true);
+    //   container.style.overflowY = "hidden";
 
-      setTimeout(() => {
-        setIsScrollingDisabled(false);
-        container.style.overflowY = "auto";
-      }, 3000);
-    }
+    //   setTimeout(() => {
+    //     setIsScrollingDisabled(false);
+    //     container.style.overflowY = "auto";
+    //   }, 3000);
+    // }
 
     const threeBeforeEnd = Math.floor(questions.length / 3) + questions.length - 3;
     if (newIndex >= threeBeforeEnd && !isFetching) {
@@ -191,7 +192,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
         <div ref={containerRef} style={containerStyle} onScroll={handleScroll}>
           {questions.map((item, index) => (
             <div key={index} ref={(el) => (cardsRef.current[index] = el)}>
-              {index > 0 && index % 3 === 0 && <div style={cardContainerStyle}><AdCard /></div>}
+              {/* {index > 0 && index % 3 === 0 && <div style={cardContainerStyle}><AdCard /></div>} */}
               <div style={cardContainerStyle}>
                 {!isLoading && (
                   <QuestionCard

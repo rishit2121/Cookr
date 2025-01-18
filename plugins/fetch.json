@@ -14,5 +14,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-livereload": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-livereload"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

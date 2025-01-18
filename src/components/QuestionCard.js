@@ -84,7 +84,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
     if (isAnswered) return;
     setSelectedChoice(choice);
     setIsAnswered(true);
-    if (choice === answer) {
+    if (choice === choices[answer]) {
       setStreak((prevStreak) => prevStreak + 1);
       setXP((prevXP) => prevXP + 10);
       triggerPlus10Animation();
@@ -336,13 +336,13 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
                 cursor: isAnswered || isFavorites ? "not-allowed" : "pointer",
                 backgroundColor: !isFavorites
                   ? selectedChoice === choice
-                    ? selectedChoice === answer
+                    ? selectedChoice === choices[answer]
                       ? "palegreen"
                       : "salmon"
-                    : isAnswered && choice === answer
+                    : isAnswered && choice === choices[answer]
                     ? "palegreen"
                     : cardStyle.buttonColor
-                  : choice == answer
+                  : choice == choices[answer]
                   ? "palegreen"
                   : "salmon",
                 opacity: isAnswered && selectedChoice !== choice ? 0.6 : 1,
