@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import QuestionCard from "./QuestionCard";
 import { Link } from "react-router-dom";
 import { jsonrepair } from "jsonrepair";
-import AdCard from './adComponent'
+import ScrollerLoader from "./mini_components/ScrollerLoader";
 
 const containerStyle = {
   display: "flex",
@@ -54,54 +54,44 @@ const loadingStyle = {
 //   );
 // };
 
-const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
+const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
   const [questions, setQuestions] = useState(
-    localStorage.getItem("lastSet")
-      ? JSON.parse(localStorage.getItem("lastSet"))
+    localStorage.getItem("lastFlashSet")
+      ? JSON.parse(localStorage.getItem("lastFlashSet"))
       : []
   );
-  const processedAdIndices = useRef(new Set()); // Track indices where timer is applied
-  const [isScrollingDisabled, setIsScrollingDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Flag for showing the loading indicator
   const [isFetching, setIsFetching] = useState(false); // Flag for indicating an API call
   const [currentIndex, setCurrentIndex] = useState(0); // Track the current card index
+  
   useEffect(() => {
     if (
-      questions.length < 1 &&
-      !localStorage.getItem("lastSet") &&
-      (currentSet != null || currentSet != undefined)
+      questions.length === 0 &&
+      !localStorage.getItem("lastFlashSet") &&
+      currentSet
     ) {
       fetchQuestions();
     }
-    console.log(questions)
-  }, []);
+  }, [questions]); // ✅ Runs only when questions change
+  
 
   const handleScroll = () => {
-    if (isFetching || isScrollingDisabled) return;
+    if (isFetching) return; // Prevent scroll event during fetching
 
     const container = containerRef.current;
     if (!container) return;
 
-    const newIndex = Math.floor(container.scrollTop / window.innerHeight) + 1;
+    const newIndex = Math.floor(container.scrollTop / container.clientHeight); // Adjust for padding
     setCurrentIndex(newIndex);
-    console.log(newIndex)
-    // if (newIndex % 4 === 0 && !processedAdIndices.current.has(newIndex)) {
-    //   // Disable scrolling for 3 seconds
-    //   processedAdIndices.current.add(newIndex); // Mark as processed
-    //   setIsScrollingDisabled(true);
-    //   container.style.overflowY = "hidden";
+    console.log(currentIndex)
+    const threeBeforeEnd = questions.length - 3;
 
-    //   setTimeout(() => {
-    //     setIsScrollingDisabled(false);
-    //     container.style.overflowY = "auto";
-    //   }, 3000);
-    // }
-
-    const threeBeforeEnd = Math.floor(questions.length / 3) + questions.length - 3;
-    if (newIndex >= threeBeforeEnd && !isFetching) {
+    // Start fetching when three cards away from the end
+    if (currentIndex >= threeBeforeEnd && !isFetching) {
       setIsFetching(true);
+
       fetchQuestions();
     }
   };
@@ -117,6 +107,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
       body: JSON.stringify({
         info: currentSet,
         lastQuestionSet: questions.slice(-10),
+        mode: localStorage.getItem("mode"),
       }),
     };
 
@@ -131,7 +122,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
       }
 
       const data = await response.json();
-      const newQuestions = JSON.parse(data);
+      const newQuestions = JSON.parse(jsonrepair(data));
       const modifiedQuestions = newQuestions.map((question) => {
         return {
           ...question, // Keep existing fields
@@ -146,7 +137,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
           ...prevQuestions,
           ...modifiedQuestions,
         ]);
-        localStorage.setItem("lastSet", JSON.stringify(modifiedQuestions));
+        localStorage.setItem("lastFlashSet", JSON.stringify(modifiedQuestions));
       } else {
         console.error("Unexpected response format:", data);
       }
@@ -154,8 +145,9 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
       setIsFetching(false); // Reset fetching flag
     } catch (e) {
       console.error("Error fetching questions:", e);
-      setIsFetching(false); // Reset fetching flag in case of error
+      setIsFetching(false); // ✅ Don't re-call fetchQuestions infinitely
     }
+    
   };
 
   return (
@@ -182,6 +174,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
             justifyContent: "space-around",
             boxShadow: "0px 0px 1px 1px gainsboro",
             zIndex: "999",
+            color:'black'
           }}
         >
           Loading More Questions
@@ -192,20 +185,22 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
         <div ref={containerRef} style={containerStyle} onScroll={handleScroll}>
           {questions.map((item, index) => (
             <div key={index} ref={(el) => (cardsRef.current[index] = el)}>
-              {/* {index > 0 && index % 3 === 0 && <div style={cardContainerStyle}><AdCard /></div>} */}
+              {/* {index > 0 && index % 3 === 0 && <AdCard />} Insert ad every 3 cards */}
               <div style={cardContainerStyle}>
                 {!isLoading && (
                   <QuestionCard
                     question={item.question}
                     choices={item.choices}
                     answer={item.answer}
-                    comment={item.comments}
                     selectedAnswer={item.selectedAnswer}
+                    comment={item.comments}
                     setStreak={setStreak}
                     setXP={setXP}
                     title={item.title && item.title}
                     color={item.color && item.color}
                     fullJSON={item}
+                    currentIndex={currentIndex}
+                    mobileDimension={mobileDimension}
                   />
                 )}
               </div>
@@ -213,17 +208,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet }) => {
           ))}
         </div>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-          }}
-        >
-          <p>Initializing Scroller...</p>
-          <div className="loader"></div>
-        </div>
+        <ScrollerLoader/>
       )}
     </div>
   );

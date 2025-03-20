@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { Toggle } from "./Toggle.js";
 import { signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import myImage from "../assets/cookr_logo.png";
+
 
 const Navbar = ({ setMobileDimension }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [darkMode, setDarkMode] = useState(false); // State for theme
+  const [darkMode, setDarkMode] = useState(true); // State for theme
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const toggleTheme = () => {
@@ -22,6 +24,7 @@ const Navbar = ({ setMobileDimension }) => {
     window.location.reload(); // Refresh the page to apply the theme change
   };
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -54,6 +57,7 @@ const Navbar = ({ setMobileDimension }) => {
         console.log("s");
         localStorage.clear();
         navigate("/auth");
+
       })
       .catch((error) => {
         console.log("e");
@@ -90,35 +94,6 @@ const Navbar = ({ setMobileDimension }) => {
   return (
     // user ? (
     <>
-      {user && isMobile && (
-        <div
-          style={{
-            fontSize: "24px",
-            color: "black",
-            top: "10px",
-            cursor: "pointer",
-            position: "fixed",
-            left: "10px",
-            zIndex: "1100",
-            display: "block", // Always show hamburger on mobile
-          }}
-          onClick={toggleNavbar}
-        >
-          {isExpanded ? (
-            <svg
-              fill={darkMode ? "#ffffff" : "#000000"}
-              xmlns="httpss://www.w3.org/2000/svg"
-              viewBox="0 0 384 512"
-              height={15}
-            >
-              <path d="M376.6 84.5c11.3-13.6 9.5-33.8-4.1-45.1s-33.8-9.5-45.1 4.1L192 206 56.6 43.5C45.3 29.9 25.1 28.1 11.5 39.4S-3.9 70.9 7.4 84.5L150.3 256 7.4 427.5c-11.3 13.6-9.5 33.8 4.1 45.1s33.8 9.5 45.1-4.1L192 306 327.4 468.5c11.3 13.6 31.5 15.4 45.1 4.1s15.4-31.5 4.1-45.1L233.7 256 376.6 84.5z" />
-            </svg>
-
-          ) : (
-            <p style={{color: darkMode ? "white":"black"}}>☰</p>
-          )}
-        </div>
-      )}
       <div
         style={{
           display: isExpanded ? "flex" : "none",
@@ -133,30 +108,34 @@ const Navbar = ({ setMobileDimension }) => {
           transition: "transform 0.3s ease",
           transform:
             isExpanded || !isMobile ? "translateX(0)" : "translateX(-100%)",
-            backgroundColor: darkMode ? "black" : "#fcfcfc",
+            backgroundColor: "black "
         }}
       >
-      <h1
+        <a style={{ textDecoration: "none", color: "black", marginLeft:'10px' }}>
+            {" "}
+            <img src={myImage} alt="Description" style={{ width: "120px" }} />
+          </a>
+      {/* <h1
         style={{
           margin: "50px 15px",
-          textShadow: "2px 2px 5px orange",
+          textShadow: "2px 2px 5px blue",
           color: darkMode ? "white" : "black", // Dynamic text color
         }}
       >
-        Scro<span style={{ fontStyle: "italic" }}>ll</span>er
-      </h1>
-      {user &&(
+        C<span style={{ fontStyle: "italic" }}>oo</span>kr
+      </h1> */}
+      {/* {user &&(
       <div style={{marginTop:''}}>
         <Toggle isChecked={darkMode} handleChange={() => toggleTheme(darkMode)} />
       </div>
-      )}
+      )} */}
         <Link
           to={"/"}
           style={{
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "80px",
@@ -164,7 +143,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 576 512"
             height={20}
@@ -173,7 +152,7 @@ const Navbar = ({ setMobileDimension }) => {
           </svg>
           <span>Home</span>
         </Link>
-        {user  && (
+        {/* {user  && (
         <Link
           to={"/scrolls"}
           style={{
@@ -184,7 +163,7 @@ const Navbar = ({ setMobileDimension }) => {
             textDecoration: "none",
             display: "flex",
             width: "85px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             justifyContent: "space-between",
           }}
         >
@@ -192,7 +171,7 @@ const Navbar = ({ setMobileDimension }) => {
             xmlns="http://www.w3.org/2000/svg"
             height={20}
             viewBox="0 0 384 512"
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
           >
             <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z" />
           </svg>
@@ -212,7 +191,7 @@ const Navbar = ({ setMobileDimension }) => {
             </span>
           </span>
         </Link>
-        )}
+        )} */}
         {user  && (
         <Link
           to={"/library"}
@@ -220,7 +199,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "113px",
@@ -228,7 +207,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             width="20px"
             height="20px"
             viewBox="0 0 32 32"
@@ -243,12 +222,12 @@ const Navbar = ({ setMobileDimension }) => {
         )}
         {user  && (
         <Link
-          to={"/featured"}
+          to={"/flashcards"}
           style={{
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "113px",
@@ -256,7 +235,37 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-          fill={darkMode ? "#ffffff" : "#000000"}
+            fill="none"
+            width="30px"
+            height="30px"
+            viewBox="5 15 60 10"  // Increased viewBox to prevent cutting off
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g transform="scale(1.2)">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                d="M14.243 7.561h19.514a2.65 2.65 0 0 1 2.657 2.658v27.563a2.65 2.65 0 0 1-2.657 2.657H14.243a2.65 2.65 0 0 1-2.657-2.657V10.219a2.65 2.65 0 0 1 2.656-2.658m1.108 9.325h17.703M15.35 20.312h17.703M15.35 23.74h17.703M15.35 27.166h17.703M15.35 13.459h7.097M15.35 30.593h7.097M15.35 34.02h17.703m-21.468 3.716h24.83m-16.556 0v2.702m8.283-2.702v2.702m-16.573-3.6L5.592 14.524a2.65 2.65 0 0 1 1.878-3.255h0l4.1-1.099m24.861 26.668l5.977-22.314a2.65 2.65 0 0 0-1.878-3.255h0l-4.1-1.099"
+              />
+            </g>
+          </svg>
+          <span style={{marginTop:'6%'}}>Flashcard</span>
+        </Link>
+        )}
+        {/* {user  && (
+        <Link
+          to={"/featured"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "20px",
+            color: "#fff",
+            textDecoration: "none",
+            display: "flex",
+            width: "113px",
+            justifyContent: "space-between",
+          }}
+        >
+          <svg
+          fill={"#ffffff"}
           width="20px"
           height="20px"
           viewBox="6 6 13 13"
@@ -270,7 +279,7 @@ const Navbar = ({ setMobileDimension }) => {
 
           <span style={{fontSize:13}}>Featured Sets</span>
         </Link>
-        )}
+        )} */}
         {user  && (
         <Link
           to="/saved"
@@ -278,7 +287,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "105px",
@@ -286,7 +295,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 384 512"
             height={20}
@@ -345,7 +354,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "80px",
@@ -353,7 +362,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             xmlns="https://www.w3.org/2000/svg"
             height={20}
             viewBox="0 0 448 512"
@@ -370,7 +379,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "90px",
@@ -378,7 +387,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 320 512"
             height={20}
@@ -394,7 +403,7 @@ const Navbar = ({ setMobileDimension }) => {
             display: "flex",
             alignItems: "center",
             padding: "20px",
-            color: darkMode ? "#fff" : "#000",
+            color: "#fff",
             textDecoration: "none",
             display: "flex",
             width: "127px",
@@ -402,7 +411,7 @@ const Navbar = ({ setMobileDimension }) => {
           }}
         >
           <svg
-            fill={darkMode ? "#ffffff" : "#000000"}
+            fill={"#ffffff"}
             xmlns="https://www.w3.org/2000/svg"
             viewBox="0 0 512 512"
             height={20}
@@ -418,7 +427,7 @@ const Navbar = ({ setMobileDimension }) => {
                 display: "flex",
                 alignItems: "center",
                 padding: "20px",
-                color: darkMode ? "#fff" : "#000",
+                color: "#fff",
                 textDecoration: "none",
                 display: "flex",
                 justifyContent: "space-between",
@@ -428,7 +437,7 @@ const Navbar = ({ setMobileDimension }) => {
               onClick={async () => logout()}
             >
               <svg
-                fill={darkMode ? "#ffffff" : "#000000"}
+                fill={"#ffffff"}
                 xmlns="https://www.w3.org/2000/svg"
                 height={20}
                 viewBox="0 0 512 512"
@@ -443,7 +452,7 @@ const Navbar = ({ setMobileDimension }) => {
                 display: "flex",
                 alignItems: "center",
                 padding: "20px",
-                color: darkMode ? "#fff" : "#000",
+                color: "#fff",
                 textDecoration: "none",
                 display: "flex",
                 justifyContent: "space-between",
@@ -453,7 +462,7 @@ const Navbar = ({ setMobileDimension }) => {
               onClick={async () => navigate("/auth")}
             >
               <svg
-                fill={darkMode ? "#ffffff" : "#000000"}
+                fill={"#ffffff"}
                 xmlns="https://www.w3.org/2000/svg"
                 height={20}
                 viewBox="0 0 512 512"

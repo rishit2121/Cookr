@@ -1,10 +1,15 @@
 {
   "files": {
-    "main.css": "./static/css/main.dadeb492.css",
-    "main.js": "./static/js/main.ba4ce9e0.js",
-    "static/js/213.1293e711.chunk.js": "./static/js/213.1293e711.chunk.js",
-    "static/js/732.92ffc6fe.chunk.js": "./static/js/732.92ffc6fe.chunk.js",
+    "main.css": "./static/css/main.b2a29dca.css",
+    "main.js": "./static/js/main.9f8130b1.js",
+    "static/media/owl.jpeg": "./static/media/owl.406b8a1f626ae4fc0dbf.jpeg",
+    "static/media/monkey.jpeg": "./static/media/monkey.7a8d4d51d94a9d2d1af2.jpeg",
+    "static/media/squirrel.jpeg": "./static/media/squirrel.d7c2c0b295ae181ce9bd.jpeg",
+    "static/media/dog.jpeg": "./static/media/dog.ead1ee2c821f3fb8c0a1.jpeg",
     "static/media/profile.png": "./static/media/profile.0160f81be67579728960.png",
+    "static/media/chipmunk.jpeg": "./static/media/chipmunk.00cc11b32143fd76518e.jpeg",
+    "static/media/shark.jpeg": "./static/media/shark.c2e8058a361eda8b49f8.jpeg",
+    "static/media/panda.jpeg": "./static/media/panda.8470c4b7d25ac2139c04.jpeg",
     "static/media/KaTeX_AMS-Regular.ttf": "./static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/correct-answer-sound-effect-19.wav": "./static/media/correct-answer-sound-effect-19.842666b9f366299de43e.wav",
     "static/media/KaTeX_Main-Regular.ttf": "./static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
@@ -54,6 +59,7 @@
     "static/media/KaTeX_Script-Regular.woff": "./static/media/KaTeX_Script-Regular.073b3402d036714b4370.woff",
     "static/media/KaTeX_Size4-Regular.ttf": "./static/media/KaTeX_Size4-Regular.4ad7c7e8bb8d10a34bb7.ttf",
     "static/media/KaTeX_SansSerif-Regular.woff2": "./static/media/KaTeX_SansSerif-Regular.cd5e231e0cc53b2cb2c0.woff2",
+    "static/media/cookr_logo.png": "./static/media/cookr_logo.caa62baeb94b02677509.png",
     "static/media/KaTeX_Script-Regular.woff2": "./static/media/KaTeX_Script-Regular.c81d1b2a4b75d3eded60.woff2",
     "static/media/KaTeX_Caligraphic-Bold.woff": "./static/media/KaTeX_Caligraphic-Bold.d757c535a2e5902f1325.woff",
     "static/media/KaTeX_Caligraphic-Regular.woff": "./static/media/KaTeX_Caligraphic-Regular.db074fa22cf224af93d7.woff",
@@ -67,15 +73,14 @@
     "static/media/KaTeX_Size2-Regular.woff2": "./static/media/KaTeX_Size2-Regular.2960900c4f271311eb36.woff2",
     "static/media/KaTeX_Size4-Regular.woff2": "./static/media/KaTeX_Size4-Regular.e418bf257af1052628d8.woff2",
     "static/media/KaTeX_Size3-Regular.woff": "./static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
+    "static/media/CookrLogo.webp": "./static/media/CookrLogo.8fa679e8b1620a0b6bdd.webp",
     "static/media/KaTeX_Size3-Regular.woff2": "./static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "./index.html",
-    "main.dadeb492.css.map": "./static/css/main.dadeb492.css.map",
-    "main.ba4ce9e0.js.map": "./static/js/main.ba4ce9e0.js.map",
-    "213.1293e711.chunk.js.map": "./static/js/213.1293e711.chunk.js.map",
-    "732.92ffc6fe.chunk.js.map": "./static/js/732.92ffc6fe.chunk.js.map"
+    "main.b2a29dca.css.map": "./static/css/main.b2a29dca.css.map",
+    "main.9f8130b1.js.map": "./static/js/main.9f8130b1.js.map"
   },
   "entrypoints": [
-    "static/css/main.dadeb492.css",
-    "static/js/main.ba4ce9e0.js"
+    "static/css/main.b2a29dca.css",
+    "static/js/main.9f8130b1.js"
   ]
 }

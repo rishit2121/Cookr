@@ -5,10 +5,26 @@ import { useNavigate } from "react-router-dom";
 import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import {useEffect, useRef } from "react";
+import Bottom from "../components/BottomNav";
+import { signOut } from "firebase/auth";
 
 
 function Profile() {
   const [mobileDimension, setMobileDimension] = useState(false);
+  const [streak, setStreak] = useState(
+    localStorage.getItem("streak")
+      ? parseInt(localStorage.getItem("streak"))
+      : 0
+  );
+  const [xp, setXP] = useState(
+    localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
+  );
+  const [sets, setSets] = useState();
+  const [currentSet, setCurrentSet] = useState(
+    localStorage.getItem("currentSet")
+      ? JSON.parse(localStorage.getItem("currentSet"))
+      : null
+  );
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -27,15 +43,27 @@ function Profile() {
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden" }}
+      style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
     >
       <div>
         <Navbar setMobileDimension={setMobileDimension} />
       </div>
       {user ? (
-        <div style={{ flex: 1, padding: "10px", overflowY: "auto", backgroundColor: isDarkMode ? "black": "whitesmoke"
+        <div style={{ display:'flex', flexDirection:'column',flex: 1, overflowY: "auto", backgroundColor: "black", justifyContent: 'flex-end', // Align items at the bottom
         }}>
           <MyProfile mobileDimension={mobileDimension} />
+          {mobileDimension && (
+            <Bottom
+              streak={streak}
+              currentPage={'profile'}
+              xp={xp}
+              sets={sets}
+              currentSet={currentSet}
+              setCurrentSet={setCurrentSet}
+              mobileDimension={mobileDimension}
+            />
+          )}
+
         </div>
       ) : (
         <div

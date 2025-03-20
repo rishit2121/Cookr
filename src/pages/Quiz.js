@@ -252,9 +252,9 @@ const Quiz = () => {
                       }}
                     >
                       <div style={{ height: "35%" }}>
-                      {/* <Latex>
+                      <Latex>
                         {typeof question.question === 'string' ? question.question : 'Question corrupted'}
-                      </Latex> */}
+                      </Latex>
 
                       </div>
                       <div>
@@ -277,9 +277,9 @@ const Quiz = () => {
                               textAlign: "center",
                             }}
                           >
-                            {/* <Latex>
+                            <Latex>
                         {typeof choice === 'string' ? choice : 'Answers not found'}
-                      </Latex> */}
+                      </Latex>
                           </div>
                         ))}
                       </div>

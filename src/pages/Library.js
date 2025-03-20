@@ -4,7 +4,23 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Bottom from "../components/BottomNav";
+
 function Library() {
+  const [streak, setStreak] = useState(
+    localStorage.getItem("streak")
+      ? parseInt(localStorage.getItem("streak"))
+      : 0
+  );
+  const [xp, setXP] = useState(
+    localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
+  );
+  const [sets, setSets] = useState();
+  const [currentSet, setCurrentSet] = useState(
+    localStorage.getItem("currentSet")
+      ? JSON.parse(localStorage.getItem("currentSet"))
+      : null
+  );
   const [mobileDimension, setMobileDimension] = useState(false);
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -12,7 +28,7 @@ function Library() {
     return localStorage.getItem("darkMode") === "true";
   });
   const [loading, setLoading] = useState(true);
-const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -24,51 +40,79 @@ const [user, setUser] = useState(null);
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden" }}
+      style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
     >
       <div>
-        <Navbar setMobileDimension={setMobileDimension}/>
+        <Navbar setMobileDimension={setMobileDimension} />
       </div>
-      <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%", backgroundColor: isDarkMode ? "black": "whitesmoke" }}>
-        {user?<MyLibrary />: <div
+      <div
+        style={{
+          flex: 1,
+          padding: "10px",
+          overflowY: "auto",
+          // justifyContent: mobileDimension && "center",
+          display: "flex",
+          width: "100%",
+          backgroundColor: "black",
+          flexDirection: 'column',
+        }}
+      >
+        {localStorage.getItem("email") ? (
+           <MyLibrary mobileDimension={mobileDimension} />
+      ) : (
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: mobileDimension
+            ? "translate(-50%, -50%)"
+            : "translate(0%, -50%)",
+        }}
+      >
+        <p style={{ fontSize: "21px" }}>Hey 👋, welcome to </p>
+        <h1
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: mobileDimension?"translate(-50%, -50%)":"translate(0%, -50%)",
+            margin: "0px",
+            textShadow: "2px 2px 5px orange",
+            fontSize: "50px",
           }}
         >
-          <p style={{fontSize:"21px"}}>Hey 👋, welcome to{" "}</p>
-          <h1
-            style={{
-              margin: "0px",
-              textShadow: "2px 2px 5px orange",
-              fontSize: "50px",
-            }}
-          >
-            Scro<span style={{fontStyle:"italic"}}>ll</span>er
-          </h1>
-          <br></br>
-          <button
-            onClick={async () => navigate("/auth")}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "black",
-              border: "none",
-              color: "white",
-              borderRadius: "100px",
-              cursor: "pointer",
-            }}
-          >
-            Sign In
-          </button>
-          <p style={{ textAlign: "center", marginTop: "20px" }}>
-            to get scrollin'!
-          </p>
-        </div>}
+          Scro<span style={{ fontStyle: "italic" }}>ll</span>er
+        </h1>
+        <br></br>
+        <button
+          onClick={async () => navigate("/auth")}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "black",
+            border: "none",
+            color: "white",
+            borderRadius: "100px",
+            cursor: "pointer",
+          }}
+        >
+          Sign In
+        </button>
+        <p style={{ textAlign: "center", marginTop: "20px" }}>
+          to get scrollin'!
+        </p>
       </div>
+        )}
+        {mobileDimension && (
+        <Bottom
+          streak={streak}
+          currentPage={'library'}
+          xp={xp}
+          sets={sets}
+          currentSet={currentSet}
+          setCurrentSet={setCurrentSet}
+          mobileDimension={mobileDimension}
+        />
+      )}
     </div>
+    </div >
   );
 }
 

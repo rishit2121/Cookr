@@ -1,9 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.dadeb492.css",
-    "main.js": "./static/js/main.ba4ce9e0.js",
-    "static/js/213.1293e711.chunk.js": "./static/js/213.1293e711.chunk.js",
-    "static/js/732.92ffc6fe.chunk.js": "./static/js/732.92ffc6fe.chunk.js",
+    "main.css": "./static/css/main.9ba52aef.css",
+    "main.js": "./static/js/main.31e39f94.js",
     "static/media/profile.png": "./static/media/profile.0160f81be67579728960.png",
     "static/media/KaTeX_AMS-Regular.ttf": "./static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/correct-answer-sound-effect-19.wav": "./static/media/correct-answer-sound-effect-19.842666b9f366299de43e.wav",
@@ -54,6 +52,7 @@
     "static/media/KaTeX_Script-Regular.woff": "./static/media/KaTeX_Script-Regular.073b3402d036714b4370.woff",
     "static/media/KaTeX_Size4-Regular.ttf": "./static/media/KaTeX_Size4-Regular.4ad7c7e8bb8d10a34bb7.ttf",
     "static/media/KaTeX_SansSerif-Regular.woff2": "./static/media/KaTeX_SansSerif-Regular.cd5e231e0cc53b2cb2c0.woff2",
+    "static/media/cookr_logo.png": "./static/media/cookr_logo.caa62baeb94b02677509.png",
     "static/media/KaTeX_Script-Regular.woff2": "./static/media/KaTeX_Script-Regular.c81d1b2a4b75d3eded60.woff2",
     "static/media/KaTeX_Caligraphic-Bold.woff": "./static/media/KaTeX_Caligraphic-Bold.d757c535a2e5902f1325.woff",
     "static/media/KaTeX_Caligraphic-Regular.woff": "./static/media/KaTeX_Caligraphic-Regular.db074fa22cf224af93d7.woff",
@@ -67,15 +66,14 @@
     "static/media/KaTeX_Size2-Regular.woff2": "./static/media/KaTeX_Size2-Regular.2960900c4f271311eb36.woff2",
     "static/media/KaTeX_Size4-Regular.woff2": "./static/media/KaTeX_Size4-Regular.e418bf257af1052628d8.woff2",
     "static/media/KaTeX_Size3-Regular.woff": "./static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
+    "static/media/CookrLogo.webp": "./static/media/CookrLogo.8fa679e8b1620a0b6bdd.webp",
     "static/media/KaTeX_Size3-Regular.woff2": "./static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "./index.html",
-    "main.dadeb492.css.map": "./static/css/main.dadeb492.css.map",
-    "main.ba4ce9e0.js.map": "./static/js/main.ba4ce9e0.js.map",
-    "213.1293e711.chunk.js.map": "./static/js/213.1293e711.chunk.js.map",
-    "732.92ffc6fe.chunk.js.map": "./static/js/732.92ffc6fe.chunk.js.map"
+    "main.9ba52aef.css.map": "./static/css/main.9ba52aef.css.map",
+    "main.31e39f94.js.map": "./static/js/main.31e39f94.js.map"
   },
   "entrypoints": [
-    "static/css/main.dadeb492.css",
-    "static/js/main.ba4ce9e0.js"
+    "static/css/main.9ba52aef.css",
+    "static/js/main.31e39f94.js"
   ]
 }

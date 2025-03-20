@@ -10,9 +10,12 @@ import {
 } from "firebase/firestore";
 import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+
 
 const MyLibrary = ({ mobileDimension }) => {
   const [sets, setSets] = useState([]);
+  const [openMode, setOpenMode] = useState(false);
   const [newPrompt, setNewPrompt] = useState("");
   const [openNewTopic, setOpenNewTopic] = useState(false);
   const [style, setStyle] = useState(0); // Manage the style with useState
@@ -24,6 +27,7 @@ const MyLibrary = ({ mobileDimension }) => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
+  const navigate = useNavigate();
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,7 +38,6 @@ const MyLibrary = ({ mobileDimension }) => {
   }, []);
   // Updated generateBlob function with dynamic width and height
   const deleteItemFromFirestore = async (subtitle,subcontent,subsubject,subpromptmode,subselectedmode,subcolor,subtag) => {
-    console.log('tryna delete...')
     try {
       const userEmail = user;
       const docRef = doc(db, "users", userEmail);
@@ -73,7 +76,6 @@ const MyLibrary = ({ mobileDimension }) => {
         localStorage.removeItem("currentSet");
       }
 
-      console.log("Item deleted successfully");
       setOpenNewTopic(false);
     } catch (e) {
       console.error("Error deleting item:", e);
@@ -110,10 +112,8 @@ const MyLibrary = ({ mobileDimension }) => {
         (docSnapshot) => {
           if (docSnapshot.exists()) {
             setSets(docSnapshot.data().sets || []);
-            console.log(docSnapshot.data().sets)
-            console.log(user)
+
           } else {
-            console.log("Document does not exist");
             setSets([]); // Clear sets if the document doesn't exist
           }
         },
@@ -149,9 +149,139 @@ const MyLibrary = ({ mobileDimension }) => {
         display: "flex",
         flexDirection: "column",
         alignItems: mobileDimension ? "center" : "flex-start",
+        overflowX: "hidden",
+        height: mobileDimension? '88%': '100%',
       }}
     >
-      <h1 style={{ margin: "40px 50px",color: isDarkMode ? "#fff" : "#000" }}>My Library</h1>
+      {openMode && (
+        <div
+          style={{
+            position: "absolute",
+            backgroundColor: "#181818",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: "999999999",
+            height: "100dvh",
+            width: "100dvw",
+            display: "flex",
+            flexDirection: "column",
+            boxSizing: "border-box",
+            overflow: "auto",
+          }}
+        >
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "30px 50px",
+            position: "relative"
+          }}>
+            <svg
+              onClick={() => setOpenMode(false)}
+              style={{
+                cursor: "pointer",
+                position: "absolute",
+                left: "20px"
+              }}
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5"/>
+              <path d="M12 19l-7-7 7-7"/>
+            </svg>
+            <p
+              style={{
+                textAlign: "center",
+                color: "white",
+                fontSize: "30px",
+                margin: "0 auto"
+              }}
+            >
+              Select Mode
+            </p>
+          </div>
+          <hr style={{
+            width: "100%",
+            border: "1px solid #555",
+            margin: "0"
+          }} />
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "column",
+            gap: "20px",
+            padding: "5%",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            flex: 1,
+            marginTop: "10%"
+          }}>
+            <button
+              style={{
+                color: "white",
+                background: `#6A6CFF`,
+                boxShadow: `0px 5px 0px 0px #484AC3`,
+                padding: "20px",
+                borderRadius: "10px",
+                fontSize: "23px",
+                textAlign: "center",
+                border: "none",
+                cursor: "pointer",
+                width: "90%",
+                height: "25%",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+              onClick={() => {
+                localStorage.setItem("mode", 1);
+                navigate("/");
+              }}
+            >
+              <span style={{ fontWeight: "bold" }}>Multiple Choice</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </button>
+            <button
+              style={{
+                color: "white",
+                background: `#6A6CFF`,
+                boxShadow: `0px 5px 0px 0px #484AC3`,
+                padding: "20px",
+                borderRadius: "10px",
+                fontSize: "23px",
+                textAlign: "center",
+                border: "none",
+                cursor: "pointer",
+                width: "90%",
+                marginTop:'5%',
+                height: "25%",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+              onClick={() => {
+                localStorage.setItem("mode", 2);
+                navigate("/");
+              }}
+            >
+              <span style={{ fontWeight: "bold" }}>Flashcards</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      <h1 style={{ margin: "20px 50px", color: "white" }}>My Library</h1>
       <div
         style={{
           margin: "5px 50px",
@@ -160,38 +290,60 @@ const MyLibrary = ({ mobileDimension }) => {
           flexWrap: "wrap",
           justifyContent: mobileDimension ? "center" : "flex-start",
           alignItems: mobileDimension ? "center" : "flex-start",
-          
         }}
       >
-        <div
-          style={{
-            width: "200px",
-            height: "200px",
-            boxShadow: "0px 0px 16px 1px gainsboro",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            margin: "10px 10px",
-          }}
-          onClick={() => handleNewClick()}
-        >
-          <p style={{color: isDarkMode ? "#fff" : "#000",}}>Add Subject</p>
-        </div>
+        {/* {!mobileDimension && ( */}
+          <div
+            className="libCard"
+            style={{
+              position: "fixed",
+              bottom: mobileDimension ? "90px" : "30px",
+              right: mobileDimension ? "3%" : "30px",
+              width: mobileDimension ?"75px": "85px",
+              height: mobileDimension ?"75px": "85px",
+              borderRadius: "50%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "white",
+              border: "1px solid #353935",
+              background: "radial-gradient(circle at center,rgb(20, 18, 18), #1a1a1d)",
+              boxShadow: "0 0px 12px rgb(155, 155, 155)",
+              borderColor: "#8a8a8a",
+              zIndex: 1000,
+            }}
+            onClick={() => handleNewClick()}
+          >
+            <svg  
+              width="32" 
+              height="32" 
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            {/* <p style={{ fontSize: "12px", margin: "4px 0 0 0" }}>Add</p> */}
+          </div>
+        {/* )} */}
         {sets &&
           sets.map((item, index) => (
             <div>
               <div
+                className="libCard"
                 key={index}
                 style={{
-                  width: "200px",
-                  height: "200px",
-                  boxShadow: `0px 0px 1px 1px ${item.color}`,
                   borderRadius: "10px",
                   display: "flex",
                   margin: "10px 10px",
-                  backgroundColor: `${item.color}10`,
+                  border:"1px solid #353935",
+                  backgroundColor: "#28282B",
                   flexDirection: "column",
                   justifyContent: "space-between",
                   position: "relative", // Ensure relative positioning
@@ -199,20 +351,18 @@ const MyLibrary = ({ mobileDimension }) => {
               >
                 <p
                   style={{
-                    color: item.color,
+                    color: "whitesmoke",
                     padding: "10px 10px",
                     display: "flex",
                     flexDirection: "column",
                     fontSize: "24px",
                     fontWeight: "bold",
-                    textShadow: `0px 0px 10px ${item.color}90`,
                     whiteSpace: "nowrap", // Prevents text from wrapping
                     overflow: "hidden", // Ensures text does not overflow the container
                     textOverflow: "ellipsis", // Displays ellipsis (...) if the text is too long
                   }}
                 >
-                  {item.title.slice(0,12)}
-                  {item.promptMode!=3  && (
+                  { mobileDimension ? item.title :  item.title.slice(0, 12)}
                   <span
                     onClick={() => {
                       setStyle(1);
@@ -231,71 +381,44 @@ const MyLibrary = ({ mobileDimension }) => {
                       fontSize: "14px",
                       fontWeight: "normal",
                       cursor: "pointer",
-                      zIndex:20
                     }}
                   >
                     edit
-                    <svg xmlns="http://www.w3.org/2000/svg" style={{marginLeft:"5px"}} viewBox="0 0 512 512"  fill={item.color} height={10}><path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ marginLeft: "5px" }}
+                      viewBox="0 0 512 512"
+                      fill={"white"}
+                      height={10}
+                    >
+                      <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z" />
+                    </svg>
                   </span>
-                  )}
-                  {item.promptMode==3  && (
-                    <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "normal",
-                      cursor: "pointer",
-                      zIndex:20
-                    }}
-                  >
-                    Featured Set
-                  </span>
-                  )}
-                  {item.promptMode==3  && (
-                  <button
-                    onClick={() => deleteItemFromFirestore(item.title,"","",3,1,item.color,item.tag)}
-                    style={{
-                      width: "47%",
-                      zIndex:20,
-                      background: "transparent",
-                      border: "1px solid gainsboro",
-                      padding: "10px",
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete
-                  </button>
-                  )}
                 </p>
 
-                {/* Updated SVG to fit inside the div */}
-                <svg
-                  width="100%" // Adjust to fit the div's width
-                  height="100%" // Adjust to fit the div's height
-                  viewBox="0 0 200 200" // Adjust viewbox to match div's dimensions
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    zIndex: 0,
-                    borderRadius: 10, // Ensure SVG is behind the text
-                  }}
-                >
-                  <path d={generateBlob(200, 200)} fill={`${item.color}19`} />
-                </svg>
-                <p
+                <button
                   style={{
                     margin: "10px 10px",
-                    color: `${item.color}`,
-                    background: `${item.color}10`,
-                    boxShadow: `0px 0px 10px 1px ${item.color}38`,
-                    padding: "5px 10px",
-                    borderRadius: "100px",
+                    color: "white",
+                    background: `#6A6CFF`,
+                    boxShadow: `0px 5px 0px 0px #484AC3`,
+                    padding: "10px 10px",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    textAlign: "center",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize:'15px'
+                  }}
+                  onClick={() => {
+                    localStorage.setItem("currentSet",  JSON.stringify(item));
+                    localStorage.removeItem("lastSet");
+                    localStorage.removeItem("lastFlashSet");
+                    setOpenMode(true);
                   }}
                 >
-                  Mode:{" "}
-                  {item.scrollGenerationMode != 2 ? "Questions" : "Videos"}
-                </p>
+                  Let Me Cook!
+                </button>
               </div>
             </div>
           ))}
@@ -306,6 +429,7 @@ const MyLibrary = ({ mobileDimension }) => {
           setOpenNewTopic={setOpenNewTopic}
           style={style}
           params={params}
+          mobileDimension={mobileDimension}
         />
       )}
     </div>

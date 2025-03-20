@@ -20,6 +20,9 @@
   "installed_plugins": {
     "cordova-plugin-device": {
       "PACKAGE_NAME": "com.example.scroller"
+    },
+    "cordova-plugin-browsersync": {
+      "PACKAGE_NAME": "com.study.scroller"
     }
   },
   "dependent_plugins": {},
@@ -34,6 +37,7 @@
     }
   ],
   "plugin_metadata": {
-    "cordova-plugin-device": "3.0.0"
+    "cordova-plugin-device": "3.0.0",
+    "cordova-plugin-browsersync": "0.1.7"
   }
 }

@@ -87,11 +87,11 @@ module.exports.parseOptions = parseOptions = function () {
 };
 
 module.exports.setLiveReloadToActive = function () {
-    GLOBAL.isLiveReloadActive = true;
+    global.isLiveReloadActive = true;
 };
 
 module.exports.isLiveReloadActivated = isLiveReloadActivated = function () {
-    return !!GLOBAL.isLiveReloadActive;
+    return !!global.isLiveReloadActive;
 };
 
 module.exports.isPlatformAddedToProject = function (projectRoot, platform) {

@@ -6,9 +6,18 @@ import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Bottom from "../components/BottomNav";
+import Comments from "./mini_components/Comments";
+
 
 const SavedQuestions = () => {
   const navigate = useNavigate();
+  const [sets, setSets] = useState();
+  const [currentSet, setCurrentSet] = useState(
+    localStorage.getItem("currentSet")
+      ? JSON.parse(localStorage.getItem("currentSet"))
+      : null
+  );
   const [savedQuestions, setSavedQuestions] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -56,17 +65,17 @@ const SavedQuestions = () => {
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden" }}
+      style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
     >
       <Navbar setMobileDimension={setMobileDimension} />
-      <div style={{ width: "5%", backgroundColor: isDarkMode ? "black": "whitesmoke"}}></div>
+      <div style={{ width: "5%", backgroundColor: "black"}}></div>
       {user ? (
         <div
-          style={{ flex: 1, height: "100%", overflow: "auto", padding: "20px", backgroundColor: isDarkMode ? "black": "whitesmoke"
+          style={{ flex: 1, height:mobileDimension? "90%":"100%",flexDirection:'column', justifyContent:'center', overflow: "auto", padding: "20px", backgroundColor: "black"
           }}
         >
-          <h2 style={{color: isDarkMode ? "white": "black"}}>Saved Questions</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0% 20%" }}>
+          <h2 style={{color: "white"}}>Saved Questions</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0% 20%", justifyContent:'center' }}>
             {savedQuestions.length > 0 ? (
               savedQuestions.map((questionData, index) => (
                 <QuestionCard
@@ -74,6 +83,7 @@ const SavedQuestions = () => {
                   question={questionData.question}
                   choices={questionData.choices}
                   answer={questionData.answer}
+                  comment={questionData.comments}
                   selectedAnswer={questionData.selectedAnswer}
                   setStreak={setStreak}
                   setXP={setXP}
@@ -81,12 +91,24 @@ const SavedQuestions = () => {
                   color={questionData.color && questionData.color}
                   fullJSON={questionData}
                   isFavorites={true}
+                  savedQuestions={savedQuestions}
                 />
               ))
             ) : (
               <p>No saved questions yet.</p>
             )}
           </div>
+          {mobileDimension && (
+        <Bottom
+          streak={streak}
+          xp={xp}
+          currentPage={'saved'}
+          sets={sets}
+          currentSet={currentSet}
+          setCurrentSet={setCurrentSet}
+          mobileDimension={mobileDimension}
+        />
+      )}
         </div>
       ) : (
         <div

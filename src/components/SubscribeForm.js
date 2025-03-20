@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 import './SubscribeForm.css'; // Import the CSS for custom styles
 import Navbar from "../components/Navbar";
+import { useEffect } from "react";
+import { onSnapshot, doc } from "firebase/firestore";
+import { db } from "./firebase/Firebase";
+import { auth} from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 
 function SubscribeForm() {
@@ -10,13 +15,36 @@ function SubscribeForm() {
   const [mobileDimension, setMobileDimension] = useState(false);
 
 
-  const [email, setEmail] = useState('');
-  const [planId, setPlanId] = useState('price_1PzSHdGseqFBdXVsZKDu0JJT');
+  const [user, setUser] = useState();
+  const [planId, setPlanId] = useState('price_1P9Kn2F2kI0aSHJWKnN6O8kf');
   const [planName, setPlanName] = useState('Scroller+');
-  const [planPrice, setPlanPrice] = useState('$5/month');
+  const [planPrice, setPlanPrice] = useState('$2/month');
   const [loading, setLoading] = useState(false);
   const [canMakePayment, setCanMakePayment] = useState(false);
-
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser.email);
+      console.log(user)
+      setLoading(false); // Auth state resolved
+    });
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+  // useEffect(() => {
+  //   try {
+  //     const document = onSnapshot(
+  //       doc(db, "users", user),
+  //       (doc) => {
+  //         setName(doc.data().name);
+  //         setEmail(doc.data().email);
+  //         setPlanType(doc.data().plan);
+  //         setReferalCode(doc.data().myCode)
+  //       }
+  //     );
+  //   } catch (error) {
+  //     alert("Error");
+  //   }
+  // }, []);
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -24,13 +52,14 @@ function SubscribeForm() {
     const cardNumberElement = elements.getElement(CardNumberElement);
     const cardExpiryElement = elements.getElement(CardExpiryElement);
     const cardCvcElement = elements.getElement(CardCvcElement);
+    const amount = planPrice.includes('$') ? parseFloat(planPrice.replace(/[^0-9.]/g, '')) * 100 : 500;
 
     try {
       // Create a PaymentMethod
       const { paymentMethod, error: paymentMethodError } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
-        billing_details: { email: email },
+        billing_details: { email: user },
       });
 
       if (paymentMethodError) {
@@ -38,15 +67,16 @@ function SubscribeForm() {
       }
 
       // Send the payment method and plan ID to your server
-      const response = await fetch('http://localhost:5001/stripe/create-subscription', {
+      const response = await fetch('http://localhost:5001/stripe/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email,
+          email: user,
           paymentMethodId: paymentMethod.id,
           planId: planId,
+          amount: amount, 
         }),
       });
 
@@ -67,6 +97,7 @@ function SubscribeForm() {
 
       if (paymentIntent.status === 'succeeded') {
         alert('Subscription successful!');
+        
       }
     } catch (error) {
       alert(`Subscription failed: ${error.message}`);
@@ -86,13 +117,13 @@ function SubscribeForm() {
     setPlanName(selectedPlanName);
 
     // Set pricing based on selected plan using setPlanPrice
-    if (selectedPlanId === 'price_1PzSHdGseqFBdXVsZKDu0JJT') {
+    if (selectedPlanId === 'price_1P9Kn2F2kI0aSHJWKnN6O8kf') {
       setPlanPrice('$5/month');
-    } else if (selectedPlanId === 'price_1PzSJ9GseqFBdXVsScxj0BhM') {
-      setPlanPrice('$45/lifetime');
+    } else if (selectedPlanId === 'price_1P9Kn2F2kI0aSHJWKnN6O8k') {
+      setPlanPrice('$50/yearly');
     } else {
       setPlanPrice('');
-    }
+    }                                        
   };
   const cardStyle = {
     style: {
@@ -117,7 +148,7 @@ function SubscribeForm() {
       className="App"
       style={{ display: "flex", height: "100vh", overflow: "hidden",}}
     >
-      {localStorage.getItem("email") ? (<Navbar setMobileDimension={setMobileDimension} />):<div></div>}
+      {user ? (<Navbar setMobileDimension={setMobileDimension} />):<div></div>}
     <div style={{ display: 'flex', flexDirection: 'column',minHeight: '100vh', backgroundColor: '#f9f9f9', padding: '20px', width:"100%"}}>
       <div style={{display:"flex", flexDirection:"row"}}>
       <div style={{display:'flex', width:'70%', flexDirection:"column", alignItems:'center'}}>
@@ -135,12 +166,12 @@ function SubscribeForm() {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid black",
-          boxShadow: "5px 5px 1px 1px orange",
+          boxShadow: "5px 5px 1px 1px #6A6CFF",
           justifyContent:'center',
           alignItems:'center'
         }}
       >
-        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller+</h1>
+        <h1 style={{ textShadow: "0px 0px 10px #82beff" }}>Scroller+</h1>
 
         <br></br>
         <p style={{ fontSize: "14px" }}>For those to lock out, to lock in.</p>
@@ -148,8 +179,8 @@ function SubscribeForm() {
         <h1
           style={{
             fontSize: "70px",
-            borderTop: "1px solid orange",
-            borderBottom: "1px solid orange",
+            borderTop: "1px solid #6A6CFF",
+            borderBottom: "1px solid #6A6CFF",
           }}
         >
           $5
@@ -205,11 +236,11 @@ function SubscribeForm() {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid black",
-          boxShadow: "5px 5px 1px 1px orange",
+          boxShadow: "5px 5px 1px 1px #6A6CFF",
           alignItems:'center'
         }}
       >
-        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller 4 Life</h1>
+        <h1 style={{ textShadow: "0px 0px 10px #82beff" }}>Cookr 4 Life</h1>
         <span class="sale">-25%</span>
         <br></br>
         <br></br>
@@ -218,11 +249,11 @@ function SubscribeForm() {
         <h1
           style={{
             fontSize: "70px",
-            borderTop: "1px solid orange",
-            borderBottom: "1px solid orange",
+            borderTop: "1px solid #6A6CFF",
+            borderBottom: "1px solid #6A6CFF",
           }}
         >
-          $45
+          $50
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>
             / lifetime
           </span>
@@ -278,8 +309,8 @@ function SubscribeForm() {
             style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}
           >
             {/* <option value="">Select a plan</option> */}
-            <option value="price_1PzSHdGseqFBdXVsZKDu0JJT">Scroller+</option>
-            <option value="price_1PzSJ9GseqFBdXVsScxj0BhM">Scroller4Life</option>
+            <option value="price_1P9Kn2F2kI0aSHJWKnN6O8kf">Scroller+</option>
+            <option value="price_1P9Kn2F2kI0aSHJWKnN6O8k">Scroller4Life</option>
           </select>
 
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>

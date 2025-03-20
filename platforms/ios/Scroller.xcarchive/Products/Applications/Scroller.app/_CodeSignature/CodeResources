@@ -6,7 +6,7 @@
 	<dict>
 		<key>AppIcon60x60@2x.png</key>
 		<data>
-		wgBa9HxhA9u1/vfePpggKbyiJgs=
+		L4ghCk2kbpoNGDQzNUuT6ALTwkE=
 		</data>
 		<key>AppIcon76x76@2x~ipad.png</key>
 		<data>
@@ -14,7 +14,7 @@
 		</data>
 		<key>Assets.car</key>
 		<data>
-		8ao5IEgMUDcOOM61KJDwrsKT2Qc=
+		Q/t+dgfplb93RaOlBzksKJVGMQ8=
 		</data>
 		<key>CDVDevice.bundle/PrivacyInfo.xcprivacy</key>
 		<data>
@@ -42,7 +42,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		m7wNWCcmQGulHt6i8Yk1wGlnvDA=
+		+6waIuUVQNmQGNOF5YMZbHbmVqA=
 		</data>
 		<key>MainViewController.nib</key>
 		<data>
@@ -58,15 +58,15 @@
 		</data>
 		<key>config.xml</key>
 		<data>
-		CWlYfGVX5Qzf3fIJilaXj1tXMWk=
+		X2rWkDwHdFKOUx8+0uvcvLVNgWQ=
 		</data>
 		<key>embedded.mobileprovision</key>
 		<data>
-		IsFulP4lRYTLefBhPsAsvsB0IwQ=
+		ZJn+KEyZp2aMvVqmd1A1J1ZMOPo=
 		</data>
 		<key>www/asset-manifest.json</key>
 		<data>
-		/6v52wW5+hwKBW3+VJ7BkVZ3DS4=
+		434dxTm8PE9DnNKNko+/2Y2yBGw=
 		</data>
 		<key>www/cordova.js</key>
 		<data>
@@ -82,7 +82,7 @@
 		</data>
 		<key>www/index.html</key>
 		<data>
-		3LRw0/fMXC7e0AcXvBVNOEkJKZw=
+		SWVu96cMJauDVF/0FPYzvVo6lZc=
 		</data>
 		<key>www/manifest.json</key>
 		<data>
@@ -100,45 +100,25 @@
 		<data>
 		BEzmj4PuhUNHX+oW9uOnPSihxtU=
 		</data>
-		<key>www/static/css/main.dadeb492.css</key>
+		<key>www/static/css/main.7b7d4d07.css</key>
 		<data>
-		4Na93xXuq3gYFfZINiBTrg6Z2bU=
+		ZiL3EgPotH0s4aaROhLXrUQzWZU=
 		</data>
-		<key>www/static/css/main.dadeb492.css.map</key>
+		<key>www/static/css/main.7b7d4d07.css.map</key>
 		<data>
-		ulO6q65qUXLWJQNmUCJYPUbrNIo=
+		9LrPF/4mh3mFNqZz5zSYFGmBQEI=
 		</data>
-		<key>www/static/js/213.1293e711.chunk.js</key>
+		<key>www/static/js/main.3784640b.js</key>
 		<data>
-		df1ymqVmHTNeTBIkeUVYZ28M64A=
+		OuTSNuUhSRmO3jjtGquJ6sDvuto=
 		</data>
-		<key>www/static/js/213.1293e711.chunk.js.LICENSE.txt</key>
+		<key>www/static/js/main.3784640b.js.LICENSE.txt</key>
 		<data>
-		nbVo9oVx5ykrxLd/MSPc2dXuhs8=
+		4SdPoXAMGZXzVhff8X8s7fjg8jE=
 		</data>
-		<key>www/static/js/213.1293e711.chunk.js.map</key>
+		<key>www/static/js/main.3784640b.js.map</key>
 		<data>
-		C8vwAoEA4w6k/OFf9UmBRfQ7XJw=
-		</data>
-		<key>www/static/js/732.92ffc6fe.chunk.js</key>
-		<data>
-		mvVoRsxvPLLt7HYXQK1+2OG1LYQ=
-		</data>
-		<key>www/static/js/732.92ffc6fe.chunk.js.map</key>
-		<data>
-		Pj1IYAq4MMGhEUCr1IcaYYNUThQ=
-		</data>
-		<key>www/static/js/main.ba4ce9e0.js</key>
-		<data>
-		c7lA4sbq1ZbqLRVXi7z30f3nkzA=
-		</data>
-		<key>www/static/js/main.ba4ce9e0.js.LICENSE.txt</key>
-		<data>
-		rJ42o/jyNL6GsRe3NRAif9gH1mc=
-		</data>
-		<key>www/static/js/main.ba4ce9e0.js.map</key>
-		<data>
-		uTNh3jwKEoNfqTjoKBNZ2vh7XR8=
+		mnjCB6YuVY7MVTkO8UBeOq01lck=
 		</data>
 		<key>www/static/media/KaTeX_AMS-Regular.73ea273a72f4aca30ca5.woff2</key>
 		<data>
@@ -380,6 +360,10 @@
 		<data>
 		YpuZ+vGNl1KfIaGxAYCT5gvNBY8=
 		</data>
+		<key>www/static/media/cookr_logo.caa62baeb94b02677509.png</key>
+		<data>
+		jPNBEu6c2gLwI5u5izcSdCibw+E=
+		</data>
 		<key>www/static/media/correct-answer-sound-effect-19.842666b9f366299de43e.wav</key>
 		<data>
 		g8IjhUttAr42tURuacYgCOfCgqk=
@@ -403,7 +387,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Id0ONkc2ui29Lqd0gfRO/AsW7ypmLxHx13irLXe6VdU=
+			sM3cA5HZYxqv4bgz9XkuCeDat0kOiygVru2W35J6iaw=
 			</data>
 		</dict>
 		<key>AppIcon76x76@2x~ipad.png</key>
@@ -417,7 +401,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			0RQvZlqgHFM9bF9OKNnrfza/5JgffYhcwhlq8zVjdLM=
+			Bv6vrQvxgW+vxJnC9iozqwSwAHLHgYKEIxhBNkuZknE=
 			</data>
 		</dict>
 		<key>CDVDevice.bundle/PrivacyInfo.xcprivacy</key>
@@ -480,21 +464,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Kn2oDpY9ebnUXPt6/hSgXTO5L0inwxDN/zc6p+4OyQI=
+			mtNi1WmkIyYPu4Lqb5BgdY+QdFnLaF15f6i+KeYCPzE=
 			</data>
 		</dict>
 		<key>embedded.mobileprovision</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			3+o3NszEBVC8axLAIQ49TKLKmKWXfftZDODsLmOB+k0=
+			aqRmXaVfLPfMqfEJhLYqxengEP70hQLZUlJwQgi87jA=
 			</data>
 		</dict>
 		<key>www/asset-manifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Ji4rkIy/Tpx9h1WZOA2Emku03dAWW9Pde7LmQBsw/VE=
+			dnyhAfSoMJjkzP6ARGU3Aeim0+KRL9RbnlvJa4F6ro0=
 			</data>
 		</dict>
 		<key>www/cordova.js</key>
@@ -522,7 +506,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			t17Zi6Hi0kH7RVmmpYZ+/YxemvuI8onAWuV6lYOjNds=
+			tzN+xuL9eXYlPBjNoLCCBycMdgRGbm8/RQyOJ8Gr2bk=
 			</data>
 		</dict>
 		<key>www/manifest.json</key>
@@ -553,74 +537,39 @@
 			kNJLw79pisHhc3OVAimMzKcq3x9WT6sF9IS4xI0crdI=
 			</data>
 		</dict>
-		<key>www/static/css/main.dadeb492.css</key>
+		<key>www/static/css/main.7b7d4d07.css</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			lIR8HuLu1lwYO4Qw/t/9Wk7VbMAZcEvPXC/7dJCpdLU=
+			15Lm0GEAPi/6iYPRmZQY9GQbyFqYgbrbcrz4yoiPmws=
 			</data>
 		</dict>
-		<key>www/static/css/main.dadeb492.css.map</key>
+		<key>www/static/css/main.7b7d4d07.css.map</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Xmr7CNsPDpxeNDqg3gjVCRtYwqnHK0YbKVutTBBVo3A=
+			o9khfS5cdaKtvVB4qiCOKtbGDtFrDxY9kUJnatOLJzE=
 			</data>
 		</dict>
-		<key>www/static/js/213.1293e711.chunk.js</key>
+		<key>www/static/js/main.3784640b.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7e4FNaudjiTs0j2rbHHBy2m0VvgyXJ4aUgEiwJFTNsw=
+			eSadENYG9mMXTIu0lSRFbwgoKlHfVezsSUUX1AikhR4=
 			</data>
 		</dict>
-		<key>www/static/js/213.1293e711.chunk.js.LICENSE.txt</key>
+		<key>www/static/js/main.3784640b.js.LICENSE.txt</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Vocfrmz1ZAzN8ae41cyk18ac8VSmdaj6H0f8Nh6I5sU=
+			WNR688J9FTGAAchBy/HYyjc12jA5MqoV1HIxfMUUuaI=
 			</data>
 		</dict>
-		<key>www/static/js/213.1293e711.chunk.js.map</key>
+		<key>www/static/js/main.3784640b.js.map</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			1RBHoOWDSNzuMCfNqttE0EJ+u++xV9S798bPZM1/Jiw=
-			</data>
-		</dict>
-		<key>www/static/js/732.92ffc6fe.chunk.js</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			PDfN17V5T0RzUEqNI5ZhmmvGIfgNzg90CzKushxVrMA=
-			</data>
-		</dict>
-		<key>www/static/js/732.92ffc6fe.chunk.js.map</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			ZXtUMADZ9eJ97elMawC0THVSUc0yI3ndvN0PGc4iGcM=
-			</data>
-		</dict>
-		<key>www/static/js/main.ba4ce9e0.js</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			+dlQfM2pzJeoVVKzZ2bfWgF70V5EFu4EqWyEjF2029I=
-			</data>
-		</dict>
-		<key>www/static/js/main.ba4ce9e0.js.LICENSE.txt</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			ARJ8/ZmaBK8Rm/5RsKaA17SjORaBEDuWkBAL6SV1Fzc=
-			</data>
-		</dict>
-		<key>www/static/js/main.ba4ce9e0.js.map</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			pHMjlsmuUam5kY/tIb0eNCHrOG6kEr2/3NpFxH6V1o4=
+			+Wf2cCsKbN4sQt/zEJw6dXXIk5Xopy6Jv96PWiTCYxk=
 			</data>
 		</dict>
 		<key>www/static/media/KaTeX_AMS-Regular.73ea273a72f4aca30ca5.woff2</key>
@@ -1041,6 +990,13 @@
 			<key>hash2</key>
 			<data>
 			8B8+h9nGphwMCBzrV3q9hk6wCmEvesFiDdaRX60u9ao=
+			</data>
+		</dict>
+		<key>www/static/media/cookr_logo.caa62baeb94b02677509.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			tntsfBJmOWiYB0+0KH6LicvCQ/dQIETOu7S9SRaWth8=
 			</data>
 		</dict>
 		<key>www/static/media/correct-answer-sound-effect-19.842666b9f366299de43e.wav</key>

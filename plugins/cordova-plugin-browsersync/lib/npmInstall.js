@@ -6,7 +6,7 @@ var fs = require('fs');
  * or as a project hook
  **/
 module.exports = function(context) {
-    var Q = context.requireCordovaModule('q');
+    var Q = context.require('q');
     var npm = context.requireCordovaModule('npm');
 
     var package = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
