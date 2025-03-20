@@ -1,5 +1,7 @@
 import AuthBox from "../components/AuthBox";
 import { useNavigate } from "react-router-dom";
+import cookrLogo from "../assets/CookrLogo.webp";
+
 
 function Auth() {
   const navigate = useNavigate();
@@ -8,21 +10,24 @@ function Auth() {
       className="App"
       style={{
         display: "flex",
-        alignItems: "center",
         flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        background:"black"
       }}
     >
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
+          marginBottom:"-50px"
         }}
       >
-        <h1 onClick={async () => navigate("/")} style={{ margin: "10px 0px", textShadow: "2px 2px 5px orange" }}>
-          Scro<span style={{ fontStyle: "italic" }}>ll</span>er
-        </h1>
+        <img style={{ height: "140px" }} src={cookrLogo} />
+
         <br></br>
       </div>
       <AuthBox></AuthBox>

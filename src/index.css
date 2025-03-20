@@ -1,17 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap');
+
+
 *{
-  font-family: "Poppins";
+  font-family: "Nunito";
   margin: 0px;
 }
 p{
-  font-family: "Poppins";
+  font-family: "Nunito";
 }
+.libCard{
+  width: 200px;
+  height: 200px;
+}
+.loading-circle {
+  border: 5px solid #101dd8; /* light background for the spinner */
+  border-top: 5px solid #0a0d0f; /* blue color for the spinning part */
+  border-radius: 50%;
+  width: 50px;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 
 .sale {
 position: relative;
-top:-75px;
+top:-55px;
 right: -150px;
-background: orange;
-box-shadow: 0px 0px 56px 1px orange;
+background: #6A6CFF;
+box-shadow: 0px 0px 56px 1px #484AC3;
 color: white;
 height: 2.5rem;
 width: 2.5rem;
@@ -20,7 +43,7 @@ vertical-align: middle;
 line-height: 2.5rem;
 transform: rotate(-10deg);
 animation: beat .4s ease infinite alternate;
-font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+font-family:Impact, Haettenschweiler, 'Nunito';
 &:before,
 &:after {
   content:"";
@@ -45,15 +68,21 @@ to {	transform: rotate(-20deg) scale(1.1); }
 
 .plus10-animation {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: orange;
+  top: 0px;
+  left: 0%;
+  background-color: #6a6cff;
   color: white;
   padding: 10px;
   border-radius: 10px;
-  font-size: 20px;
-  animation: fadeout 1.5s ease-out;
-
+  font-size: 12px;
+  animation: fadeout 2.5s;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  border-radius: 0px;
+  box-shadow: 0px 5px 1px 1px #484ac3;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 @keyframes fadeout {
@@ -95,7 +124,7 @@ margin-top: 50px;
 width: 50px;
 aspect-ratio: 1;
 border-radius: 100%;
-border: 8px solid orange;
+border: 8px solid rgb(73, 73, 255);
 animation:
   l20-1 0.8s infinite linear alternate,
   l20-2 1.6s infinite linear;
@@ -105,7 +134,7 @@ margin-top: 0px;
 width: 10px;
 aspect-ratio: 1;
 border-radius: 100%;
-border: 8px solid orange;
+border: 8px solid rgb(73, 73, 255);
 animation:
   l20-1 0.8s infinite linear alternate,
   l20-2 1.6s infinite linear;
@@ -216,14 +245,14 @@ overflow: scroll;
 
 .card {
 width: 370px;
-height: 80vh;
+height: 80dvh;
 margin: 50px 0px;
 transition: 0.1s;
 }
 
 .videoCard {
 width: 370px;
-height: 80vh;
+height: 80dvh;
 background-size: fit;
 margin: 50px 0px;
 background-position: center;
@@ -272,12 +301,16 @@ transform: scale(1.1); /* Zoom in effect */
 @media (max-width:568px) {
 .card{
 width: 84vw;
-height: 87vh;
+height: 85dvh;
 margin: 10px 0px;
 }
 .videoCard{
 width: 84vw;
-height: 87vh;
+height: 87dvh;
 margin: 10px 0px;
+}
+.libCard{
+  width: 90vw;
+  height: 150px;
 }
 }

@@ -19,7 +19,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
 
 var randomColor = require("randomcolor"); // import the script
 
-function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
+function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [promptMode, setPromptMode] = useState(1);
   const [
     subcolor,
@@ -241,6 +241,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
 
       // Update the Firestore document with the modified sets array
       await updateDoc(docRef, { sets: currentSets });
+      localStorage.setItem('sets', JSON.stringify(currentSets))
 
       // Remove from localStorage if necessary
       const currentSet = JSON.parse(localStorage.getItem("currentSet"));
@@ -257,20 +258,12 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
   };
 
   const saveToFirestore = async () => {
-    console.log("WSG")
-    console.log(user)
     try {
       const color = randomColor({
-        luminosity: "dark",
+        luminosity: "light",
       });
       const userEmail = user;
-      var docRef;
-      console.log(type)
-      if(type==3){
-        docRef = doc(db, "sets", "featured");
-      }else{
-        docRef = doc(db, "users", userEmail);
-      }
+      const docRef = doc(db, "users", userEmail);
       // Fetch the current data from Firestore
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
@@ -278,10 +271,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
         return;
       }
       let currentSets = docSnap.data().sets || [];
-      console.log("howd we eend up here")
       if (style === 1) {
-        console.log("howd we eend up here")
-
         // Remove the item if style === 1
         currentSets = currentSets.filter(
           (item) =>
@@ -302,9 +292,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
             content: subcontent,
             subject: subsubject,
             promptMode: subpromptmode,
-            scrollGenerationMode: subselectedmode,
             color: subcolor,
-            tag: subtag,
           });
         } catch (removeError) {
           console.error("Error removing item from localStorage:", removeError);
@@ -318,90 +306,47 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
               item.content === subcontent &&
               item.subject === subsubject &&
               item.promptMode === subpromptmode &&
-              item.color === subcolor &&
-              item.scrollGenerationMode == subselectedmode &&
-              item.tag === subtag
+              item.color === subcolor 
           );
         if (index !== -1) {
-          console.log("we in the iffff")
           currentSets.splice(index, 0, {
             title: title,
             content: content,
             subject: subject,
             promptMode: promptMode,
             color: subcolor,
-            tag: tag,
-            scrollGenerationMode: selectedMode,
+           
           });
         } else {
-
           // If item was not found, just add to the end
-          if(type==3){
-            currentSets.push({
-              Title: title,
-              Mode: 1,
-              content: content,
-              subject: subject,
-              author:user,
-              promptMode: promptMode,
-              color: subcolor,
-              tag: tag,
-              scrollGenerationMode: selectedMode,
-              link:''
-            });
-          }else{
-            currentSets.push({
-              title: title,
-              content: content,
-              subject: subject,
-              promptMode: promptMode,
-              color: randomColor(),
-              tag: tag,
-              scrollGenerationMode: selectedMode,
-            });
-        }
-        }
-      } else {
-        // If style !== 1, just add to the end
-        if(type==3){
-          console.log('yohooo')
-          currentSets.push({
-            Title: title,
-            Mode: 1,
-            color:color,
-            featured:true,
-            content: content,
-            subject: subject,
-            author:user,
-            promptMode: promptMode,
-            tag: tag,
-            scrollGenerationMode: selectedMode,
-            link:''
-          });
-        }else{
           currentSets.push({
             title: title,
             content: content,
             subject: subject,
             promptMode: promptMode,
-            color: randomColor(),
-            tag: tag,
-            scrollGenerationMode: selectedMode,
+            color: subcolor,
+            
           });
-      }
+        }
+      } else {
+        // If style !== 1, just add to the end
+        if(currentSets.length<10){
+        currentSets.push({
+          title: title,
+          content: content,
+          subject: subject,
+          promptMode: promptMode,
+          color: color,
+         
+        });
+      }else{
+          console.error("You can only have 10 sets at once in the library.")
+        }
       }
 
       // Update the Firestore document
-  
+      await updateDoc(docRef, { sets: currentSets });
 
-      try {
-        console.log(currentSets)
-        console.log("Updating Document:", docRef.path);
-        await updateDoc(docRef, { sets: currentSets });
-        console.log("Firestore updated successfully");
-      } catch (updateError) {
-        console.error("Error during Firestore update:", updateError);
-      }
       // Update localStorage
       if (
         localStorage.getItem("currentSet") == null ||
@@ -420,6 +365,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
           })
         );
       }
+      localStorage.setItem('sets', JSON.stringify(currentSets))
 
       setOpenNewTopic(false);
     } catch (e) {
@@ -464,21 +410,20 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
   return (
     <div
       style={{
-        flexDirection: "column",
-        width: "30px",
-        height: "auto",
-        scale: "0.97",
-        top: "-5px",
-        position: "absolute",
-        right: "0px",
-        width: "330px",
-        zIndex: "99999999999999999999",
-        background: "white",
-        boxShadow: "0px 0px 16px 1px gainsboro",
-        borderRadius: "10px",
+        position: "fixed",
+        top: 0,
+        // left: 0,
+        right: mobileDimension? 0: 0,
+        width: mobileDimension? "100vw": "370px",
+        height: "100dvh",
+        backgroundColor: "black",
+        color: "white",
         display: "flex",
+        flexDirection: "column",
         padding: "20px",
-        justifyContent: "space-between",
+        justifyContent: "space-around",
+        zIndex: 99999999999999,
+        boxSizing: "border-box",
       }}
     >
       <svg
@@ -498,50 +443,54 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
       >
         <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
       </svg>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", marginBottom: "15px" }}>
         <div
           onClick={() => setPromptMode(1)}
           style={{
             borderBottom:
-              promptMode === 1 ? "1px solid black" : "1px solid gainsboro",
+              promptMode === 1 ? "10px solid #6A6CFF" : "1px solid black",
             marginRight: "10px",
-            padding: "10px",
+            padding: "5px 10px",
             cursor: "pointer",
           }}
         >
-          <p style={{ margin: "0px" }}>My content</p>
+          <p style={{ margin: "0px" }}>Upload Notes</p>
         </div>
         <div
           onClick={() => setPromptMode(2)}
           style={{
             borderBottom:
-              promptMode === 2 ? "1px solid black" : "1px solid gainsboro",
+              promptMode === 2 ? "10px solid #6A6CFF" : "1px solid black",
             marginRight: "10px",
-            padding: "10px",
+            padding: "5px 10px",
             cursor: "pointer",
           }}
         >
-          <p style={{ margin: "0px" }}>From scratch</p>
+          <p style={{ margin: "0px" }}>General</p>
         </div>
       </div>
       <div>
         <div style={{ width: "100%", marginBottom: "10px" }}>
           <p style={{ fontSize: "20px", margin: "0px" }}>Title</p>
           <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
-            Set a title for your AI generated scrolls, so it's easy to access
+            Set a title for your AI generated Cookr questions, so it's easy to access
             later.
           </p>
           <input
             value={title}
             onChange={handleTitleChange}
             style={{
-              outline: "1px solid gainsboro",
+              background: "#28282B",
+              outline: "1px solid #353935",
               border: "none",
               borderRadius: "10px",
               padding: "10px 5px",
               width: "100%",
               boxSizing: "border-box",
+              color: "white",
+              
             }}
+            placeholder={"Chef Shark"}
           />
         </div>
         {promptMode === 1 ? (
@@ -557,8 +506,11 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                 borderRadius: "10px",
                 width: "100%",
                 boxSizing: "border-box",
-                height: "35vh",
+                height: "35dvh",
                 position: "relative",
+                background: "#28282B",
+                outline: "1px solid #353935",
+                height: "50dvh",
               }}
             >
               <textarea
@@ -573,8 +525,10 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                   resize: "none",
                   padding: "10px",
                   height: "90%",
+                  background: "#28282B",
+                  color: "white",
                 }}
-                maxLength={10000}
+                maxLength={14000}
               />
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <p
@@ -585,7 +539,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                     padding: "0px 10px",
                   }}
                 >
-                  {content.length}/10000
+                  {content.length}/14000
                 </p>
                 <form
                   style={{ position: "absolute", bottom: "5px", left: "5px" }}
@@ -593,18 +547,17 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                   <label
                     htmlFor="fileUpload"
                     style={{
-                      background: "white",
                       display: "inline-block",
                       padding: "5px 8px", // Reduced padding
                       borderRadius: "8px", // Reduced border radius
-                      outline: "1px solid gainsboro",
                       cursor: "pointer",
                       backgroundColor: "white",
                       fontSize: "12px", // Reduced font size
-                      color: "black",
+                      color: "white",
                       textAlign: "center",
                       boxSizing: "border-box",
-                      boxShadow: "2px 2px 5px gainsboro", // Shadow added here
+                      background: "#6A6CFF",
+                      boxShadow: "0px 2px 0px 0px #484AC3", // Shadow added here
                     }}
                   >
                     Upload Notes
@@ -614,7 +567,11 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                       name="file"
                       accept=".pdf, image/*" // Accepts PDF files and all image formats
                       onChange={handleFile}
-                      style={{ display: "none" }}
+                      style={{
+                        display: "none",
+                        background: "#28282B",
+                        outline: "1px solid #353935",
+                      }}
                     />
                   </label>
                 </form>
@@ -630,14 +587,15 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
             </p>
             <div
               style={{
-                outline: "1px solid gainsboro",
                 border: "none",
                 borderRadius: "10px",
                 width: "100%",
                 boxSizing: "border-box",
-                height: "35vh",
+                height: "50dvh",
                 position: "relative",
                 marginBottom: "10px",
+                background: "#28282B",
+                outline: "1px solid #353935",
               }}
             >
               <textarea
@@ -652,9 +610,11 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                   resize: "none",
                   padding: "10px",
                   height: "90%",
+                  background: "#28282B",
+                  color: "white",
                 }}
                 placeholder="Chain rule for AP Calculus BC..."
-                maxLength={6000}
+                maxLength={1000}
               />
               <p
                 style={{
@@ -664,26 +624,13 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
                   padding: "0px 10px",
                 }}
               >
-                {subject.length}/6000
+                {subject.length}/1000
               </p>
             </div>
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ccc', borderRadius: '5px', padding: '5px' }}>
-          <input
-            type="text"
-            placeholder="Enter website URL"
-            style={{ flex: 1, border: 'none', outline: 'none' }}
-            id="linkInput"
-          />
-          <img
-            src="upload-icon.png" // Replace with your actual upload icon path
-            alt="Upload"
-            style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '5px' }}
-            onClick={() => fetchTranscriptUsingAPI(document.getElementById('linkInput').value)}
-          />
-        </div>
-        <div style={{ width: "100%", marginBottom: "10px", marginTop:'15px'}}>
+
+        {/*<div style={{ width: "100%", marginBottom: "10px" }}>
           <p style={{ fontSize: "20px", margin: "0px" }}>Mode</p>
           <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
             Choose how you want to study!
@@ -696,7 +643,7 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
               📹 Videos
             </div>
           </div>
-        </div>
+              </div>*/}
       </div>
 
       <div>
@@ -706,10 +653,14 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
             style={{
               width: "100%",
               background: "transparent",
-              border: "1px solid gainsboro",
+              border: "none",
               padding: "10px",
               borderRadius: "10px",
               cursor: "pointer",
+              color: "white",
+              background: "#6A6CFF",
+              boxShadow: "0px 2px 0px 0px #484AC3", 
+              fontSize:'15px'
             }}
           >
             Save
@@ -721,11 +672,14 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
               onClick={() => saveToFirestore(false)}
               style={{
                 width: "47%",
-                background: "transparent",
-                border: "1px solid gainsboro",
+                background: "#6A6CFF",
+                boxShadow: "0px 5px 0px 0px #484AC3", 
+                border: "none",
                 padding: "10px",
                 borderRadius: "10px",
                 cursor: "pointer",
+                color:"white",
+                fontSize:'15px'
               }}
             >
               Save
@@ -735,11 +689,14 @@ function NewPrompt({ setOpenNewTopic, style, params, type=1}) {
               onClick={() => deleteItemFromFirestore()}
               style={{
                 width: "47%",
-                background: "transparent",
-                border: "1px solid gainsboro",
+                background: "#6A6CFF",
+                boxShadow: "0px 5px 0px 0px #484AC3", 
+                border: "none",
                 padding: "10px",
                 borderRadius: "10px",
                 cursor: "pointer",
+                color:"white",
+                fontSize:'15px'
               }}
             >
               Delete

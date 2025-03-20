@@ -1,4 +1,4 @@
-import Bottom from "../components/Bottom";
+import Bottom from "../components/BottomNav";
 import CustomDropdown from "../components/Dropdown";
 import Navbar from "../components/Navbar";
 import Scroller from "../components/Scroller";
@@ -14,6 +14,8 @@ import Text from '../assets/text.png'; // Adjust the path as needed
 import Desmos from 'desmos'; // You need to install Desmos or load via CDN
 import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import HomeScreenTutorial from "../components/mini_components/HomeScreenTutorial";
+import ScrollerLogInHomeScreen from "../components/mini_components/ScrollerLogInHomeScreen";
 
 
 
@@ -38,6 +40,7 @@ function Home() {
   });
   const [loading, setLoading] = useState(true);
 const [user, setUser] = useState(null);
+
 useEffect(() => {
   // Listen for authentication state changes
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -90,7 +93,6 @@ useEffect(() => {
     };
   }, [showCalculator]);
   useEffect(() => {
-    console.log(sets);
   });
   const faqData = [
     {
@@ -134,7 +136,6 @@ useEffect(() => {
           doc(db, "users", user),
           (doc) => {
             setSets(doc.data().sets);
-            console.log(sets);
           }
         );
       }
@@ -158,327 +159,95 @@ useEffect(() => {
         setActiveIndex(activeIndex === index ? null : index);
     };
 
-  return (
-    <div
-      className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden",}}
-    >
-      {user ? (<Navbar setMobileDimension={setMobileDimension} />):<div></div>}
-
-      {user ? (
-        <div
-          style={{
-            flex: 1,
-            padding: "0px",
-            overflowY: "auto",
-            display: "flex",
-            justifyContent: "center",
-            flexDirection: "column",
-            alignItems: "center",
-            backgroundColor: isDarkMode ? "black": "whitesmoke"
-          }}
-        >
-          {currentSet ? (
-           
-           <div style={{ position: 'relative', width: '100%', height: '100vh', justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
-      {/* Demos Calculator Button/Icon */}
-      {isToolsOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '6px',
-            right: '10px',
-            backgroundColor: 'black',
-            // padding: '10px',
-            borderRadius: '25px',
-            width:'50%', // change back 50%
-            height:"6.7%",
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            // justifyContent:'center',
-            overflow:'hidden',
-
-          }}
-        >
-      <button 
-        style={{
-          // position: 'absolute',
-          // marginTop:'30%',
-          // padding: '10px',
-          backgroundColor: 'black',
-          color: '#fff',
-          marginLeft:'15%',
-          border: 'none',
-          borderRadius: '50%',
-          width:'6.7%',
-          height: '6.7%',
-          cursor: 'pointer',
-          fontSize:'20px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-        }}
-        onClick={() => setShowCalculator(true)}
+    return (
+      <div
+        className="App"
+        style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
       >
-        <i class="fa-solid fa-calculator"></i>
-      </button>
-      <button
-        style={{
-          // position: 'absolute',
-          // marginTop:'70%',
-          // padding: '10px',
-          backgroundColor: 'black',
-          color: '#fff',
-          marginLeft:'15%',
-          border: 'none',
-          borderRadius: '50%',
-          width:'6.7%',
-          height: '6.7%',
-          cursor: 'pointer',
-          display: 'flex',
-          fontSize:'20px',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-        }}
-        onClick={() => setShowPeriodicTable(true)}
-      >
-        <i class="fa-solid fa-flask-vial"></i>
-      </button>
-      </div>
-      )}
-      <button
-        style={{
-          width:'6.7%',
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          padding: '10px 20px',
-          backgroundColor: 'black',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '25px',
-          cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-        }}
-        onClick={() => setIsToolsOpen(!isToolsOpen)} // Toggle tools visibility
-      >
-        Tools
-      </button>
-      
-      
-
-      {/* Existing Content */}
-      <Scroller
-        setStreak={setStreak}
-        setXP={setXP}
-        currentSet={currentSet}
-      />
-
-      {/* Calculator Modal */}
-
-      {showCalculator && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: 0, // Aligning to the right
-          width: '60vw', // Reduced size
-          right: '20px', // Moves the calculator to the left of the red button
-          top:'15px',
-          height: '80vh', // Reduced height
-          backgroundColor: '#fff',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', // Shadow for better visibility
-          zIndex: 1000, // Ensure it's above other elements
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          {/* Close Button */}
-          <button
+        {<Navbar setMobileDimension={setMobileDimension} />}
+        {localStorage.getItem("email") ? (
+          <div
             style={{
-              position: 'absolute',
-              top: '0px',
-              right: '0px',
-              marginBottom:'20px',
-              marginTop:'20px',
-              marginRight:'10px',
-              backgroundColor: 'red',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              // fontSize:'30px'
+              flex: 1,
+              padding: "0px",
+              overflowY: "auto",
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
+              backgroundColor: "black",
+              color: "white",
             }}
-            onClick={() => setShowCalculator(false)}
           >
-            &times;
-          </button>
-
-          {/* Desmos Calculator */}
-          <div ref={calculatorRef} style={{ width: '100%', height: '100%', marginRight:'40px' }}></div>
-        </div>
-      )}
-            {showPeriodicTable && (
-        <div style={{
-          position: 'fixed',
-          top: '15px',
-          right:'20px',
-          borderRadius: '8px',
-          backgroundColor: 'white',
-          display: 'flex',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-          // justifyContent: 'center',
-          // alignItems: 'center',
-          marginLeft:'20%'
-        }}>
-          <div style={{
-            width: '60vw', // Adjust the size
-            height: '60vh',
-            backgroundColor: '#fff',
-            padding: '20px',
-            borderRadius: '8px',
-            position: 'relative'
-          }}>
-            {/* Close Button */}
-            <button
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                backgroundColor: 'red',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                width: '30px',
-                height: '30px',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-              onClick={() => setShowPeriodicTable(false)}
-            >
-              &times;
-            </button>
-
-            {/* Periodic Table Image */}
-            <img
-              src="https://pubchem.ncbi.nlm.nih.gov/periodic-table/Periodic_Table.png"
-              alt="Periodic Table"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
+            {/* {mobileDimension && (
+              <div
+                style={{
+                  background: "black",
+                  width: "100%",
+                  height: "40px",
+                  position: "absolute",
+                  top: "0px",
+                  display: "flex",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                  zIndex: "10000000",
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" height={16} fill="white">
+                  <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z" />
+                </svg>
+                <p style={{ margin: "0px", fontSize: "14px" }}>Library</p>
+                <p style={{ margin: "0px", fontSize: "14px" }}>Cook</p>
+              </div>
+            )}
+   */}
+            {currentSet ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100vh",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Scroller
+                  setStreak={setStreak}
+                  setXP={setXP}
+                  currentSet={currentSet}
+                  mobileDimension={mobileDimension}
+                />
+              </div>
+            ) : (sets && sets.length) > 0 && !currentSet ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <p style={{}}>Pick a subject to get started with your session!</p>
+              </div>
+            ) : (
+              <HomeScreenTutorial></HomeScreenTutorial>
+            )}
+            <Bottom
+              streak={streak}
+              currentPage={'home'}
+              xp={xp}
+              sets={sets}
+              currentSet={currentSet}
+              setCurrentSet={setCurrentSet}
+              mobileDimension={mobileDimension}
             />
           </div>
-        </div>
-      )}
-
-    </div>
-          ) : (sets && sets.length) > 0 && !currentSet ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <p style={{color: isDarkMode ? "white": "black"}}>Pick a subject to get started with your session!</p>
-            </div>
-          ) : (
-            <p style={{ textAlign: "center", width: "50%", color: isDarkMode ? "white": "black"}}>
-              Welcome to Scroller! To get started, add a new subject in{" "}
-              <span>
-                <svg
-                  fill={isDarkMode ? "#ffffff" : "#000000"}
-                  width="20px"
-                  height="20px"
-                  viewBox="0 0 32 32"
-                  version="1.1"
-                  xmlns="https://www.w3.org/2000/svg"
-                  style={{margin:"0px 10px"}}
-                >
-                  <path d="M30.156 26.492l-6.211-23.184c-0.327-1.183-1.393-2.037-2.659-2.037-0.252 0-0.495 0.034-0.727 0.097l0.019-0.004-2.897 0.776c-0.325 0.094-0.609 0.236-0.86 0.42l0.008-0.005c-0.49-0.787-1.349-1.303-2.33-1.306h-2.998c-0.789 0.001-1.5 0.337-1.998 0.873l-0.002 0.002c-0.5-0.537-1.211-0.873-2-0.874h-3c-1.518 0.002-2.748 1.232-2.75 2.75v24c0.002 1.518 1.232 2.748 2.75 2.75h3c0.789-0.002 1.5-0.337 1.998-0.873l0.002-0.002c0.5 0.538 1.211 0.873 2 0.875h2.998c1.518-0.002 2.748-1.232 2.75-2.75v-16.848l4.699 17.54c0.327 1.182 1.392 2.035 2.656 2.037h0c0.001 0 0.003 0 0.005 0 0.251 0 0.494-0.034 0.725-0.098l-0.019 0.005 2.898-0.775c1.182-0.326 2.036-1.392 2.036-2.657 0-0.252-0.034-0.497-0.098-0.729l0.005 0.019zM18.415 9.708l5.31-1.423 3.753 14.007-5.311 1.422zM18.068 3.59l2.896-0.776c0.097-0.027 0.209-0.043 0.325-0.043 0.575 0 1.059 0.389 1.204 0.918l0.002 0.009 0.841 3.139-5.311 1.423-0.778-2.905v-1.055c0.153-0.347 0.449-0.607 0.812-0.708l0.009-0.002zM11.5 2.75h2.998c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.498 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM8.75 23.25h-5.5v-14.5l5.5-0.001zM10.25 8.75l5.498-0.001v14.501h-5.498zM4.5 2.75h3c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.5 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM7.5 29.25h-3c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.5v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM14.498 29.25h-2.998c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.498v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM28.58 27.826c-0.164 0.285-0.43 0.495-0.747 0.582l-0.009 0.002-2.898 0.775c-0.096 0.026-0.206 0.041-0.319 0.041-0.575 0-1.060-0.387-1.208-0.915l-0.002-0.009-0.841-3.14 5.311-1.422 0.841 3.14c0.027 0.096 0.042 0.207 0.042 0.321 0 0.23-0.063 0.446-0.173 0.63l0.003-0.006z"></path>
-                </svg>
-                My Library
-              </span>
-            </p>
-          )}
-          <Bottom
-            streak={streak}
-            xp={xp}
-            sets={sets}
-            currentSet={currentSet}
-            setCurrentSet={setCurrentSet}
-            mobileDimension={mobileDimension}
-          />
-        </div>
-      ) : (
-        <div
-      className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden", }}
-    >
-      <Navbar setMobileDimension={setMobileDimension} />
-      <div style={{display:'flex',height:'100vh',alignContent:'center', justifyContent:'center'}}>
-      <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: mobileDimension?"translate(-50%, -50%)":"translate(0%, -50%)",
-          }}
-        >
-          <p style={{fontSize:"21px"}}>Hey 👋, welcome to{" "}</p>
-          <h1
-            style={{
-              margin: "0px",
-              textShadow: "2px 2px 5px orange",
-              fontSize: "50px",
-            }}
-          >
-            Scro<span style={{fontStyle:"italic"}}>ll</span>er
-          </h1>
-          <br></br>
-          <button
-            onClick={async () => navigate("/auth")}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "black",
-              border: "none",
-              color: "white",
-              borderRadius: "100px",
-              cursor: "pointer",
-            }}
-          >
-            Sign In
-          </button>
-          <p style={{ textAlign: "center", marginTop: "20px" }}>
-            to get scrollin'!
-          </p>
-        </div>
-        </div>
+        ) : (
+          <ScrollerLogInHomeScreen mobileDimension={mobileDimension} />
+        )}
       </div>
-        
-      )}
-    </div>
-  );
-}
+    );
+  }
 
 export default Home;
 

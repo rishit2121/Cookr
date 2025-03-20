@@ -327,6 +327,8 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
     implementation "androidx.appcompat:appcompat:${cordovaConfig.ANDROIDX_APP_COMPAT_VERSION}"
     implementation "androidx.core:core-splashscreen:${cordovaConfig.ANDROIDX_CORE_SPLASHSCREEN_VERSION}"
 

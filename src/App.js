@@ -16,7 +16,10 @@ import { loadStripe } from '@stripe/stripe-js';
 import CancelSubscription from "./components/CancelSubscription"; // New subscription page
 import Reels from "./pages/VideoScroller";
 import Scrolls from "./pages/Scrolls";
+import FlashCard from "./pages/Flashcard";
 import Featured from "./pages/Featured_Sets";
+import Leaderboard from "./pages/LeaderboardPage";
+const stripePromise = loadStripe("pk_test_51NDfrSF2kI0aSHJWEUmuSmUqVTFRTKvvDcBKtGVuEC4WdgqXvw1eiE3f0etV8s8fSAdlp774vmPwCvUSORmsVfY300UlG4SuFH");
 
 
 
@@ -35,7 +38,16 @@ function App() {
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/results" element={<Results />} />
           <Route path="/featured" element={<Featured />} />
-          {/* <Route path="/subscribe" element={<SubscribeForm />} /> Add the new subscription route */}
+          <Route path="/flashcards" element={<FlashCard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route
+          path="/subscribe"
+          element={
+            <Elements stripe={stripePromise}>
+              <SubscribeForm />
+            </Elements>
+          }
+        />
           {/* <Route path="/cancel" element={<CancelSubscription />} /> Add the new subscription route */}
           <Route path="/reels" element={<Reels />} /> Add the new subscription route
           <Route path="/scrolls" element={<Scrolls />} />

@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { async } from "@firebase/util";
+import CheckMark from "./mini_components/green_check"
+import CrossMark from "./mini_components/cross_mark"
+
 
 const Plans = ({ planType }) => {
   const item = {
     price: "price_1PnC5hKU472eG61vQgz1hUnm",
     quantity: 1,
   };
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
 
   const checkoutOptions = {
     lineItems: [item],
@@ -35,15 +40,21 @@ const Plans = ({ planType }) => {
       style={{
         margin: "0px 00px",
         display: "flex",
-        width: "92%",
-        flexWrap: "wrap",
-        justifyContent: "space-evenly",
+        flexDirection: "row",
+        overflowY:'visible',
+        // gap:'50px',
+        overflowX: "auto", // Enable horizontal scrolling
+        paddingBottom: "20px", // Optional: adds some padding at the bottom to prevent content cut-off
+        width:'100%',
+        height:'calc(100dvh - 50px)',
+        alignItems: isMobile?'center': 'initial',
       }}
     >
       <div
         style={{
           width: "300px",
-          height: "600px",
+          // height: "80%",
+          height:'fit-content',
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -51,19 +62,20 @@ const Plans = ({ planType }) => {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid gainsboro",
-          marginBottom: "50px",
+          marginTop: "3.5%",
+          flex: "0 0 auto",
+          marginLeft:'5%',
         }}
       >
-        <h1 style={{}}>Free</h1>
+        <h1 style={{marginTop:'0%'}}>Free</h1>
         <br></br>
-        <br></br>
-        <p style={{ fontSize: "14px" }}>Get a break from brainrot.</p>
+        {/* <p style={{ fontSize: "14px" }}>Get a break from brainrot.</p> */}
         <br></br>
         <h1
           style={{
-            fontSize: "70px",
-            borderTop: "1px solid orange",
-            borderBottom: "1px solid orange",
+            fontSize: "60px",
+            borderTop: "1px solid blue",
+            borderBottom: "1px solid blue",
           }}
         >
           $0
@@ -80,36 +92,44 @@ const Plans = ({ planType }) => {
             listStyle: "none",
           }}
         >
-          <li>✅ Unlimited Scrolling</li>
+          <li> <div style={{display:'flex', }}><CheckMark></CheckMark> Unlimited Scrolling</div></li>
           <li>
-            ✅ Unlimted Subjects
-            <span style={{ fontSize: "10px" }}> (Till September 5th)</span>
+          <div style={{display:'flex', }}><CheckMark></CheckMark>Unlimted Subjects</div>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>Save Scrolls</div></li>
+
+            {/* <span style={{ fontSize: "10px" }}> (Till September 5th)</span> */}
           </li>
-          <li>❌ Save Scrolls</li>
-          <li>❌ No Ads</li>
-          <li>❌ Early Acccess to New Features</li>
-          <li>❌ No Priority Customer Support</li>
-          <li>❌ No Access to Scroller Benefits</li>
+          {/* <li><div style={{display:'flex', }}><CrossMark></CrossMark> Save Scrolls</li> */}
+          <li><div style={{display:'flex', }}><CrossMark></CrossMark> Infinite Note Uploads</div></li>
+          <li><div style={{display:'flex', }}><CrossMark></CrossMark> AI Tutor Bot</div></li>
+          {/* <li><div style={{display:'flex', }}><CrossMark></CrossMark> No Priority Customer Support</li> */}
+          <li><div style={{display:'flex', width:'200px'}}><CrossMark></CrossMark> New Feature Access</div></li>
         </div>
         <button
           style={{
             width: "100%",
-            padding: "10px",
-            backgroundColor: "black",
+            padding: "4%",
             borderRadius: "100px",
             border: "none",
             color: "white",
             cursor: "pointer",
-            marginTop: "40px",
+            marginTop: "24px",
+            marginBottom:'7px',
+            fontSize:'20px',
+            backgroundColor:"#ff9900",
+            color:'black',
+            fontWeight:'bold'
           }}
         >
           {planType == "free" && "Current"}
         </button>
+        
       </div>
+
       <div
         style={{
           width: "300px",
-          height: "660px",
+          height:'fit-content',
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -117,20 +137,22 @@ const Plans = ({ planType }) => {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid black",
-          boxShadow: "5px 5px 1px 1px orange",
-          marginBottom: "50px",
+          boxShadow: "5px 5px 1px 1px blue",
+          marginTop: "2%",
+          flex: "0 0 auto",
+          marginLeft:'10%',
         }}
       >
-        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller+</h1>
+        <h1 style={{ textShadow: "0px 0px 10px white" }}>Cookr+</h1>
+
+        {/* <p style={{ fontSize: "14px" }}>For those to lock out, to lock in.</p> */}
         <br></br>
-        <br></br>
-        <p style={{ fontSize: "14px" }}>For those to lock out, to lock in.</p>
         <br></br>
         <h1
           style={{
-            fontSize: "70px",
-            borderTop: "1px solid orange",
-            borderBottom: "1px solid orange",
+            fontSize: "60px",
+            borderTop: "1px solid blue",
+            borderBottom: "1px solid blue",
           }}
         >
           $5
@@ -141,42 +163,46 @@ const Plans = ({ planType }) => {
           style={{
             display: "flex",
             flexDirection: "column",
-            lineHeight: "35px",
+            lineHeight: "31px",
             listStyle: "none",
           }}
         >
-          <li>✅ Unlimited Scrolling</li>
-          <li>✅ Unlimited Subjects</li>
-          <li>✅ Save Scrolls</li>
-          <li>✅ Access to Answer Explanations </li>
-          <li>
-            ✅ Access to Themes{" "}
+          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark> Everything in Standard</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Share Scrolls</div></li>
+          {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Save Scrolls</li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Infinite Note Uploads </div></li>
+          {/* <li>
+            <div style={{display:'flex', }}><CheckMark></CheckMark> Access to Themes{" "}
             <span style={{ fontSize: "10px" }}>(Coming Soon)</span>
-          </li>
-          <li>✅ No Ads</li>
-          <li>✅ Early Acccess to New Features</li>
-          <li>✅ Priority Customer Support</li>
-          <li>✅ Exclusive Newsletter </li>
+          </li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Answer Explanations</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access</div></li>
+          {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> AI Tutor Bot </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Exclusive Newsletter </div></li>
         </div>
         <button
           style={{
             width: "100%",
-            padding: "10px",
-            backgroundColor: "black",
+            padding: "4%",
             borderRadius: "100px",
             border: "none",
             color: "white",
             cursor: "pointer",
             marginTop: "20px",
+            fontSize:'20px',
+            backgroundColor:"#ff9900",
+            color:'black',
+            fontWeight:'bold'
           }}
         >
-          Coming Soon
+          Switch Over
         </button>
       </div>
       <div
         style={{
           width: "300px",
-          height: "600px",
+          height:'fit-content',
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -184,25 +210,28 @@ const Plans = ({ planType }) => {
           background: "#fcfcfc",
           borderRadius: "10px",
           outline: "1px solid black",
-          boxShadow: "5px 5px 1px 1px orange",
+          boxShadow: "5px 5px 1px 1px blue",
+          flex: "0 0 auto",
+          marginTop:'2%',
+          marginLeft:'10%',
+          overflowY:'visible'
         }}
       >
-        <h1 style={{ textShadow: "0px 0px 10px orange" }}>Scroller 4 Life</h1>
+        <h1 style={{ textShadow: "0px 0px 10px white" }}>Cookr Elite</h1>
         <span class="sale">-25%</span>
-        <br></br>
-        <br></br>
-        <p style={{ fontSize: "14px" }}>You'll never touch TikTok again.</p>
-        <br></br>
+
+        {/* <p style={{ fontSize: "14px" }}>You'll never touch TikTok again.</p> */}
+
         <h1
           style={{
-            fontSize: "70px",
-            borderTop: "1px solid orange",
-            borderBottom: "1px solid orange",
+            fontSize: "60px",
+            borderTop: "1px solid blue",
+            borderBottom: "1px solid blue",
           }}
         >
           $45
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>
-            / lifetime
+            / yearly
           </span>
         </h1>
         <br></br>
@@ -210,32 +239,44 @@ const Plans = ({ planType }) => {
           style={{
             display: "flex",
             flexDirection: "column",
-            lineHeight: "40px",
+            lineHeight: "31px",
             listStyle: "none",
           }}
         >
-          <li>✅ Everything in Scroller+</li>
-          <li>✅ Thank You Letter</li>
-          <li>✅ Own Scroller Forever</li>
-          <li>✅ Access to Answer Explanations </li>
-          <li>
-            ✅ Exclusive Perks{" "}
+          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark> Everything in Standard</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Share Scrolls</div></li>
+          {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Save Scrolls</li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Infinite Note Uploads </div></li>
+          {/* <li>
+            <div style={{display:'flex', }}><CheckMark></CheckMark> Access to Themes{" "}
+            <span style={{ fontSize: "10px" }}>(Coming Soon)</span>
+          </li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Answer Explanations</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access</div></li>
+          {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> AI Tutor Bot </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Exclusive Newsletter </div></li>
+          {/* <li>
+            <div style={{display:'flex', }}><CheckMark></CheckMark> Exclusive Perks{" "}
             <span style={{ fontSize: "10px" }}>(more details coming soon)</span>
-          </li>
+          </li> */}
         </div>
         <button
           style={{
             width: "100%",
-            padding: "10px",
-            backgroundColor: "black",
+            padding: "4%",
             borderRadius: "100px",
             border: "none",
             color: "white",
             cursor: "pointer",
-            marginTop: "30px",
+            marginTop: "24px",
+            fontSize:'20px',
+            backgroundColor:"#ff9900",
+            color:'black',
+            fontWeight:'bold'
           }}
         >
-          Coming Soon
+          Switch Over
         </button>
       </div>
     </div>

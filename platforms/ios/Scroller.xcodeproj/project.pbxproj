@@ -330,7 +330,7 @@
 				INFOPLIST_FILE = "Scroller/Scroller-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.scroller;
+				PRODUCT_BUNDLE_IDENTIFIER = com.study.scroller;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.example.scrollerstudy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
@@ -358,7 +358,7 @@
 				INFOPLIST_FILE = "Scroller/Scroller-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.scroller;
+				PRODUCT_BUNDLE_IDENTIFIER = com.study.scroller;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";

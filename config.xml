@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.example.scroller" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.study.scroller" version="1.2.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Scroller</name>
-    <description>Sample Apache Cordova App</description>
+    <description>The TikTok for learning</description>
     <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
         Apache Cordova Team
     </author>
@@ -9,4 +9,31 @@
     <allow-navigation href="*" /> <!-- Allow navigation to any URL -->
     <allow-intent href="*" /> <!-- Allow any intent -->
     <access origin="*" /> <!-- Allow all domains, which can be restricted as needed -->
+
+    <!-- Add platform-specific icons -->
+    <platform name="android">
+        <preference name="loadUrlTimeoutValue" value="700000" />
+        <icon src="res/icons/android/icon-mdpi.png" density="mdpi" />
+        <icon src="res/icons/android/icon-hdpi.png" density="hdpi" />
+        <icon src="res/icons/android/icon-xhdpi.png" density="xhdpi" />
+        <icon src="res/icons/android/icon-xxhdpi.png" density="xxhdpi" />
+        <icon src="res/icons/android/icon-xxxhdpi.png" density="xxxhdpi" />
+    </platform>
+
+
+    <platform name="ios">
+    <icon src="res/icons/ios/29.png" width="29" height="29" />
+    <icon src="res/icons/ios/40.png" width="40" height="40" />
+    <icon src="res/icons/ios/57.png" width="57" height="57" />
+    <icon src="res/icons/ios/58.png" width="58" height="58" />
+    <icon src="res/icons/ios/60.png" width="60" height="60" />
+    <icon src="res/icons/ios/80.png" width="80" height="80" />
+    <icon src="res/icons/ios/87.png" width="87" height="87" />
+    <icon src="res/icons/ios/114.png" width="114" height="114" />
+    <icon src="res/icons/ios/120.png" width="120" height="120" />
+    <icon src="res/icons/ios/180.png" width="180" height="180" />
+    <icon src="res/icons/ios/1024.png" width="1024" height="1024" />
+    </platform>
+
+    <!-- Optional: Default icon for fallback -->
 </widget>

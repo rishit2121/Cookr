@@ -8,7 +8,7 @@
   },
   "installed_plugins": {
     "cordova-plugin-browsersync": {
-      "PACKAGE_NAME": "com.example.scroller"
+      "PACKAGE_NAME": "com.study.scroller"
     }
   },
   "dependent_plugins": {},
