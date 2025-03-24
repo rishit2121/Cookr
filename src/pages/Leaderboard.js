@@ -137,7 +137,7 @@ function MyLeaderboard() {
                   marginRight: "15px"
                 }}>2</div>
                 <span style={{ flex: 1 }}>{formatName(topThree[1].name)}</span>
-                <span style={{ color: 'white' }}>{topThree[1].XP.toLocaleString()} XP</span>
+                <span style={{ color: 'white', fontWeight: 'bold' }}>{topThree[1].XP.toLocaleString()} XP</span>
               </div>
             )}
 
@@ -166,7 +166,7 @@ function MyLeaderboard() {
                   marginRight: "15px"
                 }}>3</div>
                 <span style={{ flex: 1 }}>{formatName(topThree[2].name)}</span>
-                <span style={{ color: 'white' }}>{topThree[2].XP.toLocaleString()} XP</span>
+                <span style={{ color: 'white', fontWeight: 'bold' }}>{topThree[2].XP.toLocaleString()} XP</span>
               </div>
             )}
           </div>
@@ -190,11 +190,10 @@ function MyLeaderboard() {
         {/* <h4 style={{ color: "#6c757d", fontSize: "1em", marginBottom: "5px" }}>RANKINGS</h4> */}
         <div style={{ 
           height: 'calc(100dvh - 105px - 6dvh - 37dvh)',
-          width: "90%", 
+          width: "100%", 
           color:'white',
           overflowY: 'auto',
           overflowX: 'hidden',
-          position:'absolute',
           bottom: '75px',
           left: '5%',
           right: 0

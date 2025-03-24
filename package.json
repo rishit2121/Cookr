@@ -55,6 +55,7 @@
     "postcss-loader": "^6.2.1",
     "postcss-normalize": "^10.0.1",
     "postcss-preset-env": "^7.0.1",
+    "posthog-js": "^1.232.3",
     "prompts": "^2.4.2",
     "q": "^2.0.3",
     "randomcolor": "^0.6.2",
