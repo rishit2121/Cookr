@@ -224,8 +224,8 @@ const MyLibrary = ({ mobileDimension }) => {
             <button
               style={{
                 color: "white",
-                background: `#6A6CFF`,
-                boxShadow: `0px 5px 0px 0px #484AC3`,
+                background: `#0194a3`,
+                boxShadow: `0px 2px 0px 5px #00b3d1`,
                 padding: "20px",
                 borderRadius: "10px",
                 fontSize: "23px",
@@ -233,7 +233,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 border: "none",
                 cursor: "pointer",
                 width: "90%",
-                height: "25%",
+                height: "25dvh",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
@@ -244,16 +244,23 @@ const MyLibrary = ({ mobileDimension }) => {
               }}
             >
               <span style={{ fontWeight: "bold" }}>Multiple Choice</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="18dvw"
+                height="18dvh"
+              >
+                <path
+                  fill="currentColor"
+                  d="M3 12a3.5 3.5 0 0 1 3.5-3.5c1.204 0 2.02.434 2.7 1.113c.726.727 1.285 1.72 1.926 2.873l.034.06c.6 1.082 1.283 2.311 2.227 3.255c1.008 1.008 2.316 1.699 4.113 1.699a5.5 5.5 0 1 0-4.158-9.1a24 24 0 0 1 1.122 1.857A3.5 3.5 0 1 1 17.5 15.5c-1.203 0-2.02-.434-2.7-1.113c-.726-.727-1.285-1.72-1.926-2.873l-.034-.06c-.6-1.082-1.283-2.311-2.227-3.255C9.605 7.191 8.297 6.5 6.5 6.5a5.5 5.5 0 1 0 4.158 9.1a24 24 0 0 1-1.122-1.857A3.5 3.5 0 0 1 3 12"
+                ></path>
               </svg>
             </button>
             <button
               style={{
                 color: "white",
-                background: `#6A6CFF`,
-                boxShadow: `0px 5px 0px 0px #484AC3`,
+                background: `#6700d9`,
+                boxShadow: `0px 2px 0px 5px #7729cf`,
                 padding: "20px",
                 borderRadius: "10px",
                 fontSize: "23px",
@@ -262,7 +269,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 cursor: "pointer",
                 width: "90%",
                 marginTop:'5%',
-                height: "25%",
+                height: "25dvh",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
@@ -273,10 +280,26 @@ const MyLibrary = ({ mobileDimension }) => {
               }}
             >
               <span style={{ fontWeight: "bold" }}>Flashcards</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
-                <path d="M12 6v6l4 2"></path>
+
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 14 14"
+                width="15dvw"
+                height="15dvh"
+              >
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="8" height="6" x="5.5" y="1.5" rx="1"></rect>
+                  <path d="M11 10H4a1 1 0 0 1-1-1V4"></path>
+                  <path d="M9 12.5H1.5a1 1 0 0 1-1-1V6"></path>
+                </g>
               </svg>
+
             </button>
           </div>
         </div>

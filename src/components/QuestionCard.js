@@ -34,13 +34,30 @@ const QuestionCard = ({
     textColor: "black",
     buttonColor: "whitesmoke",
   };
-  const [selectedChoice, setSelectedChoice] = useState(selectedAnswer);
-  const [isAnswered, setIsAnswered] = useState(false);
+  
+  // Get the question states from the shared dictionary
+  const questionKey = `question_${question.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const questionStates = JSON.parse(localStorage.getItem("questionStates") || "{}");
+  const savedState = questionStates[questionKey] || {};
+  
+  const [selectedChoice, setSelectedChoice] = useState(savedState.selectedChoice || selectedAnswer);
+  const [isAnswered, setIsAnswered] = useState(savedState.isAnswered || false);
   const [showPlus10, setShowPlus10] = useState(false);
   const [shake, setShake] = useState(false);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [reveal, setReveal] = useState(false)
+  const [reveal, setReveal] = useState(savedState.reveal || false);
+
+  // Save state to the shared dictionary whenever it changes
+  useEffect(() => {
+    const questionStates = JSON.parse(localStorage.getItem("questionStates") || "{}");
+    questionStates[questionKey] = {
+      selectedChoice,
+      isAnswered,
+      reveal
+    };
+    localStorage.setItem("questionStates", JSON.stringify(questionStates));
+  }, [selectedChoice, isAnswered, reveal, questionKey]);
 
 const [user, setUser] = useState('rishit.agrawal121@gmail.com');
   useEffect(() => {
@@ -89,6 +106,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
     if (isAnswered) return;
     setSelectedChoice(choice);
     setIsAnswered(true);
+    setReveal(true);
     if (choice === parseInt(answer)) {
       if (isFavorites) {
         return;
@@ -122,6 +140,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
           if (userIndex !== -1) {
             // Remove user from current position before searching
             userData = rankingList[userIndex];
+            userData.XP += 10; // Add 10 to current XP
             rankingList.splice(userIndex, 1);
           } else {
             // For new users, create their data
@@ -258,7 +277,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
           transition: "transform 0.3s ease-in-out",
           minHeight: "300px", // Ensures the card has enough space to work with
         }}
-        onDoubleClick={handleHeartClick}
+        onDoubleClick={(localStorage.getItem("mode") == 1 || isFavorites) ? handleHeartClick : undefined}
       >
         {showPlus10 && (
           <div className="plus10-animation">Correct! You Cooked.</div>
@@ -334,7 +353,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
               <p
                 style={{
                   margin: "0% 0px",
-                  color: "#484AC3",
+                  color: "#6A6CFF",
                   fontSize: "18px",
                   boxSizing:"border-box",
                   
@@ -441,6 +460,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
                 </svg>
               </i>
             )}
+          {(localStorage.getItem("mode") == 1 || isFavorites) && (
           <svg
             onClick={async () => setShowComments(!showComments)}
             style={{ cursor: "pointer" }}
@@ -458,6 +478,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
               d="M21.5,12A9.5,9.5,0,1,0,12,21.5h9.5l-2.66-2.92A9.43,9.43,0,0,0,21.5,12Z"
             />
           </svg>
+          )}
           {!isFavorites && (
           <div
             style={{

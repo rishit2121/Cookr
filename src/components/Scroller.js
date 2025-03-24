@@ -62,10 +62,53 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       ? JSON.parse(localStorage.getItem("lastFlashSet"))
       : []
   );
-  const [isLoading, setIsLoading] = useState(false); // Flag for showing the loading indicator
-  const [isFetching, setIsFetching] = useState(false); // Flag for indicating an API call
-  const [currentIndex, setCurrentIndex] = useState(0); // Track the current card index
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (currentSet) {
+      const savedIndex = localStorage.getItem(`scrollPosition_${currentSet.title}`);
+      return savedIndex ? parseInt(savedIndex) : 0;
+    }
+    return 0;
+  });
+  useEffect(() => {
+    localStorage.setItem("previousQuestionsLength", "0");
+  }, []);
+  // Save current index to localStorage whenever it changes
+  useEffect(() => {
+    if (currentSet) {
+      const previousQuestionsLength = parseInt(localStorage.getItem("previousQuestionsLength") || "0");
+      const adjustedIndex = currentIndex - previousQuestionsLength;
+      if (adjustedIndex >= 0) {
+        localStorage.setItem(`scrollPosition_${currentSet.title}`, adjustedIndex.toString());
+      } else {
+        localStorage.setItem(`scrollPosition_${currentSet.title}`, "0");
+      }
+    }
+  }, [currentIndex, currentSet]);
+
+  // Restore scroll position when component mounts or questions change
+  useEffect(() => {
+    if (containerRef.current && currentSet && questions.length > 0) {
+      const savedIndex = localStorage.getItem(`scrollPosition_${currentSet.title}`);
+      if (savedIndex) {
+        const previousQuestionsLength = parseInt(localStorage.getItem("previousQuestionsLength") || "0");
+        const adjustedIndex = parseInt(savedIndex) - previousQuestionsLength;
+        
+        if (adjustedIndex >= 0) {
+          const scrollHeight = containerRef.current.clientHeight;
+          containerRef.current.scrollTop = scrollHeight * adjustedIndex;
+          setCurrentIndex(adjustedIndex);
+        } else {
+          setCurrentIndex(0);
+        }
+      }
+    }
+  }, [currentSet, questions.length]);
+
+  // Initialize previousQuestionsLength to 0 whenever the page is visited
+
+
   useEffect(() => {
     if (
       questions.length === 0 &&
@@ -74,24 +117,20 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     ) {
       fetchQuestions();
     }
-  }, [questions]); // ✅ Runs only when questions change
-  
+  }, [questions]);
 
   const handleScroll = () => {
-    if (isFetching) return; // Prevent scroll event during fetching
+    if (isFetching) return;
 
     const container = containerRef.current;
     if (!container) return;
 
-    const newIndex = Math.floor(container.scrollTop / container.clientHeight); // Adjust for padding
+    const newIndex = Math.floor(container.scrollTop / container.clientHeight);
     setCurrentIndex(newIndex);
-    console.log(currentIndex)
     const threeBeforeEnd = questions.length - 3;
 
-    // Start fetching when three cards away from the end
     if (currentIndex >= threeBeforeEnd && !isFetching) {
       setIsFetching(true);
-
       fetchQuestions();
     }
   };
@@ -125,14 +164,32 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       const newQuestions = JSON.parse(jsonrepair(data));
       const modifiedQuestions = newQuestions.map((question) => {
         return {
-          ...question, // Keep existing fields
+          ...question,
           title: currentSet.title,
           color: currentSet.color,
         };
       });
 
-      // Check if the response is an array
       if (Array.isArray(newQuestions)) {
+        // Increment previousQuestionsLength by 10 for each new set
+        const currentPreviousLength = localStorage.getItem("previousQuestionsLength");
+        if (!currentPreviousLength) {
+          localStorage.setItem("previousQuestionsLength", "0");
+        } else {
+          localStorage.setItem("previousQuestionsLength", (parseInt(currentPreviousLength) + 10).toString());
+        }
+
+        // Clear old question states when loading new questions
+        const questionStates = JSON.parse(localStorage.getItem("questionStates") || "{}");
+        const newQuestionStates = {};
+        modifiedQuestions.forEach(q => {
+          const key = `question_${q.question.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          if (questionStates[key]) {
+            newQuestionStates[key] = questionStates[key];
+          }
+        });
+        localStorage.setItem("questionStates", JSON.stringify(newQuestionStates));
+
         setQuestions((prevQuestions) => [
           ...prevQuestions,
           ...modifiedQuestions,
@@ -142,12 +199,11 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
         console.error("Unexpected response format:", data);
       }
 
-      setIsFetching(false); // Reset fetching flag
+      setIsFetching(false);
     } catch (e) {
       console.error("Error fetching questions:", e);
-      setIsFetching(false); // ✅ Don't re-call fetchQuestions infinitely
+      setIsFetching(false);
     }
-    
   };
 
   return (

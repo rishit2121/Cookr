@@ -303,6 +303,7 @@ const MyProfile = ({ mobileDimension }) => {
       console.log('fetched XP from firestore')
     } else {
       setUserXP(parseInt(localStorage.getItem("trueXP")));
+      console.log('hey im running!!!')
     }
   }, [user]); // This effect will run when userEmail changes
   const handleSelectPicture = async (alias) => {
@@ -312,19 +313,19 @@ const MyProfile = ({ mobileDimension }) => {
     // Save alias in Firestore
     await updateDoc(doc(db, "users", user), { profilePicture: alias });
   };
-  useEffect(() => {
-    if (!loading) {
-      // Subscribe to the leaderboard document
-      const unsubscribe = onSnapshot(doc(db, "leaderboard", "rankings"), (doc) => {
-        if (doc.exists()) {
-          const rankingList = doc.data().ranking || [];
-          const userData = rankingList.find(player => player.email === user);
-          setUserXP(userData ? userData.XP : 0);
-        }
-      });
-      return () => unsubscribe();
-    }
-  }, [loading, user]);
+  // useEffect(() => {
+  //   if (!loading) {
+  //     // Subscribe to the leaderboard document
+  //     const unsubscribe = onSnapshot(doc(db, "leaderboard", "rankings"), (doc) => {
+  //       if (doc.exists()) {
+  //         const rankingList = doc.data().ranking || [];
+  //         const userData = rankingList.find(player => player.email === user);
+  //         setUserXP(userData ? userData.XP : 0);
+  //       }
+  //     });
+  //     return () => unsubscribe();
+  //   }
+  // }, [loading, user]);
   if(isMobile){
   return (
     <>
@@ -746,7 +747,7 @@ const MyProfile = ({ mobileDimension }) => {
                 color: 'white',
                 transition: 'font-size 0.3s ease'
               }}>
-                {userXP.toLocaleString()}
+                {userXP}
               </span>  
               <span style={{ fontSize: "16px", color:'white'}}>XP</span>
               </div>
