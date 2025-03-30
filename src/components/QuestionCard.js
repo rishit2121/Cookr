@@ -65,6 +65,15 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser.email);
       setLoading(false); // Auth state resolved
+      if (currentUser) {
+        // Get subscription status from Firestore
+        const userRef = doc(db, "users", currentUser.email);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setHasSubscription(docSnap.data().subscription || false);
+          }
+        });
+      }
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
@@ -75,6 +84,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
     JSON.parse(localStorage.getItem("favorites")) || []
   );
   const [showComments, setShowComments] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -145,7 +155,27 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
           } else {
             // For new users, create their data
             const userDoc = await getDoc(doc(db, "users", userEmail));
-            const userName = userDoc.exists() ? userDoc.data().name || userEmail : userEmail;
+            const currentUser = auth.currentUser;
+            const googleName = currentUser.displayName ? currentUser.displayName : null;
+            
+            let userName;
+            if (userDoc.exists()) {
+              const firestoreName = userDoc.data().name;
+              if (googleName) {
+                userName = googleName;
+              } else if (firestoreName && firestoreName !== 'null') {
+                userName = firestoreName;
+              } else {
+                userName = `@Cookr${generateUniqueNumber(userEmail)}`;
+              }
+            } else {
+              if (googleName) {
+                userName = googleName;
+              } else {
+                userName = `@Cookr${generateUniqueNumber(userEmail)}`;
+              }
+            }
+
             userData = {
               email: userEmail,
               name: userName,
@@ -259,6 +289,16 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
     (fav) => fav.question === fullJSON.question
   );
 
+  const generateUniqueNumber = (email) => {
+    // Create a hash of the email by converting it to a string and then hashing it
+    const hash = Array.from(email)
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+    // Generate a random number using the hash value, and ensure it's a 6-digit number
+    const randomNumber = (hash * 1000) % 900000 + 100000; // Generates a 6-digit number
+  
+    return randomNumber;
+  };
 
   return (
     <div>
@@ -460,7 +500,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
                 </svg>
               </i>
             )}
-          {(localStorage.getItem("mode") == 1 || isFavorites) && (
+          {(localStorage.getItem("mode") == 1 || isFavorites) && hasSubscription && (
           <svg
             onClick={async () => setShowComments(!showComments)}
             style={{ cursor: "pointer" }}

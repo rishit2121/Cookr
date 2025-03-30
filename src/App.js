@@ -19,7 +19,9 @@ import Scrolls from "./pages/Scrolls";
 import FlashCard from "./pages/Flashcard";
 import Featured from "./pages/Featured_Sets";
 import Leaderboard from "./pages/LeaderboardPage";
-const stripePromise = loadStripe("pk_test_51NDfrSF2kI0aSHJWEUmuSmUqVTFRTKvvDcBKtGVuEC4WdgqXvw1eiE3f0etV8s8fSAdlp774vmPwCvUSORmsVfY300UlG4SuFH");
+import Paypal from "./pages/Paypal";
+import PaymentConfirmation from './components/PaymentConfirmation';
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 
 
@@ -40,6 +42,8 @@ function App() {
           <Route path="/featured" element={<Featured />} />
           <Route path="/flashcards" element={<FlashCard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/paypal" element={<Paypal />} />
+
           <Route
           path="/subscribe"
           element={
@@ -51,6 +55,7 @@ function App() {
           {/* <Route path="/cancel" element={<CancelSubscription />} /> Add the new subscription route */}
           <Route path="/reels" element={<Reels />} /> Add the new subscription route
           <Route path="/scrolls" element={<Scrolls />} />
+          <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
 
 
 
