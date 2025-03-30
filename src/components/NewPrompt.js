@@ -39,11 +39,23 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  const [showLimitDialog, setShowLimitDialog] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser.email);
       setLoading(false); // Auth state resolved
+      if (currentUser) {
+        // Get subscription status from Firestore
+        const userRef = doc(db, "users", currentUser.email);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setHasSubscription(docSnap.data().subscription || false);
+          }
+        });
+      }
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
@@ -257,6 +269,46 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     }
   };
 
+  // Limit Dialog Component
+  const LimitDialog = ({ show, onClose }) => {
+    if (!show) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: 'white',
+        padding: '20px',
+        borderRadius: '10px',
+        boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+        zIndex: 1000,
+        width: '400px',
+      }}>
+        <h2 style={{ marginBottom: '20px', color: 'black' }}>Set Limit Reached</h2>
+        <p style={{ marginBottom: '20px', color: 'black' }}>
+          You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              background: 'white',
+              cursor: 'pointer',
+              color: 'black'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const saveToFirestore = async () => {
     try {
       const color = randomColor({
@@ -270,7 +322,10 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         console.error("Document not found");
         return;
       }
-      let currentSets = docSnap.data().sets || [];
+
+      const userData = docSnap.data();
+      let currentSets = userData.sets || [];
+
       if (style === 1) {
         // Remove the item if style === 1
         currentSets = currentSets.filter(
@@ -315,7 +370,6 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             subject: subject,
             promptMode: promptMode,
             color: subcolor,
-           
           });
         } else {
           // If item was not found, just add to the end
@@ -325,23 +379,22 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             subject: subject,
             promptMode: promptMode,
             color: subcolor,
-            
           });
         }
       } else {
-        // If style !== 1, just add to the end
-        if(currentSets.length<10){
+        // Check subscription status before limiting sets
+        if (!userData.subscription && currentSets.length >= 10) {
+          setShowLimitDialog(true);
+          return;
+        }
+        
         currentSets.push({
           title: title,
           content: content,
           subject: subject,
           promptMode: promptMode,
           color: color,
-         
         });
-      }else{
-          console.error("You can only have 10 sets at once in the library.")
-        }
       }
 
       // Update the Firestore document
@@ -528,7 +581,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   background: "#28282B",
                   color: "white",
                 }}
-                maxLength={14000}
+                maxLength={hasSubscription ? 15000 : 8000}
               />
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <p
@@ -539,7 +592,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                     padding: "0px 10px",
                   }}
                 >
-                  {content.length}/14000
+                  {content.length}/{hasSubscription ? 15000 : 8000}
                 </p>
                 <form
                   style={{ position: "absolute", bottom: "5px", left: "5px" }}
@@ -710,6 +763,12 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           style={{ position: "absolute", right: "30px", cursor: "pointer" }}
         ></div>
       }
+
+      {/* Add the Limit Dialog */}
+      <LimitDialog
+        show={showLimitDialog}
+        onClose={() => setShowLimitDialog(false)}
+      />
     </div>
   );
 }

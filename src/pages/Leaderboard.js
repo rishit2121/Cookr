@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../components/firebase/Firebase";
 import { auth } from "../components/firebase/Firebase";
@@ -8,6 +8,9 @@ function MyLeaderboard() {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const scrollContainerRef = useRef(null);
+  const userEntryRef = useRef(null);
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -32,8 +35,6 @@ function MyLeaderboard() {
       return () => unsubscribe();
     }
   }, [loading]);
-
-  // Get top 3 players
   const topThree = leaderboardData.slice(0, 3);
   // Get players around the current user's rank
   const userRank = leaderboardData.findIndex(player => player.email === user);
@@ -41,6 +42,43 @@ function MyLeaderboard() {
     Math.max(0, userRank - 25),
     Math.min(leaderboardData.length, userRank + 26)
   );
+
+  useEffect(() => {
+    if (scrollContainerRef.current && userEntryRef.current && nearbyPlayers.length > 0) {
+      const container = scrollContainerRef.current;
+      const userEntry = userEntryRef.current;
+      
+      if (!container || !userEntry) return;
+
+      // Get total scrollable height
+      const totalScrollHeight = container.scrollHeight;
+      
+      // Get height of one entry (they're all the same height)
+      const entryHeight = userEntry.clientHeight;
+      
+      // Get the distance from our entry to the top
+      const distanceFromTop = userEntry.offsetTop;
+
+      // If we're in the first few entries, don't scroll
+      const userIndex = nearbyPlayers.findIndex(player => player.email === user);
+      if (userIndex <= 2) {
+        container.scrollTop = 0;
+        return;
+      }
+      
+      // Calculate how much space we want above our entry (half of remaining space)
+      const desiredTopSpace = (totalScrollHeight - entryHeight) / 2;
+      
+      // Calculate final scroll position
+      const scrollPosition = Math.max(0, distanceFromTop - desiredTopSpace);
+      
+      // Apply the scroll
+      container.scrollTop = scrollPosition;
+    }
+  }, [nearbyPlayers.length, user]);
+
+  // Get top 3 players
+  
 
   // Helper function to format name (first name only, capitalize first letter)
   const formatName = (name) => {
@@ -81,13 +119,13 @@ function MyLeaderboard() {
             flexDirection: "column",
             alignItems: "center",
             gap: "10px",
-            padding: "1dvh 0 1dvh 0",
+            padding: "2.5dvh 0 1dvh 0",
           }}>
             {/* 1st Place */}
             {topThree[0] && (
               <div style={{
                 width: "90%",
-                height:'8dvh',
+                height:'7dvh',
 
                 borderRadius: "10px",
                 display: "flex",
@@ -122,7 +160,7 @@ function MyLeaderboard() {
                 alignItems: "center",
                 padding: "0 20px",
                 boxSizing: "border-box",
-                height:'8dvh',
+                height:'7dvh',
               }}>
                 <div style={{
                   width: "30px",
@@ -151,7 +189,7 @@ function MyLeaderboard() {
                 alignItems: "center",
                 padding: "0 20px",
                 boxSizing: "border-box",
-                height:'8dvh',
+                height:'7dvh',
               }}>
                 <div style={{
                   width: "30px",
@@ -174,12 +212,12 @@ function MyLeaderboard() {
       </div>
 
       {/* Current User's Rank */}
-      {user && (
+      {/* {user && (
         <div style={{ width: "78%", height:'3dvh', color:'black', background: "white", padding: "10px 10% 10px 12%", display: "flex", justifyContent: "space-between", fontWeight: "bold", marginTop:'3dvh' }}>
           <span>{userRank + 1}. You</span>
           <span>{leaderboardData[userRank]?.XP.toLocaleString()} XP</span>
         </div>
-      )}
+      )} */}
 
       {/* Nearby Rankings */}
       <div style={{ 
@@ -188,28 +226,33 @@ function MyLeaderboard() {
        
       }}>
         {/* <h4 style={{ color: "#6c757d", fontSize: "1em", marginBottom: "5px" }}>RANKINGS</h4> */}
-        <div style={{ 
-          height: 'calc(100dvh - 105px - 6dvh - 37dvh)',
-          width: "100%", 
-          color:'white',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          bottom: '75px',
-          left: '5%',
-          right: 0
-        }}>
+        <div 
+          ref={scrollContainerRef}
+          style={{ 
+            height: window.innerWidth <= 768 ? 'calc(100dvh - 105px - 37dvh)' : 'calc(100dvh - 10px - 37dvh)',
+            width: "100%", 
+            color:'white',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            bottom: '75px',
+            left: '5%',
+            right: 0
+          }}>
           {nearbyPlayers.map((player, index) => (
-            <div key={player.email} style={{ 
-              width: "100%",
-              height: "7dvh",
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              padding: "0 5% 0 20px",
-              boxSizing: "border-box",
-              background: player.email === user ? "rgba(255, 255, 255, 0.1)" : "transparent",
-              margin: "0 auto"
-            }}>
+            <div 
+              key={player.email} 
+              ref={player.email === user ? userEntryRef : null}
+              style={{ 
+                width: "100%",
+                height: "max(7dvh, 50px)",
+                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                padding: "0 5% 0 20px",
+                boxSizing: "border-box",
+                background: player.email === user ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                margin: "0 auto"
+              }}>
               <div style={{
                 width: "30px",
                 height: "30px",

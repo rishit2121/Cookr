@@ -22,6 +22,7 @@ const MyLibrary = ({ mobileDimension }) => {
   const [params, setParams] = useState([]); // Manage the params with useState
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -142,6 +143,21 @@ const MyLibrary = ({ mobileDimension }) => {
     setOpenNewTopic(!openNewTopic);
   };
 
+  const handleLetMeCook = (item) => {
+    setSelectedItem(item);
+    setOpenMode(true);
+  };
+
+  const handleEdit = () => {
+    if (!selectedItem) return;
+    setOpenNewTopic(true);
+  };
+
+  const handleDelete = () => {
+    if (!selectedItem) return;
+    deleteItemFromFirestore(selectedItem.title, selectedItem.content, selectedItem.subject, selectedItem.promptMode, selectedItem.scrollGenerationMode, selectedItem.color, selectedItem.tag);
+  };
+
   return (
     user ? (
     <div
@@ -239,6 +255,10 @@ const MyLibrary = ({ mobileDimension }) => {
                 alignItems: "center"
               }}
               onClick={() => {
+                if (!selectedItem) return;
+                localStorage.setItem("currentSet", JSON.stringify(selectedItem));
+                localStorage.removeItem("lastSet");
+                localStorage.removeItem("lastFlashSet");
                 localStorage.setItem("mode", 1);
                 navigate("/");
               }}
@@ -275,6 +295,10 @@ const MyLibrary = ({ mobileDimension }) => {
                 alignItems: "center"
               }}
               onClick={() => {
+                if (!selectedItem) return;
+                localStorage.setItem("currentSet", JSON.stringify(selectedItem));
+                localStorage.removeItem("lastSet");
+                localStorage.removeItem("lastFlashSet");
                 localStorage.setItem("mode", 2);
                 navigate("/");
               }}
@@ -433,14 +457,9 @@ const MyLibrary = ({ mobileDimension }) => {
                     cursor: "pointer",
                     fontSize:'15px'
                   }}
-                  onClick={() => {
-                    localStorage.setItem("currentSet",  JSON.stringify(item));
-                    localStorage.removeItem("lastSet");
-                    localStorage.removeItem("lastFlashSet");
-                    setOpenMode(true);
-                  }}
+                  onClick={() => handleLetMeCook(item)}
                 >
-                  Let Me Cook!
+                  Let me cook
                 </button>
               </div>
             </div>
