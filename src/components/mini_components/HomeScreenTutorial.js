@@ -7,7 +7,7 @@ function HomeScreenTutorial() {
       });
   return (
     <div style={{ textAlign: "center", width: "50%",color: isDarkMode ? "white": "black" }}>
-      Welcome to Scroller! To get started, add a new subject in{" "}
+      Welcome to Cookr! To get started, add a new subject in{" "}
       <span>
         <svg
           fill={isDarkMode ? "#ffffff" : "#000000"}

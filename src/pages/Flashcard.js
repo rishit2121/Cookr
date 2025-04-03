@@ -6,6 +6,7 @@ import FlippingCard from "../components/Card";
 import Bottom from "../components/BottomNav";
 import Selector from "../components/SubjectSelector";
 import { jsonrepair } from "jsonrepair";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -57,6 +58,7 @@ const FlashCard = () => {
     const [shuffledCards, setShuffledCards] = useState(flashcards);  // Shuffled flashcards
     const [inputValue, setInputValue] = useState(''); // Input value
     const [selectedSubject, setSelectedSubject] = useState(null);
+    const navigate = useNavigate();
       
   const handleSubjectChange = (newSubject) => {
     setSelectedSubject(newSubject);  // This triggers re-render in FlashCard
@@ -328,239 +330,296 @@ const FlashCard = () => {
     setStartY(null);
   };
 
+    // Add window resize handler
+    useEffect(() => {
+        const handleResize = () => {
+            setMobileDimension(window.innerWidth <= 768);
+        };
+
+        // Set initial value
+        handleResize();
+
+        // Add event listener
+        window.addEventListener('resize', handleResize);
+
+        // Cleanup
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <div className="App" style={{ display: "flex", height: "100dvh", overflowX: "hidden",overflowY:"hidden", backgroundColor: "black" }}>
-            {user &&  <Navbar setMobileDimension={setMobileDimension} />}
-            <div style={containerStyle} 
-                ref={containerRef} 
-            >
-                    <Selector onSubjectChange={handleSubjectChange} />
-
-                {/* Pass the current flashcard to FlippingCard */}
-                {isFetching ? (
-        <div style={{ color: 'white', textAlign: 'center', marginTop: '20%' }}>
-          <div className="loading-circle"></div>
-          <p style={{marginTop:'20px', marginBottom:'50%'}}>Loading...</p>
-        </div>
-      ) : (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                position: 'relative',
-                alignItems:'center',
-                // justifyContent:'center',
-                height: !mobileDimension? "55dvh": "48dvh",
-                width: !mobileDimension? "78vw": "100vw",  // Use full width of the viewport
-                overflowX: "hidden",  // Prevent horizontal scrolling
-                overflowY: "hidden"   // Prevent vertical scrolling
-
-            }}
-        >
-          {shuffledCards.map((card, index) => (
-              <div 
-                  onTouchStart={handleTouchStart} 
-                  onTouchEnd={handleTouchEnd}
-                  style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: !mobileDimension ? "50dvw" : "80dvw", // Adjust width according to mobile dimension
-                      marginLeft: !mobileDimension ? "15.5dvw" : "10dvw", // Adjust margin for positioning
-                      marginRight: !mobileDimension ? "11.5dvw" : "10dvw", // Adjust margin for positioning
-                      marginTop: !mobileDimension? '3.5dvh': '3.5dvh',
-                      marginBottom: !mobileDimension? '3.5dvh': '3.5dvh',
-                      height: !mobileDimension ? "45vh" : "50vh", // Adjust height according to mobile dimension
-                      overflow: "visible",  // Allow overflow of cards
-                      transition: 'transform 0.6s ease',
-                      transform: !mobileDimension? `translateY(-${currentIndex * 52}dvh)`: `translateY(-${currentIndex * 47}dvh)`, // Slide effect
-                  }}
-              >  
-                  <FlippingCard
-                      key={currentIndex} 
-                      question={shuffledCards[currentIndex].question} 
-                      answer={shuffledCards[currentIndex].answer} 
-                      flipCard={flipCard} 
-                      style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100dvw',
-                          height: '100dvw',
-                          transform: `translateX(-${(currentIndex - index) * 100}%)`, // Ensure cards are positioned correctly
-                          transition: 'transform 0.6s ease',
-                          visibility: currentIndex === index ? 'visible' : 'hidden',
-                      }}
-                      />
-                  </div>
-              ))}
-          </div>
-          )}
-
-                {/* Navigation buttons */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "20px", marginTop: "20px",}}>
-                    <div
-                        onClick={prevCard}
-                        style={{
-                            width: mobileDimension? "11dvw": '55px',
-                            height: mobileDimension? "11dvw": '55px',
-                            borderRadius: "50%",
-                            // border: "3px solid darkblue",
-                            backgroundColor:"#2e2e2e",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            alignText:'center',
-                            color: "white",
-                            fontSize: "35px",
-                        }}
-                    >
-                        ←
-                    </div>
-
-                    <div
-                        onClick={startAutoPlay}
-                        style={{
-                            width: mobileDimension? "11dvw": '55px',
-                            height: mobileDimension? "11dvw": '55px',
-                            borderRadius: "50%",
-                            // border: "3px solid darkblue",
-                            backgroundColor:"#2e2e2e",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "24px",
-                            cursor: "pointer",
-                            color: "white",
-                            alignText:'center',
-                        }}
-                    >
-                        {isPlaying ? 
-
-                            <svg
-                            role="img"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            height="1em"
-                            >
-                            <path
-                            fill="currentColor"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 4h4v16H6zm8 0h4v16h-4z"
-                            />
-                            </svg>
-                          
-
-                        : <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width="1em"
-                            height="1em"
-                            >
-                            <path
-                                fill="currentColor"
-                                d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 0 0 0-1.69L9.54 5.98A.998.998 0 0 0 8 6.82"
-                            ></path>
-                            </svg>
-                        }
-                    </div>
-                    {/* New Randomize Button */}
-                    <div
-                        onClick={toggleShuffle}
-                        style={{
-                            width: mobileDimension? "11dvw": '55px',
-                            height: mobileDimension? "11dvw": '55px',
-                            borderRadius: "50%",
-                            border: isShuffled ? "3px solid white" : "none",
-                            backgroundColor:"#2e2e2e",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            color: "white",
-                            fontSize: "25px"
-                        }}
-                    >
-                        <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 1200 1200"
-                        width="1em"
-                        height="1em"
-                        >
-                        <path
-                            fill="currentColor"
-                            d="M935.926 42.203v186.061H763.958c-54.408 0-114.484 26.559-164.729 77.32c-50.242 50.761-104.842 126.065-191.527 249.904c-87.076 124.394-135.567 199.565-165.807 233.346c-30.24 33.78-25.376 30.882-69.388 30.882H0v147.863h172.507c66.078 0 132.54-27.619 179.515-80.093s91.312-125.164 176.742-247.208c85.82-122.601 140.381-195.159 175.512-230.651c35.129-35.491 36.641-33.5 59.685-33.5h171.967v194.147L1200 306.276zM0 228.263v147.863h172.507c44.012 0 39.148-2.975 69.388 30.805c19.456 21.734 51.507 67.826 91.49 125.915c5.419-7.773 7.973-11.521 13.708-19.716c21.78-31.114 41.563-59.187 59.838-84.79c6.36-8.91 11.688-15.939 17.714-24.259c-27.021-39.039-49.525-70.001-72.623-95.803c-46.975-52.474-113.437-80.015-179.515-80.015zm935.926 401.464v189.988H763.958c-23.043 0-24.554 1.915-59.684-33.577c-23.237-23.477-56.146-65.093-99.809-124.76c-5.281 7.49-9.555 13.418-15.095 21.333c-30.571 43.674-51.648 75.183-73.777 107.816c31.395 41.578 58.12 73.875 83.637 99.652c50.242 50.763 110.319 77.397 164.729 77.397h171.968v190.22L1200 893.801z"
-                        ></path>
-                        </svg>
-                    </div>
-                    <div
-                        onClick={nextCard}
-                        style={{
-                            width: mobileDimension? "11dvw": '55px',
-                            height: mobileDimension? "11dvw": '55px',
-                            borderRadius: "50%",
-                            // border: "3px solid darkblue",
-                            backgroundColor:"#2e2e2e",
-                            display: "flex",
-                            alignItems: "center",
-                            alignText: 'center',
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            color: "white",
-                            fontSize: "35px"
-                        }}
-                    >
-                        →
-                    </div>
-                    
-                </div>
-                <div>
-        <div style={{ marginTop:'15%', justifyContent:'center',}}>
-        <span style={{color:'white'}}>Card   
-
-        </span>
-        <input
-           type="tel"
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur} // Validate when input loses focus
-          onKeyDown={handleKeyDown} // Validate on Enter key
-          min="1"
-          max={flashcards.length }
-          style={{
-            width: "50px",
-            textAlign: "center",
-            backgroundColor: "#2e2e2e",
-            border: "none", // Removes the border
-            color: "#fff", // Sets the text color to white
-            padding: "5px",
-            margin: "0 10px", // Adds more space between the words,
-            borderRadius:'5px',
-            WebkitAppearance: "none", // Removes stepper controls on iOS
-            MozAppearance: "textfield", // Removes stepper controls on Firefox
-            inputMode: "numeric", // Prevents non-numeric inputs
-            appearance: "none", 
-          }}
-        />
-        <span style={{color:'white'}}> of {flashcards.length}</span>
-        </div>
-      </div>
-                {mobileDimension && (
-                    <Bottom
-                    streak={streak}
-                    currentPage={'flashcards'}
-                    xp={xp}
-                    sets={sets}
-                    currentSet={currentSet}
-                    setCurrentSet={setFlashcards}
-                    mobileDimension={mobileDimension}
-                    />
-                )}
+            <div>
+              <Navbar setMobileDimension={setMobileDimension} />
             </div>
+            {user ? (
+                <>
+                    <div style={containerStyle} ref={containerRef}>
+                        <Selector onSubjectChange={handleSubjectChange} />
+                        {isFetching ? (
+                            <div style={{ color: 'white', textAlign: 'center', marginTop: '20%' }}>
+                                <div className="loading-circle"></div>
+                                <p style={{marginTop:'20px', marginBottom:'50%'}}>Loading...</p>
+                            </div>
+                        ) : (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    position: 'relative',
+                                    alignItems:'center',
+                                    // justifyContent:'center',
+                                    height: !mobileDimension? "55dvh": "48dvh",
+                                    width: !mobileDimension? "78vw": "100vw",  // Use full width of the viewport
+                                    overflowX: "hidden",  // Prevent horizontal scrolling
+                                    overflowY: "hidden"   // Prevent vertical scrolling
+
+                                }}
+                            >
+                                {shuffledCards.map((card, index) => (
+                                    <div 
+                                        onTouchStart={handleTouchStart} 
+                                        onTouchEnd={handleTouchEnd}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: !mobileDimension ? "50dvw" : "80dvw", // Adjust width according to mobile dimension
+                                            marginLeft: !mobileDimension ? "15.5dvw" : "10dvw", // Adjust margin for positioning
+                                            marginRight: !mobileDimension ? "11.5dvw" : "10dvw", // Adjust margin for positioning
+                                            marginTop: !mobileDimension? '3.5dvh': '3.5dvh',
+                                            marginBottom: !mobileDimension? '3.5dvh': '3.5dvh',
+                                            height: !mobileDimension ? "45vh" : "50vh", // Adjust height according to mobile dimension
+                                            overflow: "visible",  // Allow overflow of cards
+                                            transition: 'transform 0.6s ease',
+                                            transform: !mobileDimension? `translateY(-${currentIndex * 52}dvh)`: `translateY(-${currentIndex * 47}dvh)`, // Slide effect
+                                        }}
+                                    >  
+                                        <FlippingCard
+                                            key={currentIndex} 
+                                            question={shuffledCards[currentIndex].question} 
+                                            answer={shuffledCards[currentIndex].answer} 
+                                            flipCard={flipCard} 
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100dvw',
+                                                height: '100dvw',
+                                                transform: `translateX(-${(currentIndex - index) * 100}%)`, // Ensure cards are positioned correctly
+                                                transition: 'transform 0.6s ease',
+                                                visibility: currentIndex === index ? 'visible' : 'hidden',
+                                            }}
+                                            />
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+                        {/* Navigation buttons */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "20px", marginTop: "20px",}}>
+                            <div
+                                onClick={prevCard}
+                                style={{
+                                    width: mobileDimension? "11dvw": '55px',
+                                    height: mobileDimension? "11dvw": '55px',
+                                    borderRadius: "50%",
+                                    // border: "3px solid darkblue",
+                                    backgroundColor:"#2e2e2e",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    alignText:'center',
+                                    color: "white",
+                                    fontSize: "35px",
+                                }}
+                            >
+                                ←
+                            </div>
+
+                            <div
+                                onClick={startAutoPlay}
+                                style={{
+                                    width: mobileDimension? "11dvw": '55px',
+                                    height: mobileDimension? "11dvw": '55px',
+                                    borderRadius: "50%",
+                                    // border: "3px solid darkblue",
+                                    backgroundColor:"#2e2e2e",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "24px",
+                                    cursor: "pointer",
+                                    color: "white",
+                                    alignText:'center',
+                                }}
+                            >
+                                {isPlaying ? 
+
+                                    <svg
+                                    role="img"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    height="1em"
+                                    >
+                                    <path
+                                    fill="currentColor"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M6 4h4v16H6zm8 0h4v16h-4z"
+                                    />
+                                    </svg>
+                                  
+
+                                : <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    width="1em"
+                                    height="1em"
+                                    >
+                                    <path
+                                        fill="currentColor"
+                                        d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 0 0 0-1.69L9.54 5.98A.998.998 0 0 0 8 6.82"
+                                    ></path>
+                                    </svg>
+                                }
+                            </div>
+                            {/* New Randomize Button */}
+                            <div
+                                onClick={toggleShuffle}
+                                style={{
+                                    width: mobileDimension? "11dvw": '55px',
+                                    height: mobileDimension? "11dvw": '55px',
+                                    borderRadius: "50%",
+                                    border: isShuffled ? "3px solid white" : "none",
+                                    backgroundColor:"#2e2e2e",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    color: "white",
+                                    fontSize: "25px"
+                                }}
+                            >
+                                <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 1200 1200"
+                                width="1em"
+                                height="1em"
+                                >
+                                <path
+                                    fill="currentColor"
+                                    d="M935.926 42.203v186.061H763.958c-54.408 0-114.484 26.559-164.729 77.32c-50.242 50.761-104.842 126.065-191.527 249.904c-87.076 124.394-135.567 199.565-165.807 233.346c-30.24 33.78-25.376 30.882-69.388 30.882H0v147.863h172.507c66.078 0 132.54-27.619 179.515-80.093s91.312-125.164 176.742-247.208c85.82-122.601 140.381-195.159 175.512-230.651c35.129-35.491 36.641-33.5 59.685-33.5h171.967v194.147L1200 306.276zM0 228.263v147.863h172.507c44.012 0 39.148-2.975 69.388 30.805c19.456 21.734 51.507 67.826 91.49 125.915c5.419-7.773 7.973-11.521 13.708-19.716c21.78-31.114 41.563-59.187 59.838-84.79c6.36-8.91 11.688-15.939 17.714-24.259c-27.021-39.039-49.525-70.001-72.623-95.803c-46.975-52.474-113.437-80.015-179.515-80.015zm935.926 401.464v189.988H763.958c-23.043 0-24.554 1.915-59.684-33.577c-23.237-23.477-56.146-65.093-99.809-124.76c-5.281 7.49-9.555 13.418-15.095 21.333c-30.571 43.674-51.648 75.183-73.777 107.816c31.395 41.578 58.12 73.875 83.637 99.652c50.242 50.763 110.319 77.397 164.729 77.397h171.968v190.22L1200 893.801z"
+                                    ></path>
+                                </svg>
+                            </div>
+                            <div
+                                onClick={nextCard}
+                                style={{
+                                    width: mobileDimension? "11dvw": '55px',
+                                    height: mobileDimension? "11dvw": '55px',
+                                    borderRadius: "50%",
+                                    // border: "3px solid darkblue",
+                                    backgroundColor:"#2e2e2e",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    alignText: 'center',
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    color: "white",
+                                    fontSize: "35px"
+                                }}
+                            >
+                                →
+                            </div>
+                            
+                        </div>
+                        <div>
+                        <div style={{ marginTop:'15%', justifyContent:'center',}}>
+                        <span style={{color:'white'}}>Card   
+
+                        </span>
+                        <input
+                           type="tel"
+                          value={inputValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur} // Validate when input loses focus
+                          onKeyDown={handleKeyDown} // Validate on Enter key
+                          min="1"
+                          max={flashcards.length }
+                          style={{
+                            width: "50px",
+                            textAlign: "center",
+                            backgroundColor: "#2e2e2e",
+                            border: "none", // Removes the border
+                            color: "#fff", // Sets the text color to white
+                            padding: "5px",
+                            margin: "0 10px", // Adds more space between the words,
+                            borderRadius:'5px',
+                            WebkitAppearance: "none", // Removes stepper controls on iOS
+                            MozAppearance: "textfield", // Removes stepper controls on Firefox
+                            inputMode: "numeric", // Prevents non-numeric inputs
+                            appearance: "none", 
+                          }}
+                        />
+                        <span style={{color:'white'}}> of {flashcards.length}</span>
+                        </div>
+                      </div>
+                        {mobileDimension && (
+                            <Bottom
+                            streak={streak}
+                            currentPage={'flashcards'}
+                            xp={xp}
+                            sets={sets}
+                            currentSet={currentSet}
+                            setCurrentSet={setFlashcards}
+                            mobileDimension={mobileDimension}
+                            />
+                        )}
+                    </div>
+                </>
+            ) : (
+              <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: mobileDimension
+                  ? "translate(-50%, -50%)"
+                  : "translate(0%, -50%)",
+              }}
+            >
+              <p style={{ fontSize: "21px", color: "white" }}>Hey 👋, welcome to </p>
+              <h1
+                style={{
+                  marginLeft: "15px",
+                  textShadow: "2px 2px 5px blue",
+                  fontSize: "50px",
+                  color: "white"
+                }}
+              >
+                    C<span style={{ fontStyle: "italic" }}>oo</span>kr
+              </h1>
+              <br></br>
+              <button
+                onClick={async () => navigate("/auth")}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  backgroundColor: "white",
+                  border: "none",
+                  color: "black",
+                  borderRadius: "100px",
+                  cursor: "pointer",
+                }}
+              >
+                Sign In
+              </button>
+              <p style={{ textAlign: "center", marginTop: "20px" }}>
+                to get scrollin'!
+              </p>
+            </div>
+            )}
         </div>
     );
 };

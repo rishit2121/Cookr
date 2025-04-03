@@ -110,11 +110,7 @@ const Paypal = () => {
                   setMessage(
                     `Transaction ${transaction.status}: ${transaction.id}. See console for all available details`
                   );
-                  console.log(
-                    "Capture result",
-                    orderData,
-                    JSON.stringify(orderData, null, 2)
-                  );
+
                 }
               } catch (error) {
                 console.error(error);

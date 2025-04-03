@@ -54,13 +54,11 @@ const Navbar = ({ setMobileDimension }) => {
   const logout = () => {
     signOut(auth)
       .then(() => {
-        console.log("s");
         localStorage.clear();
         navigate("/auth");
 
       })
       .catch((error) => {
-        console.log("e");
       });
   };
 

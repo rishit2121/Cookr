@@ -63,7 +63,6 @@ const [user, setUser] = useState(null);
               .data()
               .sets.filter((set) => set.scrollGenerationMode == 2);
             setSets(filteredSets);
-            console.log(filteredSets);
           }
         );
       }

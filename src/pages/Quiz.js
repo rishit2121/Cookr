@@ -17,7 +17,6 @@ const Quiz = () => {
 
   // Fetch questions from the server
   const fetchQuestions = async () => {
-    console.log(location.state)
     setIsFetching(true);
     const options = {
       method: "POST",
@@ -74,13 +73,11 @@ const Quiz = () => {
   };
   const handleChange = (e) => {
     const selectedTime = Number(e.target.value);
-    console.log(`Selected Time (minutes): ${selectedTime}`); // Debugging log
     setTime(selectedTime * 60); // Convert minutes to seconds and update state
   };
   
   // Use useEffect to log the updated time value
   useEffect(() => {
-    console.log(`Updated Time (seconds): ${time}`);
   }, [time]); // 
 
   // Handle changes in selected answers
@@ -111,7 +108,6 @@ const Quiz = () => {
       return; // Prevent further execution if time has reached zero
     }
     if(showQuiz===true){
-      console.log('hey')
     const timer = setInterval(() => {
       setTime((prevTime) => prevTime - 1);
     }, 1000);

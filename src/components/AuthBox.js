@@ -407,7 +407,7 @@ const AuthBox = () => {
             }}
           >
             <p style={{ fontSize: "14px", margin: "30px 10px" }}>
-              New to Scroller?
+              New to Cookr?
             </p>
             <p
               style={{ fontSize: "14px", cursor: "pointer", color: "#6A6CFF" }}

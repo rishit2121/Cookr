@@ -89,14 +89,12 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
       // Check if captions are available
       if (data.items && data.items.length > 0) {
         const captionId = data.items[0].id;  // Get the first available caption ID
-        console.log('Caption ID:', captionId);
   
         // Now fetch the actual caption text (subtitles) using the caption ID
         const captionUrl = `https://www.googleapis.com/youtube/v3/captions/${captionId}?key=${apiKey}`;
         const captionResponse = await fetch(captionUrl);
         const captionData = await captionResponse.text();
   
-        console.log('Transcript:', captionData); // This will contain the caption text
   
         // You can now set the transcript to your state or handle it
         setContent(captionData);
@@ -123,7 +121,6 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     const pTextContents = Array.from(pTags).map(p => p.textContent); // for text content
     // or
 
-    console.log(link); // Logs an array of text contents of <p> tags
 
       const textContent = doc.body.innerText || ''; // Extracts text content from the page body
       setContent(pTextContents);
@@ -156,7 +153,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
       file,
       "eng", // Language
       {
-        logger: (info) => console.log(info), // Optional: for logging progress
+        // logger: (info) => console.log(info), // Optional: for logging progress
       }
     )
       .then(({ data: { text } }) => {
@@ -216,9 +213,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     ) {
       // Remove the item by setting it to null or an empty object/string
       localStorage.removeItem("currentSet");
-      console.log("Item removed from localStorage");
     } else {
-      console.log("Item not found in localStorage");
     }
   };
 
@@ -261,7 +256,6 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         localStorage.removeItem("currentSet");
       }
 
-      console.log("Item deleted successfully");
       setOpenNewTopic(false);
     } catch (e) {
       console.error("Error deleting item:", e);

@@ -53,7 +53,7 @@ function SubscribeForm() {
 
     try {
       // Create checkout session directly
-      const response = await fetch('http://localhost:5001/stripe/create-checkout-session', {
+      const response = await fetch('https://5vwa814x63.execute-api.us-west-2.amazonaws.com/production/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

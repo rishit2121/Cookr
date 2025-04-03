@@ -140,7 +140,6 @@ const QuestionCard = ({
           cards: arrayRemove(fullJSON),
         });
       } else {
-        console.log(selectedAnswer);
         const newJSON = {
           question,
           choices,

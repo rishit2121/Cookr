@@ -35,7 +35,11 @@ function Profile() {
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser.email);
+      if (currentUser) {
+        setUser(currentUser.email);
+      } else {
+        setUser(null); // Set user to null when not logged in
+      }
       setLoading(false); // Auth state resolved
     });
     return () => unsubscribe(); // Cleanup listener
@@ -43,7 +47,7 @@ function Profile() {
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
+      style={{ display: "flex", height: "100dvh", overflow: "hidden", backgroundColor: "black"}}
     >
       <div>
         <Navbar setMobileDimension={setMobileDimension} />
@@ -76,15 +80,16 @@ function Profile() {
               : "translate(0%, -50%)",
           }}
         >
-          <p style={{ fontSize: "21px" }}>Hey 👋, welcome to </p>
+          <p style={{ fontSize: "21px", color: "white" }}>Hey 👋, welcome to </p>
           <h1
             style={{
-              margin: "0px",
-              textShadow: "2px 2px 5px orange",
+              marginLeft: "15px",
+              textShadow: "2px 2px 5px blue",
               fontSize: "50px",
+              color: "white"
             }}
           >
-            Scro<span style={{ fontStyle: "italic" }}>ll</span>er
+                C<span style={{ fontStyle: "italic" }}>oo</span>kr
           </h1>
           <br></br>
           <button
@@ -92,9 +97,9 @@ function Profile() {
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "black",
+              backgroundColor: "white",
               border: "none",
-              color: "white",
+              color: "black",
               borderRadius: "100px",
               cursor: "pointer",
             }}

@@ -256,7 +256,6 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
           cards: arrayRemove(fullJSON),
         });
       } else {
-        console.log(selectedAnswer);
         const newJSON = {
           question,
           choices,

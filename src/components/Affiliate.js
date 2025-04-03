@@ -16,7 +16,7 @@ const Affiliate = () => {
         alignItems: "center",
       }}
     >
-      <h1 style={{ margin: "40px 50px" }}>Scroller Affiliate Program</h1>
+      <h1 style={{ margin: "40px 50px" }}>Cookr Affiliate Program</h1>
       <div
         style={{
           flexDirection: "column",
@@ -43,12 +43,12 @@ const Affiliate = () => {
             }}
           >
             {" "}
-            Scroller Affiliate Program
+            Cookr Affiliate Program
           </span>
         </h2>
         <br></br>
         <p style={{lineHeight:"30px"}}>
-          Join our team to get more users on board with Scroller! With every 100
+          Join our team to get more users on board with Cookr! With every 100
           referral sign ups, earn{" "}
           <span
             style={{
@@ -67,7 +67,7 @@ const Affiliate = () => {
           <span
             style={{ textShadow: "0px 0px 10px orange", fontWeight: "bold" }}
           >
-            Scroller 4 Life
+            Cookr 4 Life
           </span>{" "}
           plan, earn  <span
             style={{

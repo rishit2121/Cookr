@@ -90,7 +90,6 @@ const Features= ({ mobileDimension }) => {
         sets: arrayRemove(item), // 'item' is the specific item to remove from the array
       });
   
-      console.log('Item successfully deleted from sets!');
       // Optionally, update the local state to reflect the deletion or re-fetch the list
     } catch (error) {
       console.error('Error deleting item from sets:', error);
@@ -127,17 +126,13 @@ const Features= ({ mobileDimension }) => {
   
 
   const isSetAdded = (title) => {
-    console.log(currentsets)
-    console.log(title)
+
     return currentsets.some((set) => set.title === title);
   };
-  console.log(isSetAdded("Astronomy"))
   // Updated generateBlob function with dynamic width and height
   const saveToFirestore = async (title, content, subject, promptMode, tag) => {
     try {
-      console.log("Trying to add...");
-      console.log(sets)
-      console.log('hiii')
+
       const color = randomColor({
         luminosity: "dark",
       });
@@ -183,7 +178,6 @@ const Features= ({ mobileDimension }) => {
         localStorage.setItem("currentSet", JSON.stringify(newSet));
       }
   
-      console.log("Set added successfully!");
     } catch (e) {
       console.error("Error adding set:", e);
     }

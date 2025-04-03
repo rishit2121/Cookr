@@ -119,6 +119,53 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     }
   }, [questions]);
 
+  // Add streak check on component mount
+  useEffect(() => {
+    checkAndUpdateStreak();
+  }, []);
+
+  // Function to check and update streak
+  const checkAndUpdateStreak = () => {
+    const today = new Date();
+    const lastStreakUpdate = localStorage.getItem('lastStreakUpdate');
+    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+
+    if (!lastStreakUpdate) {
+      // First time user
+      localStorage.setItem('streak', '1');
+      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      setStreak(1);
+      return;
+    }
+
+    const lastUpdate = new Date(lastStreakUpdate);
+    const isSameDay = today.getDate() === lastUpdate.getDate() &&
+                      today.getMonth() === lastUpdate.getMonth() &&
+                      today.getFullYear() === lastUpdate.getFullYear();
+
+    const isNextDay = today.getDate() === lastUpdate.getDate() + 1 &&
+                      today.getMonth() === lastUpdate.getMonth() &&
+                      today.getFullYear() === lastUpdate.getFullYear();
+
+    if (isSameDay) {
+      // Already updated today, don't change anything
+      return;
+    }
+
+    if (isNextDay) {
+      // Consecutive day, increment streak
+      const newStreak = currentStreak + 1;
+      localStorage.setItem('streak', newStreak.toString());
+      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      setStreak(newStreak);
+    } else {
+      // Not consecutive, reset streak to 1
+      localStorage.setItem('streak', '1');
+      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      setStreak(1);
+    }
+  };
+
   const handleScroll = () => {
     if (isFetching) return;
 

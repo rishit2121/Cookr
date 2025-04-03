@@ -33,7 +33,7 @@ const Plans = ({ planType }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await fetch('http://localhost:5001/stripe/prices');
+        const response = await fetch('https://5vwa814x63.execute-api.us-west-2.amazonaws.com/production/prices');
         const data = await response.json();
         
         if (data.success) {
@@ -97,8 +97,7 @@ const Plans = ({ planType }) => {
   const handleSwitchToFree = async () => {
     setLoading(true);
     try {
-      console.log('Attempting to cancel subscription for:', userEmail);
-      const response = await fetch('http://localhost:5001/stripe/cancel-subscription', {
+      const response = await fetch('https://5vwa814x63.execute-api.us-west-2.amazonaws.com/production/cancel-subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +108,6 @@ const Plans = ({ planType }) => {
       });
 
       const data = await response.json();
-      console.log('Cancel subscription response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to cancel subscription');
@@ -119,10 +117,9 @@ const Plans = ({ planType }) => {
       setUserPlan('Free');
       setUserPlanId(null);
       setShowConfirmDialog(false);
-      console.log('Successfully switched to free plan');
     } catch (error) {
-      console.error('Detailed error in handleSwitchToFree:', error);
-      console.error('Error stack:', error.stack);
+      console.log('Detailed error in handleSwitchToFree:', error);
+      console.log('Error stack:', error.stack);
       setStripeError('Error cancelling subscription. Please try again later.');
     } finally {
       setLoading(false);
@@ -130,13 +127,17 @@ const Plans = ({ planType }) => {
   };
 
   const handleSwitchPlan = async (planId, planName, planPrice) => {
+    console.log('handleSwitchPlan called with:', { planId, planName, planPrice, userEmail });
+    
     if (!userEmail) {
+      console.error('No user email found');
       setStripeError('Please sign in to continue with the payment');
       return;
     }
 
     // If switching to free plan, show confirmation dialog
     if (planName === 'Free') {
+      console.log('Switching to free plan, showing confirmation dialog');
       setShowConfirmDialog(true);
       return;
     }
@@ -144,7 +145,14 @@ const Plans = ({ planType }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/stripe/create-checkout-session', {
+      console.log('Creating checkout session with data:', {
+        planId,
+        planName,
+        planPrice,
+        email: userEmail
+      });
+
+      const response = await fetch('https://5vwa814x63.execute-api.us-west-2.amazonaws.com/production/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,17 +165,25 @@ const Plans = ({ planType }) => {
         }),
       });
 
+      console.log('Checkout session response status:', response.status);
       const data = await response.json();
+      console.log('Checkout session response data:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
+      if (!data.url) {
+        throw new Error('No checkout URL received from server');
+      }
+
+      console.log('Redirecting to checkout URL:', data.url);
       // Redirect to Stripe Checkout
       window.location.href = data.url;
     } catch (error) {
-      console.error('Error:', error);
-      setStripeError('Error connecting to payment service. Please try again later.');
+      console.error('Detailed error in handleSwitchPlan:', error);
+      console.error('Error stack:', error.stack);
+      setStripeError(`Error connecting to payment service: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -344,18 +360,18 @@ const Plans = ({ planType }) => {
             borderRadius: "100px",
             border: "none",
             color: "white",
-            cursor: userPlan === 'Free' ? "not-allowed" : "pointer",
+            cursor: !userPlan || userPlan.toLowerCase() === 'free' ? "not-allowed" : "pointer",
             marginTop: "24px",
             marginBottom:'7px',
             fontSize:'20px',
-            backgroundColor: userPlan === 'Free' ? "#cccccc" : "#ff9900",
+            backgroundColor: !userPlan || userPlan.toLowerCase() === 'free' ? "#cccccc" : "#ff9900",
             color:'black',
             fontWeight:'bold'
           }}
-          onClick={() => userPlan !== 'Free' && handleSwitchPlan(null, 'Free', '$0')}
-          disabled={userPlan === 'Free'}
+          onClick={() => userPlan && userPlan.toLowerCase() !== 'free' && handleSwitchPlan(null, 'Free', '$0')}
+          disabled={!userPlan || userPlan.toLowerCase() === 'free'}
         >
-          {userPlan === 'Free' ? "Current" : "Switch Over"}
+          {!userPlan || userPlan.toLowerCase() === 'free' ? "Current" : "Switch Over"}
         </button>
         
       </div>
@@ -465,7 +481,7 @@ const Plans = ({ planType }) => {
             borderBottom: "1px solid blue",
           }}
         >
-          $45.00
+          $45
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>
             /year
           </span>

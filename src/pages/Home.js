@@ -26,11 +26,11 @@ function Home() {
       ? parseInt(localStorage.getItem("streak"))
       : 0
   );
-  const [featured, setFeatured] = useState(
-    localStorage.getItem("featured")
-      ? JSON.parse(localStorage.getItem("featured"))
-      : [] // Default value if nothing is in localStorage
-  );
+  // const [featured, setFeatured] = useState(
+  //   localStorage.getItem("featured")
+  //     ? JSON.parse(localStorage.getItem("featured"))
+  //     : [] // Default value if nothing is in localStorage
+  // );
   const [showCalculator, setShowCalculator] = useState(false);
   const [showPeriodicTable, setShowPeriodicTable] = useState(false);
   const calculatorRef = useRef(null);
@@ -124,10 +124,10 @@ useEffect(() => {
 
   useEffect(() => {
     localStorage.setItem("streak", streak);
-    localStorage.setItem('featured', JSON.stringify(featured));
+    // localStorage.setItem('featured', JSON.stringify(featured));
     localStorage.setItem("xp", xp);
     localStorage.setItem("sets", JSON.stringify(sets));
-  }, [streak, xp, sets, featured]);
+  }, [streak, xp, sets]);
 
   useEffect(() => {
     try {
@@ -143,15 +143,15 @@ useEffect(() => {
       alert("Error");
     }
   }, [user]);
-  useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
-      const data = doc.data()?.sets || [];
-      setFeatured(data);
-      localStorage.setItem('featured', JSON.stringify(data)); // Save valid JSON
-    });
+  // useEffect(() => {
+  //   const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
+  //     const data = doc.data()?.sets || [];
+  //     setFeatured(data);
+  //     localStorage.setItem('featured', JSON.stringify(data)); // Save valid JSON
+  //   });
   
-    return () => unsubscribe();
-  }, []);
+  //   return () => unsubscribe();
+  // }, []);
   
   const [activeIndex, setActiveIndex] = useState(null);
 

@@ -39,7 +39,7 @@ const PrivacyPolicyPopup = ({ open, setPrivacyOpen }) => {
             </p>
 
             <p>
-              Welcome to Scroller! We value your privacy and are committed to
+              Welcome to Cookr! We value your privacy and are committed to
               protecting your personal information. This Privacy Policy outlines
               how we collect, use, and safeguard your information when you use
               our educational app.
@@ -47,7 +47,7 @@ const PrivacyPolicyPopup = ({ open, setPrivacyOpen }) => {
 
             <h3>1. Information We Collect</h3>
             <p>
-              <strong>Name and Email:</strong> When you sign up for Scroller, we
+              <strong>Name and Email:</strong> When you sign up for Cookr, we
               collect your name and email address. This information helps us
               create your account and provide you with personalized services.
             </p>
@@ -58,11 +58,11 @@ const PrivacyPolicyPopup = ({ open, setPrivacyOpen }) => {
               <ul>
                 <li>
                   <strong>Account Creation and Management:</strong> To create
-                  and manage your Scroller account.
+                  and manage your Cookr account.
                 </li>
                 <li>
                   <strong>Communication:</strong> To send you updates,
-                  newsletters, and other information related to Scroller. You
+                  newsletters, and other information related to Cookr. You
                   can opt out of these communications at any time.
                 </li>
               </ul>
@@ -105,7 +105,7 @@ const PrivacyPolicyPopup = ({ open, setPrivacyOpen }) => {
             <p>
               If you have any questions or concerns about this Privacy Policy or
               our data practices, please contact us at{" "}
-              <strong>scrollercontact@gmail.com</strong>.
+              <strong>Cookrcontact@gmail.com</strong>.
             </p>
           </div>
         </div>

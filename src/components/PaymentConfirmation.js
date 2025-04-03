@@ -20,7 +20,6 @@ function PaymentConfirmation() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setEmail(currentUser?.email);
     });
-    console.log("Email:", email);
     return () => unsubscribe();
   }, []);
 
@@ -29,18 +28,13 @@ function PaymentConfirmation() {
       try {
         // Get plan info from URL
         const searchParams = new URLSearchParams(location.search);
-        console.log("Full URL search params:", location.search);
         
         // Get all parameters
         const planId = searchParams.get('planId');
         const planName = searchParams.get('planName');
         const clientSecret = searchParams.get('payment_intent_client_secret');
         
-        console.log("Retrieved parameters:", {
-          planId,
-          planName,
-          clientSecret
-        });
+
 
         if (!planId || !planName) {
           setError('Invalid payment confirmation link.');
@@ -56,7 +50,6 @@ function PaymentConfirmation() {
           return;
         }
 
-        console.log("Payment intent details:", paymentIntent);
 
         // Verify the payment belongs to the current user
         if (!paymentIntent.metadata?.email && !paymentIntent.receipt_email) {
@@ -71,7 +64,6 @@ function PaymentConfirmation() {
         }
 
         if (paymentIntent.status === 'succeeded') {
-          console.log("Payment succeeded! Updating Firestore...");
           try {
             // Ensure email is properly formatted
             const userEmail = email?.toLowerCase()?.trim();
@@ -81,7 +73,6 @@ function PaymentConfirmation() {
             }
 
             const userRef = doc(db, "users", userEmail);
-            console.log("User document reference:", userRef.path);
             
             const userDoc = await getDoc(userRef);
             
@@ -102,11 +93,9 @@ function PaymentConfirmation() {
               planId: planId
             });
             
-            console.log("Firestore document updated successfully!");
             setStatus('success');
             setPlanInfo({ name: planName, id: planId });
           } catch (firestoreError) {
-            console.log("Error updating Firestore:", firestoreError);
             setError("Error updating subscription status. Please contact support.");
           }
         } else if (paymentIntent.status === 'processing') {
@@ -115,7 +104,6 @@ function PaymentConfirmation() {
           setError('Payment failed. Please try again.');
         }
       } catch (err) {
-        console.log("Error processing payment:", err);
         setError('An unexpected error occurred.');
       }
     };

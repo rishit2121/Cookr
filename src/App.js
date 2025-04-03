@@ -34,7 +34,7 @@ function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/affiliate" element={<AffiliatePage />} />
+          {/* <Route path="/affiliate" element={<AffiliatePage />} /> */}
           <Route path="/saved" element={<SavedQuestions />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/quiz" element={<Quiz />} />

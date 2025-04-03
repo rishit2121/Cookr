@@ -230,7 +230,6 @@ const MyProfile = ({ mobileDimension }) => {
       const rawJoinDate = currentUser.metadata.creationTime;
       const formattedJoinDate = formatJoinDate(rawJoinDate);
 
-      console.log(userName)
       setName(userName); // Store name or null
       setJoinDate(formattedJoinDate);
       setLoading(false); // Auth state resolved
@@ -295,15 +294,12 @@ const MyProfile = ({ mobileDimension }) => {
 
     if(!profileImage || profileImage===null || profileImage==='null'){
       fetchProfileImage();
-      console.log('fetched firebase image')
     }
 
     if(!localStorage.getItem("trueXP")) {
       fetchXP();
-      console.log('fetched XP from firestore')
     } else {
       setUserXP(parseInt(localStorage.getItem("trueXP")));
-      console.log('hey im running!!!')
     }
   }, [user]); // This effect will run when userEmail changes
   const handleSelectPicture = async (alias) => {

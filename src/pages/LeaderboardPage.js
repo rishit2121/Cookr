@@ -36,7 +36,11 @@ function Leaderboard() {
     useEffect(() => {
       // Listen for authentication state changes
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser.email);
+        if (currentUser) {
+          setUser(currentUser.email);
+        } else {
+          setUser(null); // Set user to null when not logged in
+        }
         setLoading(false); // Auth state resolved
       });
       return () => unsubscribe(); // Cleanup listener
@@ -44,7 +48,7 @@ function Leaderboard() {
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100dvh", overflow: "hidden" }}
+      style={{ display: "flex", height: "100dvh", overflow: "hidden", backgroundColor: "black" }}
     >
       <div>
         <Navbar setMobileDimension={setMobileDimension} />
@@ -68,44 +72,45 @@ function Leaderboard() {
         </div>
       ) : (
         <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: mobileDimension
+            ? "translate(-50%, -50%)"
+            : "translate(0%, -50%)",
+        }}
+      >
+        <p style={{ fontSize: "21px", color: "white" }}>Hey 👋, welcome to </p>
+        <h1
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: mobileDimension
-              ? "translate(-50%, -50%)"
-              : "translate(0%, -50%)",
+            marginLeft: "15px",
+            textShadow: "2px 2px 5px blue",
+            fontSize: "50px",
+            color: "white"
           }}
         >
-          <p style={{ fontSize: "21px" }}>Hey 👋, welcome to </p>
-          <h1
-            style={{
-              margin: "0px",
-              textShadow: "2px 2px 5px orange",
-              fontSize: "50px",
-            }}
-          >
-            Scro<span style={{ fontStyle: "italic" }}>ll</span>er
-          </h1>
-          <br></br>
-          <button
-            onClick={async () => navigate("/auth")}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "black",
-              border: "none",
-              color: "white",
-              borderRadius: "100px",
-              cursor: "pointer",
-            }}
-          >
-            Sign In
-          </button>
-          <p style={{ textAlign: "center", marginTop: "20px" }}>
-            to get scrollin'!
-          </p>
-        </div>
+              C<span style={{ fontStyle: "italic" }}>oo</span>kr
+        </h1>
+        <br></br>
+        <button
+          onClick={async () => navigate("/auth")}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "white",
+            border: "none",
+            color: "black",
+            borderRadius: "100px",
+            cursor: "pointer",
+          }}
+        >
+          Sign In
+        </button>
+        <p style={{ textAlign: "center", marginTop: "20px" }}>
+          to get scrollin'!
+        </p>
+      </div>
       )}
     </div>
   );
