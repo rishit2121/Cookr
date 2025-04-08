@@ -52,11 +52,11 @@ const MyProfile = ({ mobileDimension }) => {
   const [showPlans, setShowPlans] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [name, setName] = useState();
-  const [planType, setPlanType] = useState();
+  const [planType, setPlanType] = useState('free');
   const [referalCode, setReferalCode] = useState();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState("rishit.agrawal121@gmail.com");
+  const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [userXP, setUserXP] = useState(0);
   const fileInputRef = useRef(null);
@@ -94,7 +94,7 @@ const MyProfile = ({ mobileDimension }) => {
   };
 
   const handleTerms = () => {
-    window.open("https://cookrapp.co/privacy_policy", "_blank");
+    navigate('/terms')
   };
 
   const handleClosePopup = () => {
@@ -225,39 +225,49 @@ const MyProfile = ({ mobileDimension }) => {
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser.email);
-      const userName = currentUser.displayName ? currentUser.displayName : null; // Set null if no name
-      const rawJoinDate = currentUser.metadata.creationTime;
-      const formattedJoinDate = formatJoinDate(rawJoinDate);
+      if (currentUser) {
+        setUser(currentUser.email);
+        const userName = currentUser.displayName ? currentUser.displayName : null;
+        const rawJoinDate = currentUser.metadata.creationTime;
+        const formattedJoinDate = formatJoinDate(rawJoinDate);
 
-      setName(userName); // Store name or null
-      setJoinDate(formattedJoinDate);
-      setLoading(false); // Auth state resolved
+        setName(userName);
+        setJoinDate(formattedJoinDate);
+        setLoading(false);
+
+        // Set up Firestore listener only when we have a valid user
+        try {
+          const unsubscribeFirestore = onSnapshot(
+            doc(db, "users", currentUser.email),
+            (doc) => {
+              if(name===null || name==='null'){
+                setName(doc.data().name);
+              }
+              setPlanType(doc.data().plan || 'free');
+              setReferalCode(doc.data().myCode);
+              const profilePicture = doc.data().profilePicture;
+              setSelectedAlias(profilePicture ? profilePicture : '');
+            }
+          );
+          return () => unsubscribeFirestore(); // Cleanup Firestore listener
+        } catch (error) {
+          setPlanType('free');
+          alert("Error");
+        }
+      } else {
+        // Handle case when user is not logged in
+        setUser(null);
+        setName(null);
+        setPlanType('free');
+        setLoading(false);
+      }
     });
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe(); // Cleanup auth listener
   }, []);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
-  useEffect(() => {
-    try {
-      const document = onSnapshot(
-        doc(db, "users", user),
-        (doc) => {
-          if(name===null || name==='null'){
-          setName(doc.data().name);
-          }
-          setPlanType(doc.data().plan);
-          setReferalCode(doc.data().myCode)
-          const profilePicture = doc.data().profilePicture;
-          setSelectedAlias(profilePicture ? profilePicture : '');
-        }
-      );
-    } catch (error) {
-      alert("Error");
-    }
-  }, [user]);
   useEffect(() => {
     const fetchProfileImage = async () => {
       if (user) {
@@ -583,13 +593,34 @@ const MyProfile = ({ mobileDimension }) => {
               marginLeft:'8%',
               width:'92%',
               position:'absolute',
-              bottom:'84%'
+              bottom:'84%',
+              alignItems: 'center',
+              gap: '10px'
             }}
           >
-            <label style={{ color: "white", fontWeight: "bold", fontSize: "22px", width: '60%' }}>
+            <label style={{ display:'flex',color: "white", fontWeight: "bold", fontSize: "22px", width: '60%', flexDirection:'row'}}>
               {name || `@Cookr${generateUniqueNumber(user)}`}
-            </label>
+              {!loading && planType && planType.toLowerCase() !== 'free' && (
+              <div style={{
+                backgroundColor: 'transparent',
+                backgroundColor: '#e1af32',
 
+                color: 'black',
+                padding: '0px 14px',
+                borderRadius: '15px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                fontStyle: 'italic',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: '10px'
+              }}>
+                Pro
+              </div>
+            )}
+            </label>
+            
           </div>
           <div
             style={{
@@ -781,13 +812,11 @@ const MyProfile = ({ mobileDimension }) => {
               marginLeft:'6%',
               position:'absolute',
               bottom:'7%',
-              // justifyContent:'center',
-              // marginRight:'12%',
               height:'16%',
             }}>
-              <span style={{ fontSize: "18px", fontWeight: "bold", color:'#cfa208', marginTop:'1%'}}>Upgrade to Pro</span>
+              <span style={{ fontSize: "18px", fontWeight: "bold", color:'#e1af32', marginTop:'1%'}}>Upgrade to Pro</span>
               <div style={{
-                backgroundColor: "#cfa208",
+                backgroundColor: "#e1af32",
                 width:'90%',
                 marginTop:'3%',
                 height:'55%',
@@ -795,7 +824,7 @@ const MyProfile = ({ mobileDimension }) => {
                 fontSize: "16px",
                 fontWeight: "bold",
                 border: "none",
-                borderRadius: "10px", // Rounded rectangle effect
+                borderRadius: "10px",
                 cursor: "pointer",
                 transition: "0.3s ease-in-out",
                 justifyContent:'center',
@@ -804,14 +833,14 @@ const MyProfile = ({ mobileDimension }) => {
                 
               <button
                 style={{
-                  backgroundColor: "#dde023",
+                  backgroundColor: "#e1af32",
                   width:'100%',
                   height:'90%',
                   color: "white",
                   fontSize: "16px",
                   fontWeight: "bold",
                   border: "none",
-                  borderRadius: "10px", // Rounded rectangle effect
+                  borderRadius: "10px",
                   cursor: "pointer",
                   transition: "0.3s ease-in-out",
                   justifyContent:'center',
@@ -821,23 +850,23 @@ const MyProfile = ({ mobileDimension }) => {
                 onMouseOver={(e) => (e.target.style.opacity = 1)}
                 onMouseOut={(e) => (e.target.style.opacity = 1)}
               >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 14 14"
-                width="30px"
-                height="30px"
-                style={{marginTop:'2%'}}
-              >
-                <g
-                  fill="none"
-                  stroke="black"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 14 14"
+                  width="30px"
+                  height="30px"
+                  style={{marginTop:'2%'}}
                 >
-                  <path d="M10.64 1.54H3.36a1.07 1.07 0 0 0-.85.46L.69 4.52a1.05 1.05 0 0 0 .06 1.29l5.46 6.29a1 1 0 0 0 1.58 0l5.46-6.29a1.05 1.05 0 0 0 .06-1.29L11.49 2a1.07 1.07 0 0 0-.85-.46Z"></path>
-                  <path d="M6.48 1.53L4.04 5.31L7 12.46m.55-10.93l2.43 3.78L7 12.46M.52 5.31h12.96"></path>
-                </g>
-              </svg>
+                  <g
+                    fill="none"
+                    stroke="black"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M10.64 1.54H3.36a1.07 1.07 0 0 0-.85.46L.69 4.52a1.05 1.05 0 0 0 .06 1.29l5.46 6.29a1 1 0 0 0 1.58 0l5.46-6.29a1.05 1.05 0 0 0 .06-1.29L11.49 2a1.07 1.07 0 0 0-.85-.46Z"></path>
+                    <path d="M6.48 1.53L4.04 5.31L7 12.46m.55-10.93l2.43 3.78L7 12.46M.52 5.31h12.96"></path>
+                  </g>
+                </svg>
               </button>
               </div>
             </div>
@@ -985,9 +1014,9 @@ const MyProfile = ({ mobileDimension }) => {
             {/* Divider and Sections */}
               {/* Section 1 */}
               <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%' }}>
+              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%', cursor: 'pointer'}} onClick={handleShare}>
                 {/* Icon */}
-                <div style={{ display: "flex", alignItems: "center", width:'90%' }}>
+                <div style={{ display: "flex", alignItems: "center", width:'90%', }}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 48 48"
@@ -1009,7 +1038,7 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right" onClick={handleShare} style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <i className="fas fa-chevron-right" style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
               </div>
               </div>
               {/* Divider */}
@@ -1017,9 +1046,9 @@ const MyProfile = ({ mobileDimension }) => {
 
               {/* Section 2 */}
               <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%' }}>
+              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%', cursor: 'pointer' }} onClick={handleContact}>
                 {/* Icon */}
-                <div style={{ display: "flex", alignItems: "center", width:'90%' }}>
+                <div style={{ display: "flex", alignItems: "center", width:'90%', }}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -1040,7 +1069,7 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right"  onClick={handleContact} style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <i className="fas fa-chevron-right"  style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
               </div>
               </div>
               {/* Divider */}
@@ -1048,9 +1077,9 @@ const MyProfile = ({ mobileDimension }) => {
 
               {/* Section 3 */}
               <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%' }}>
+              <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%', cursor: 'pointer' }} onClick={handleTerms}>
                 {/* Icon */}
-                <div style={{ display: "flex", alignItems: "center", width:'90%' }}>
+                <div style={{ display: "flex", alignItems: "center", width: '90%' }}>
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -1084,7 +1113,7 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right" onClick={handleTerms} style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <i className="fas fa-chevron-right"  style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
               </div>
               </div>
           </div>

@@ -32,11 +32,7 @@ function Library() {
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser.email);
-      } else {
-        setUser(null); // Set user to null when not logged in
-      }
+      setUser(currentUser.email);
       setLoading(false); // Auth state resolved
     });
     return () => unsubscribe(); // Cleanup listener

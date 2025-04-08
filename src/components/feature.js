@@ -31,6 +31,7 @@ const Features= ({ mobileDimension }) => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState("rishit.agrawal121@gmail.com");
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -75,6 +76,15 @@ const Features= ({ mobileDimension }) => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser.email);
       setLoading(false); // Auth state resolved
+      if (currentUser) {
+        // Get subscription status from Firestore
+        const userRef = doc(db, "users", currentUser.email);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setHasSubscription(docSnap.data().subscription || false);
+          }
+        });
+      }
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
@@ -132,7 +142,6 @@ const Features= ({ mobileDimension }) => {
   // Updated generateBlob function with dynamic width and height
   const saveToFirestore = async (title, content, subject, promptMode, tag) => {
     try {
-
       const color = randomColor({
         luminosity: "dark",
       });
@@ -154,6 +163,12 @@ const Features= ({ mobileDimension }) => {
       if (isDuplicate) {
         window.alert("This set already exists in your library!");
         return; // Exit early if duplicate
+      }
+  
+      // Check subscription status before adding new set
+      if (!hasSubscription && currentSets.length >= 10) {
+        window.alert("You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!");
+        return;
       }
   
       // Add the new set

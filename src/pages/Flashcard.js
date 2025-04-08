@@ -368,11 +368,10 @@ const FlashCard = () => {
                                     position: 'relative',
                                     alignItems:'center',
                                     // justifyContent:'center',
-                                    height: !mobileDimension? "55dvh": "48dvh",
+                                    height: !mobileDimension? "calc(100dvh - 75px)": "48dvh",
                                     width: !mobileDimension? "78vw": "100vw",  // Use full width of the viewport
                                     overflowX: "hidden",  // Prevent horizontal scrolling
                                     overflowY: "hidden"   // Prevent vertical scrolling
-
                                 }}
                             >
                                 {shuffledCards.map((card, index) => (

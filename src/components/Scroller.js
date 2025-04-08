@@ -7,7 +7,7 @@ import ScrollerLoader from "./mini_components/ScrollerLoader";
 const containerStyle = {
   display: "flex",
   flexDirection: "column",
-  height: "100vh",
+  height: "100dvh",
   width: "100%",
   overflowY: "auto", // Change from 'scroll' to 'auto'
   scrollSnapType: "y mandatory", // Enforce snapping on the y-axis
@@ -21,7 +21,7 @@ const containerStyle = {
 const cardContainerStyle = {
   display: "flex",
   flexDirection: "column",
-  height: "100vh", // Each card takes up full viewport height
+  height: "100dvh", // Each card takes up full viewport height
   scrollSnapAlign: "start", // Snap to the start of each card
   scrollSnapStop: "always", // Stop scrolling at each snap point
 };
@@ -30,7 +30,7 @@ const loadingStyle = {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  height: "100vh",
+  height: "100dvh",
   fontSize: "24px",
   color: "#888",
 };

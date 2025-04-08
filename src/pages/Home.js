@@ -205,7 +205,7 @@ useEffect(() => {
               <div
                 style={{
                   width: "100%",
-                  height: "100vh",
+                  height: "100dvh",
                   justifyContent: "center",
                   alignItems: "center",
                   display: "flex",

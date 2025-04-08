@@ -41,6 +41,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [titleError, setTitleError] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isOpening, setIsOpening] = useState(true);
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -58,6 +61,14 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
       }
     });
     return () => unsubscribe(); // Cleanup listener
+  }, []);
+
+  useEffect(() => {
+    // Set isOpening to false after the initial animation
+    const timer = setTimeout(() => {
+      setIsOpening(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   function extractVideoId(url) {
@@ -305,6 +316,12 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
   const saveToFirestore = async () => {
     try {
+      if (!title.trim()) {
+        setTitleError(true);
+        return;
+      }
+      setTitleError(false);
+
       const color = randomColor({
         luminosity: "light",
       });
@@ -377,7 +394,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         }
       } else {
         // Check subscription status before limiting sets
-        if (!userData.subscription && currentSets.length >= 10) {
+        if (!hasSubscription && currentSets.length >= 10) {
           setShowLimitDialog(true);
           return;
         }
@@ -423,6 +440,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
+    setTitleError(false);
   };
 
   const handleContentChange = (e) => {
@@ -454,12 +472,18 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     justifyContent: "center",
   });
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setOpenNewTopic(false);
+    }, 300); // Match this with the animation duration
+  };
+
   return (
     <div
       style={{
         position: "fixed",
         top: 0,
-        // left: 0,
         right: mobileDimension? 0: 0,
         width: mobileDimension? "100vw": "370px",
         height: "100dvh",
@@ -471,12 +495,24 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         justifyContent: "space-around",
         zIndex: 99999999999999,
         boxSizing: "border-box",
+        transform: isClosing ? "translateY(100%)" : isOpening ? "translateY(100%)" : "translateY(0)",
+        transition: "transform 0.3s ease-in-out",
       }}
     >
+      <style>
+        {`
+          @keyframes slideUp {
+            from {
+              transform: translateY(100%);
+            }
+            to {
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
       <svg
-        onClick={async () => {
-          setOpenNewTopic(false);
-        }}
+        onClick={handleClose}
         xmlns="http://www.w3.org/2000/svg"
         fill="gainsboro"
         viewBox="0 0 384 512"
@@ -528,17 +564,26 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             onChange={handleTitleChange}
             style={{
               background: "#28282B",
-              outline: "1px solid #353935",
+              outline: titleError ? "1px solid #ff4444" : "1px solid #353935",
               border: "none",
               borderRadius: "10px",
               padding: "10px 5px",
               width: "100%",
               boxSizing: "border-box",
               color: "white",
-              
             }}
             placeholder={"Chef Shark"}
           />
+          {titleError && (
+            <p style={{ 
+              color: "#ff4444", 
+              fontSize: "12px", 
+              margin: "4px 0px 0px 0px",
+              opacity: 0.8
+            }}>
+              Title cannot be blank
+            </p>
+          )}
         </div>
         {promptMode === 1 ? (
           <div style={{ width: "100%", marginBottom: "10px" }}>

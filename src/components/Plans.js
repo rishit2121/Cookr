@@ -247,7 +247,7 @@ const Plans = ({ planType }) => {
         borderRadius: '10px',
         boxShadow: '0 0 20px rgba(0,0,0,0.2)',
         zIndex: 1000,
-        width: '400px',
+        width: '80dvw',
       }}>
         <h2 style={{ marginBottom: '20px' }}>Confirm Switch to Free Plan</h2>
         <p style={{ marginBottom: '20px' }}>
@@ -364,7 +364,7 @@ const Plans = ({ planType }) => {
             marginTop: "24px",
             marginBottom:'7px',
             fontSize:'20px',
-            backgroundColor: !userPlan || userPlan.toLowerCase() === 'free' ? "#cccccc" : "#ff9900",
+            backgroundColor: !userPlan || userPlan.toLowerCase() === 'free' ? "#cccccc" : "#e1af32",
             color:'black',
             fontWeight:'bold'
           }}
@@ -441,7 +441,7 @@ const Plans = ({ planType }) => {
             cursor: userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk' ? "not-allowed" : "pointer",
             marginTop: "20px",
             fontSize:'20px',
-            backgroundColor: userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk' ? "#cccccc" : "#ff9900",
+            backgroundColor: userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk' ? "#cccccc" : "#e1af32",
             color:'black',
             fontWeight:'bold'
           }}
@@ -523,7 +523,7 @@ const Plans = ({ planType }) => {
             cursor: userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk' ? "not-allowed" : "pointer",
             marginTop: "24px",
             fontSize:'20px',
-            backgroundColor: userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk' ? "#cccccc" : "#ff9900",
+            backgroundColor: userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk' ? "#cccccc" : "#e1af32",
             color:'black',
             fontWeight:'bold'
           }}

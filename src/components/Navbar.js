@@ -7,6 +7,8 @@ import { Toggle } from "./Toggle.js";
 import { signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import myImage from "../assets/cookr_logo.png";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase/Firebase";
 
 
 const Navbar = ({ setMobileDimension }) => {
@@ -24,6 +26,7 @@ const Navbar = ({ setMobileDimension }) => {
     window.location.reload(); // Refresh the page to apply the theme change
   };
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -31,9 +34,17 @@ const Navbar = ({ setMobileDimension }) => {
       if (currentUser) {
         // User is logged in
         setUser(currentUser.email);
+        // Get subscription status from Firestore
+        const userRef = doc(db, "users", currentUser.email);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setHasSubscription(docSnap.data().subscription || false);
+          }
+        });
       } else {
         // User is logged out
         setUser(null);
+        setHasSubscription(false);
       }
       setLoading(false); // Auth state resolved
     });

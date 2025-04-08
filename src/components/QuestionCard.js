@@ -47,6 +47,8 @@ const QuestionCard = ({
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reveal, setReveal] = useState(savedState.reveal || false);
+  const [user, setUser] = useState(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   // Save state to the shared dictionary whenever it changes
   useEffect(() => {
@@ -59,13 +61,12 @@ const QuestionCard = ({
     localStorage.setItem("questionStates", JSON.stringify(questionStates));
   }, [selectedChoice, isAnswered, reveal, questionKey]);
 
-const [user, setUser] = useState('rishit.agrawal121@gmail.com');
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser.email);
-      setLoading(false); // Auth state resolved
       if (currentUser) {
+        setUser(currentUser.email);
+        setLoading(false);
         // Get subscription status from Firestore
         const userRef = doc(db, "users", currentUser.email);
         getDoc(userRef).then((docSnap) => {
@@ -73,18 +74,20 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
             setHasSubscription(docSnap.data().subscription || false);
           }
         });
+      } else {
+        setUser(null);
+        setHasSubscription(false);
+        setLoading(false);
       }
     });
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe();
   }, []);
-
 
   // Retrieve favorites from local storage, or initialize with an empty array
   const [favorites, setFavorites] = useState(
     JSON.parse(localStorage.getItem("favorites")) || []
   );
   const [showComments, setShowComments] = useState(false);
-  const [hasSubscription, setHasSubscription] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -121,13 +124,17 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
       if (isFavorites) {
         return;
       } else {
-        setStreak((prevStreak) => prevStreak + 1);
+        // setStreak((prevStreak) => prevStreak + 1);
         setXP((prevXP) => prevXP + 10);
         triggerPlus10Animation();
 
         // Update trueXP in localStorage
         const currentXP = parseInt(localStorage.getItem("trueXP") || "0");
         localStorage.setItem("trueXP", (currentXP + 10).toString());
+
+        // Update questionStreak in localStorage
+        const currentQuestionStreak = parseInt(localStorage.getItem("questionStreak") || "0");
+        localStorage.setItem("questionStreak", (currentQuestionStreak + 1).toString());
 
         // Update leaderboard
         try {
@@ -209,8 +216,11 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
         }
       }
     } else {
-      setStreak(0);
+      // setStreak(0);
       triggerShakeAnimation();
+      
+      // Reset questionStreak to 0 when wrong
+      localStorage.setItem("questionStreak", "0");
     }
   };
 
@@ -854,7 +864,7 @@ const [user, setUser] = useState('rishit.agrawal121@gmail.com');
               </g>
             </svg>
 
-            {localStorage.getItem("streak")}
+            {localStorage.getItem("questionStreak") || "0"}
           </div>
           )}
         </div>

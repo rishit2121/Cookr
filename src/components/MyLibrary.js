@@ -23,6 +23,7 @@ const MyLibrary = ({ mobileDimension }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -34,6 +35,15 @@ const MyLibrary = ({ mobileDimension }) => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser.email);
       setLoading(false); // Auth state resolved
+      if (currentUser) {
+        // Get subscription status from Firestore
+        const userRef = doc(db, "users", currentUser.email);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setHasSubscription(docSnap.data().subscription || false);
+          }
+        });
+      }
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
@@ -329,6 +339,51 @@ const MyLibrary = ({ mobileDimension }) => {
         </div>
       )}
       <h1 style={{ margin: "20px 50px", color: "white" }}>My Library</h1>
+      <div style={{ 
+        textAlign: mobileDimension ? "center" : "left", 
+        color: (!hasSubscription && sets.length >= 10) ? "#ff4444" : "white", 
+        marginBottom: "20px",
+        fontSize: "14px",
+        opacity: 0.8,
+        marginLeft: mobileDimension ? "0" : "50px",
+        marginRight: mobileDimension ? "0" : "50px"
+      }}>
+        {hasSubscription ? (
+          `${sets.length} sets added. No limit for Cookr Pro.`
+        ) : (
+          sets.length > 10 ? (
+            <div>
+              {sets.length} out of 10 sets added.{" "}
+              <span 
+                onClick={() => navigate("/profile")}
+                style={{ 
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  color: "#ff4444"
+                }}
+              >
+                Switch back to Pro
+              </span>
+            </div>
+          ) : sets.length === 10 ? (
+            <div>
+              {sets.length} out of 10 sets added.{" "}
+              <span 
+                onClick={() => navigate("/profile")}
+                style={{ 
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  color: "#ff4444"
+                }}
+              >
+                Upgrade to Pro
+              </span>
+            </div>
+          ) : (
+            `${sets.length} out of 10 on Free`
+          )
+        )}
+      </div>
       <div
         style={{
           margin: "5px 50px",
@@ -339,46 +394,44 @@ const MyLibrary = ({ mobileDimension }) => {
           alignItems: mobileDimension ? "center" : "flex-start",
         }}
       >
-        {/* {!mobileDimension && ( */}
-          <div
-            className="libCard"
-            style={{
-              position: "fixed",
-              bottom: mobileDimension ? "90px" : "30px",
-              right: mobileDimension ? "3%" : "30px",
-              width: mobileDimension ?"75px": "85px",
-              height: mobileDimension ?"75px": "85px",
-              borderRadius: "50%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "white",
-              border: "1px solid #353935",
-              background: "radial-gradient(circle at center,rgb(20, 18, 18), #1a1a1d)",
-              boxShadow: "0 0px 12px rgb(155, 155, 155)",
-              borderColor: "#8a8a8a",
-              zIndex: 1000,
-            }}
-            onClick={() => handleNewClick()}
+        <div
+          className="libCard"
+          style={{
+            position: "fixed",
+            bottom: mobileDimension ? "90px" : "30px",
+            right: mobileDimension ? "3%" : "30px",
+            width: mobileDimension ?"75px": "85px",
+            height: mobileDimension ?"75px": "85px",
+            borderRadius: "50%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: (!hasSubscription && sets.length >= 10) ? "not-allowed" : "pointer",
+            color: (!hasSubscription && sets.length >= 10) ? "#666666" : "white",
+            border: "1px solid #353935",
+            background: "radial-gradient(circle at center,rgb(20, 18, 18), #1a1a1d)",
+            boxShadow: "0 0px 12px rgb(155, 155, 155)",
+            borderColor: "#8a8a8a",
+            zIndex: 1000,
+            opacity: (!hasSubscription && sets.length >= 10) ? 0.5 : 1,
+          }}
+          onClick={() => (!hasSubscription && sets.length >= 10) ? null : handleNewClick()}
+        >
+          <svg  
+            width="32" 
+            height="32" 
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg  
-              width="32" 
-              height="32" 
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            {/* <p style={{ fontSize: "12px", margin: "4px 0 0 0" }}>Add</p> */}
-          </div>
-        {/* )} */}
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
         {sets &&
           sets.map((item, index) => (
             <div>
