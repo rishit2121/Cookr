@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "./static/css/main.b2a29dca.css",
-    "main.js": "./static/js/main.62edd2c3.js",
+    "main.js": "./static/js/main.299d534f.js",
     "static/media/owl.jpeg": "./static/media/owl.406b8a1f626ae4fc0dbf.jpeg",
     "static/media/monkey.jpeg": "./static/media/monkey.7a8d4d51d94a9d2d1af2.jpeg",
     "static/media/squirrel.jpeg": "./static/media/squirrel.d7c2c0b295ae181ce9bd.jpeg",
@@ -10,6 +10,7 @@
     "static/media/chipmunk.jpeg": "./static/media/chipmunk.00cc11b32143fd76518e.jpeg",
     "static/media/shark.jpeg": "./static/media/shark.c2e8058a361eda8b49f8.jpeg",
     "static/media/panda.jpeg": "./static/media/panda.8470c4b7d25ac2139c04.jpeg",
+    "static/media/text.png": "./static/media/text.f1d822506fcff15dc730.png",
     "static/media/KaTeX_AMS-Regular.ttf": "./static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/correct-answer-sound-effect-19.wav": "./static/media/correct-answer-sound-effect-19.842666b9f366299de43e.wav",
     "static/media/KaTeX_Main-Regular.ttf": "./static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
@@ -24,7 +25,6 @@
     "static/media/KaTeX_AMS-Regular.woff2": "./static/media/KaTeX_AMS-Regular.73ea273a72f4aca30ca5.woff2",
     "static/media/KaTeX_Typewriter-Regular.ttf": "./static/media/KaTeX_Typewriter-Regular.c5c02d763c89380dcb4e.ttf",
     "static/media/KaTeX_Main-Regular.woff2": "./static/media/KaTeX_Main-Regular.f650f111a3b890d116f1.woff2",
-    "static/media/text.png": "./static/media/text.d35f64e20b17f0cd27bb.png",
     "static/media/KaTeX_Main-Bold.woff2": "./static/media/KaTeX_Main-Bold.39890742bc957b368704.woff2",
     "static/media/KaTeX_SansSerif-Bold.ttf": "./static/media/KaTeX_SansSerif-Bold.5b49f4993ae22d7975b4.ttf",
     "static/media/KaTeX_SansSerif-Italic.ttf": "./static/media/KaTeX_SansSerif-Italic.b257a18c016f37ee4543.ttf",
@@ -77,10 +77,10 @@
     "static/media/KaTeX_Size3-Regular.woff2": "./static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "./index.html",
     "main.b2a29dca.css.map": "./static/css/main.b2a29dca.css.map",
-    "main.62edd2c3.js.map": "./static/js/main.62edd2c3.js.map"
+    "main.299d534f.js.map": "./static/js/main.299d534f.js.map"
   },
   "entrypoints": [
     "static/css/main.b2a29dca.css",
-    "static/js/main.62edd2c3.js"
+    "static/js/main.299d534f.js"
   ]
 }

@@ -22,6 +22,7 @@ import Leaderboard from "./pages/LeaderboardPage";
 import Paypal from "./pages/Paypal";
 import PaymentConfirmation from './components/PaymentConfirmation';
 import Terms from './pages/Terms';
+import  PrivacyPolicyPopup from './components/Privacy';
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 
@@ -45,6 +46,8 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/paypal" element={<Paypal />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<PrivacyPolicyPopup />} />
+
 
           <Route
           path="/subscribe"

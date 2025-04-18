@@ -3,6 +3,10 @@ import QuestionCard from "./QuestionCard";
 import { Link } from "react-router-dom";
 import { jsonrepair } from "jsonrepair";
 import ScrollerLoader from "./mini_components/ScrollerLoader";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "./firebase/Firebase";
+import { auth } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const containerStyle = {
   display: "flex",
@@ -71,6 +75,19 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     }
     return 0;
   });
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser.email);
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("previousQuestionsLength", "0");
   }, []);
@@ -119,33 +136,46 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     }
   }, [questions]);
 
-  // Add streak check on component mount
-  useEffect(() => {
-    checkAndUpdateStreak();
-  }, []);
-
   // Function to check and update streak
-  const checkAndUpdateStreak = () => {
+  const checkAndUpdateStreak = async () => {
+    if (!user) return;
+
     const today = new Date();
-    const lastStreakUpdate = localStorage.getItem('lastStreakUpdate');
-    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+    const userRef = doc(db, "users", user);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      // First time user
+      await updateDoc(userRef, {
+        streak: 1,
+        lastStreakUpdate: today.toISOString()
+      });
+      setStreak(1);
+      return;
+    }
+
+    const userData = userDoc.data();
+    const lastStreakUpdate = userData.lastStreakUpdate;
+    const currentStreak = userData.streak || 0;
 
     if (!lastStreakUpdate) {
       // First time user
-      localStorage.setItem('streak', '1');
-      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      await updateDoc(userRef, {
+        streak: 1,
+        lastStreakUpdate: today.toISOString()
+      });
       setStreak(1);
       return;
     }
 
     const lastUpdate = new Date(lastStreakUpdate);
     const isSameDay = today.getDate() === lastUpdate.getDate() &&
-                      today.getMonth() === lastUpdate.getMonth() &&
-                      today.getFullYear() === lastUpdate.getFullYear();
+                    today.getMonth() === lastUpdate.getMonth() &&
+                    today.getFullYear() === lastUpdate.getFullYear();
 
     const isNextDay = today.getDate() === lastUpdate.getDate() + 1 &&
-                      today.getMonth() === lastUpdate.getMonth() &&
-                      today.getFullYear() === lastUpdate.getFullYear();
+                    today.getMonth() === lastUpdate.getMonth() &&
+                    today.getFullYear() === lastUpdate.getFullYear();
 
     if (isSameDay) {
       // Already updated today, don't change anything
@@ -155,16 +185,25 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     if (isNextDay) {
       // Consecutive day, increment streak
       const newStreak = currentStreak + 1;
-      localStorage.setItem('streak', newStreak.toString());
-      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      await updateDoc(userRef, {
+        streak: newStreak,
+        lastStreakUpdate: today.toISOString()
+      });
       setStreak(newStreak);
     } else {
       // Not consecutive, reset streak to 1
-      localStorage.setItem('streak', '1');
-      localStorage.setItem('lastStreakUpdate', today.toISOString());
+      await updateDoc(userRef, {
+        streak: 1,
+        lastStreakUpdate: today.toISOString()
+      });
       setStreak(1);
     }
   };
+
+  // Add streak check on component mount
+  useEffect(() => {
+    checkAndUpdateStreak();
+  }, [user]);
 
   const handleScroll = () => {
     if (isFetching) return;
@@ -202,7 +241,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
         "https://hfob3eouy6.execute-api.us-west-2.amazonaws.com/production/",
         options
       );
-
+      console.log(response)
       if (!response.ok) {
         throw new Error();
       }

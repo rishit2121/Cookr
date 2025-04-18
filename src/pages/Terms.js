@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Terms = () => {
+  const navigate = useNavigate();
+
   return (
     <div style={{
       backgroundColor: '#202020',
@@ -9,15 +12,37 @@ const Terms = () => {
       color: 'white',
       margin: '0 auto',
     }}>
-      <h1 style={{
-        fontSize: '48px',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: '10px',
-        color: 'white'
-      }}>
-            C<span style={{ fontStyle: "italic", }}>oo</span>kr
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <button 
+          onClick={() => navigate(-1)}
+          style={{
+            position: 'absolute',
+            left: '20px',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '36px',
+            padding: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '50px',
+            height: '50px'
+          }}
+        >
+          ←
+        </button>
+        <h1 style={{
+          fontSize: '48px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginBottom: '10px',
+          color: 'white'
+        }}>
+          C<span style={{ fontStyle: "italic", }}>oo</span>kr
         </h1>
+      </div>
       
       <div style={{
         borderBottom: '1px solid #e1af32',
@@ -53,10 +78,10 @@ const Terms = () => {
             <h2>3. Account Responsibilities</h2>
             <p>You are responsible for maintaining the confidentiality of your account and password and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account or any other breach of security.</p>
 
-            <h2>4. Use of Anthropic API</h2>
-            <p>Cookr uses the OpenAI API to provide certain functionalities within the app. By using our app, you acknowledge that:</p>
+            <h2>4. Use of Google Gemini API</h2>
+            <p>Cookr uses the Google Gemini API to provide certain functionalities within the app. By using our app, you acknowledge that:</p>
             <ul>
-                <li>Your use of Anthropic's API is subject to Anthropics Technology Ltd.'s Terms of Service and Privacy Policy.</li>
+                <li>Your use of Google's Gemini API is subject to Google's Terms of Service and Privacy Policy.</li>
                 <li>We are not responsible for any issues or disruptions related to the API.</li>
             </ul>
 
@@ -88,89 +113,7 @@ const Terms = () => {
 
             <h2>12. Contact Us</h2>
             <p>If you have any questions or concerns about these Terms of Use, please contact us at <a href="mailto:alsonchang.digital@gmail.com">alsonchang.digital@gmail.com</a></p>
-      </div>
-      <h2 style={{
-        fontSize: '32px',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: '30px',
-        marginTop:'40px'
-      }}>
-        Privacy Policy
-      </h2>
-
-      <div style={{
-        fontSize: '16px',
-        lineHeight: '1.6',
-        color: '#cccccc',
-        width:'90dvw',
-        margin:'0 auto'
-      }}>
-        <p style={{ textAlign: 'right', fontStyle: 'italic' }}>Effective Date: July 21, 2024</p>
-
-<h2>1. Introduction</h2>
-<p>Welcome to Cookr.co, a study app designed for students aged 12 and above. We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website and use our services.</p>
-
-<h2>2. Information We Collect</h2>
-<p>We may collect the following types of information:</p>
-
-<h3>2.1 Personal Information</h3>
-<ul>
-    <li>Name</li>
-    <li>Email Address</li>
-    <li>School Information</li>
-</ul>
-
-<h3>2.2 Non-Personal Information</h3>
-<ul>
-    <li>Browser type</li>
-    <li>Operating system</li>
-    <li>Usage data (e.g., pages visited, time spent on the site)</li>
-</ul>
-
-<h2>3. How We Use Your Information</h2>
-<p>We use the collected information for various purposes, including:</p>
-<ul>
-    <li>To provide and maintain our service</li>
-    <li>To notify you about changes to our service</li>
-    <li>To allow you to participate in interactive features of our service</li>
-    <li>To provide customer support</li>
-    <li>To gather analysis or valuable information to improve our service</li>
-    <li>To monitor the usage of our service</li>
-    <li>To detect, prevent, and address technical issues</li>
-</ul>
-
-<h2>4. Sharing Your Information</h2>
-<p>We do not sell or rent your personal information to third parties. We may share your information with:</p>
-<ul>
-    <li><strong>Service Providers:</strong> To facilitate our service, provide the service on our behalf, perform service-related activities, or assist us in analyzing how our service is used.</li>
-    <li><strong>Legal Authorities:</strong> If required by law or in response to valid requests by public authorities (e.g., a court or a government agency).</li>
-</ul>
-
-<h2>5. Data Security</h2>
-<p>We use administrative, technical, and physical security measures to protect your personal information. Despite these measures, no method of transmission over the Internet or method of electronic storage is 100% secure, so we cannot guarantee its absolute security.</p>
-
-<h2>6. Your Rights</h2>
-<p>You have the right to:</p>
-<ul>
-    <li>Access and obtain a copy of your personal data.</li>
-    <li>Rectify any inaccurate or incomplete data.</li>
-    <li>Erase your personal data under certain conditions.</li>
-    <li>Restrict or object to the processing of your data.</li>
-    <li>Data portability, allowing you to request the transfer of your data to another organization.</li>
-</ul>
-
-<h2>7. Children's Privacy</h2>
-<p>Our service is intended for users age 12 and above. We do not knowingly collect personal information from children under 12. If we become aware that we have collected personal information from a child under age 12, we will take steps to delete such information.</p>
-
-<h2>8. Changes to This Privacy Policy</h2>
-<p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the effective date at the top of the policy.</p>
-
-<h2>9. Contact Us</h2>
-<p>If you have any questions about this Privacy Policy, please contact us at:</p>
-<p>Email: <a href="mailto:alsonchang.digital@gmail.com">alsonchang.digital@gmail.com</a></p>
-
-        </div>
+          </div>
     </div>
   );
 };

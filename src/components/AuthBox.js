@@ -204,7 +204,7 @@ const AuthBox = () => {
           </p>
         </div>
       )}
-      <h2>Hi! 👋</h2>
+      <h2>Lets Cook 🧑‍🍳</h2>
       <form onSubmit={handleSubmit}>
         {mode === 0 && (
           <div>
@@ -334,7 +334,7 @@ const AuthBox = () => {
             >
               By signing up, you agree to our{" "}
               <span
-                onClick={async () => setPrivacyOpen(true)}
+                onClick={async () => navigate("/privacy")}
                 style={{ color: "#6A6CFF", cursor: "pointer" }}
               >
                 privacy policy

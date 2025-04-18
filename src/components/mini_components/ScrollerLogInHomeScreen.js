@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import cookrLogo from "./../../assets/CookrLogo.webp";
+import cookrLogo from "./../../assets/cook.png";
 
 function ScrollerLogInHomeScreen({ mobileDimension }) {
   const navigate = useNavigate();
@@ -9,11 +9,9 @@ function ScrollerLogInHomeScreen({ mobileDimension }) {
       <div
         style={{
           position: "absolute",
-          left: "50%",
+          left: mobileDimension ? "50%" : "calc(50% + 110px)",
           top: "50%",
-          transform: mobileDimension
-            ? "translate(-50%, -50%)"
-            : "translate(0%, -50%)",
+          transform: mobileDimension ? "translate(-50%, -50%)" : "translate(-50%, -50%)",
         }}
       >
         <p style={{ fontSize: "30px", color: "white", textAlign: "center" }}>
@@ -22,13 +20,14 @@ function ScrollerLogInHomeScreen({ mobileDimension }) {
         <div
           style={{ display: "flex", justifyContent: "center", height: "100px" }}
         >
-          <img style={{ scale: "4" }} src={cookrLogo} />
+          <img style={{ scale: "3.5" }} src={cookrLogo} />
         </div>
         <br></br>
         <button
           onClick={async () => navigate("/auth")}
           style={{
-            width: "100%",
+            width: "300px",
+            height:"7vh",
             padding: "10px 40px",
             backgroundColor: "#6A6CFF",
             border: "none",
@@ -37,7 +36,7 @@ function ScrollerLogInHomeScreen({ mobileDimension }) {
             cursor: "pointer",
             marginTop: "150px",
             boxShadow: "0px 5px #484AC3",
-            width: "300px",
+            fontSize: "18px",
           }}
         >
           Start Cooking
@@ -48,20 +47,22 @@ function ScrollerLogInHomeScreen({ mobileDimension }) {
       </div>
       <div
         style={{
-          bottom: "10px",
-          alignItems: "end",
+          bottom: "10dvh",
+          alignItems: "center",
           display: "flex",
-          justifyContent: "end",
+          justifyContent: "space-between",
           marginTop: "10px",
           position: "absolute",
-          right: "0%",
+          width: "300px",
+          left: mobileDimension ? "50%" : "calc(50% + 110px)",
+          transform: "translateX(-50%)"
         }}
       >
         <p
           style={{
-            margin: "0px 0px",
+            margin: "0px",
             color: "gray",
-            fontSize: "10px",
+            fontSize: "15px",
             cursor: "pointer",
           }}
           onClick={async () => navigate("terms")}
@@ -70,25 +71,14 @@ function ScrollerLogInHomeScreen({ mobileDimension }) {
         </p>
         <p
           style={{
-            margin: "0px 10px",
+            margin: "0px",
             color: "gray",
-            fontSize: "10px",
+            fontSize: "15px",
             cursor: "pointer",
           }}
-          onClick={async () => navigate("careers")}
+          onClick={async () => navigate("privacy")}
         >
           Privacy Policy
-        </p>
-        <p
-          style={{
-            margin: "0px 10px",
-            color: "gray",
-            fontSize: "10px",
-            cursor: "pointer",
-          }}
-          onClick={async () => navigate("careers")}
-        >
-          Careers
         </p>
       </div>
     </div>

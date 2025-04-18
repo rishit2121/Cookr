@@ -54,6 +54,7 @@ const MyProfile = ({ mobileDimension }) => {
   const [name, setName] = useState();
   const [planType, setPlanType] = useState('free');
   const [referalCode, setReferalCode] = useState();
+  const [streak, setStreak] = useState(0);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -65,11 +66,9 @@ const MyProfile = ({ mobileDimension }) => {
   const [selectedAlias, setSelectedAlias] = useState(null);
   const [isEmailVisible, setIsEmailVisible] = useState(false);
   const [profileImage, setProfileImage] = useState(() => {
-    // Load from localStorage on component mount
     return localStorage.getItem("profileImage") || null;
   });
   const [joinDate, setJoinDate] = useState(() => {
-    // Load from localStorage on component mount
     return localStorage.getItem("joinDate") || '';
   });
 
@@ -86,15 +85,26 @@ const MyProfile = ({ mobileDimension }) => {
     setTimeout(() => setCopied(false), 2000);
   };
   const handleShare = () => {
-    setPopupType("share");
+    if (navigator.share) {
+      navigator.share({
+        title: 'Check out Cookr!',
+        text: 'Join me on Cookr, a study app designed for students aged 12 and above!',
+        url: link, // The link to share
+      })
+      .then(() => console.log('Share successful'))
+      .catch((error) => console.error('Error sharing:', error));
+    } else {
+      // Fallback for browsers that do not support the Web Share API
+      alert('Sharing is not supported in this browser. Please copy the link manually.');
+    }
   };
 
   const handleContact = () => {
-    window.location.href = "mailto:scrollercontact@gmail.com";
+    window.open("https://forms.gle/ryFqJFQPqgG2xJhJ6", "_blank");
   };
 
   const handleTerms = () => {
-    navigate('/terms')
+    window.open('/#/terms', '_blank'); // Opens the terms page in a new tab with hash routing
   };
 
   const handleClosePopup = () => {
@@ -222,6 +232,12 @@ const MyProfile = ({ mobileDimension }) => {
     // Format the date to "Feb 10, 2024"
     return date.toLocaleDateString('en-US', options);
   };
+  function formatXP(xp) {
+    if (xp < 1000) return xp.toString();
+    if (xp < 1_000_000) return (xp / 1000).toPrecision(3) + 'K';
+    return (xp / 1_000_000).toPrecision(3) + 'M';
+  }
+  
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -245,6 +261,7 @@ const MyProfile = ({ mobileDimension }) => {
               }
               setPlanType(doc.data().plan || 'free');
               setReferalCode(doc.data().myCode);
+              setStreak(doc.data().streak || 0);
               const profilePicture = doc.data().profilePicture;
               setSelectedAlias(profilePicture ? profilePicture : '');
             }
@@ -332,6 +349,14 @@ const MyProfile = ({ mobileDimension }) => {
   //     return () => unsubscribe();
   //   }
   // }, [loading, user]);
+  if (loading) {
+    return null; // Show nothing while loading
+  }
+
+  if (!user) {
+    return null; // Show nothing if no user
+  }
+
   if(isMobile){
   return (
     <>
@@ -728,7 +753,7 @@ const MyProfile = ({ mobileDimension }) => {
               </span>
               <div style={{display:'flex', flexDirection:'column', alignItems:'center', width:'35%'}}>
               <span style={{ fontSize: "40px", fontWeight: "bold", color: 'white' }}>
-                {localStorage.getItem("streak") || 0}
+                {streak || 0}
               </span>              
               <span style={{ fontSize: "16px", color:'white'}}>Streak</span>
               </div>
@@ -746,11 +771,9 @@ const MyProfile = ({ mobileDimension }) => {
               position:'absolute',
               bottom:'54%',
               marginLeft:'47%',
-              // justifyContent:'center',
-              // marginRight:'12%',
               height:'10dvh'
             }}>
-                <span style={{ fontSize: "35px", fontWeight: "bold", color:'blue', marginLeft:'5%', }}>
+                <span style={{ fontSize: "35px", fontWeight: "bold", color:'blue', marginLeft:'5%' }}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 48 48"
@@ -769,12 +792,15 @@ const MyProfile = ({ mobileDimension }) => {
               </span>
               <div style={{display:'flex', flexDirection:'column', alignItems:'center', width:'65%'}}>
               <span style={{ 
-                fontSize: userXP > 9999 ? "32px" : "40px", 
+                fontSize: "clamp(20px, 7.7vw, 40px)", 
                 fontWeight: "bold", 
                 color: 'white',
-                transition: 'font-size 0.3s ease'
+                transition: 'font-size 0.3s ease',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap'
               }}>
-                {userXP}
+                {formatXP(userXP)}
               </span>  
               <span style={{ fontSize: "16px", color:'white'}}>XP</span>
               </div>
@@ -1271,124 +1297,303 @@ const MyProfile = ({ mobileDimension }) => {
     )}  
   </>  
   );
-}else{
+} else {
   return(
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          overflowY:'auto',
+          alignItems: "center",
+          justifyContent: "flex-start",
+          overflowY: 'auto',
+          width: '100%',
+          height: '100%',
+          padding: '0%',
+          top: 0,
+          left: '10%'
         }}
       >
-        <h1 style={{ margin: "40px 20px", color: "white"}}>My Profile</h1>
+        {/* Profile Header */}
         <div
           style={{
-            margin: "0px 10px",
             display: "flex",
-            width: "60%",
-            flexDirection: mobileDimension && "row",
+            flexDirection: "row",
+            alignItems: "center",
+            width: "96%",
+            marginBottom: "3%",
+            marginTop: "3%",
+            gap: "3%",
           }}
         >
+          {/* Profile Image */}
           <div
             style={{
-              display: "flex",
-              alignItems: "Center",
-              justifyContent: "center",
-              width: "1px",
-              height: "100px",
-              background: "whitesmoke",
-              borderRadius: "100px",
-              boxShadow: "0px 0px 4px 2px black",
-              fontSize: "150px",
-              fontWeight: "bold",
-              color: "white"
+              width: "15%",
+              aspectRatio: "1/1",
+              background: profileImage
+                ? `url(${profileImage}) center/cover`
+                : "#6A6CFF",
+              borderRadius: "50%",
+              border: "5px solid white",
+              boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.2)",
+              cursor: "pointer"
             }}
+            onClick={() => setShowPopup(true)}
           >
+            {(!profileImage || profileImage===null || profileImage==='null') && (
+              <p style={{ fontSize: "60px", color: "white", textAlign: "center", marginTop: "25%" }}>+</p>
+            )}
           </div>
-          <div
-            style={{ marginLeft: "10px", flexDirection: "column", width: "100%" }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <label style={{color: "white"}}>Name: </label>
-              <p
-                style={{
-                  fontWeight: "bold",
-                  padding: "5px",
-                  borderRadius: "10px",
-                  color: "white"
-                }}
-              >
-                {name && name}
-              </p>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <label style={{color: "white"}}>Email: </label>
-              <p
-                style={{
-                  fontWeight: "bold",
-                  padding: "5px",
-                  borderRadius: "10px",
-                  color: "white"
-                }}
-              >
-                {user && user}
-              </p>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <label style={{color: "white"}}>Referal Code: </label>
-              <p
-                style={{
-                  fontWeight: "bold",
-                  padding: "5px",
-                  borderRadius: "10px",
-                  color: "white"
-                }}
-              >
-                {referalCode && referalCode}
-              </p>
-            </div>
-            <button
-              style={{
-                marginTop: "5px",
-                color: "white",
-                background: `#6A6CFF`,
-                boxShadow: `0px 5px 0px 0px #484AC3`,
-                padding: "5px 15px",
-                borderRadius: "10px",
-                fontSize: "15px",
-                textAlign: "center",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-              onClick={async () => logout()}
-            >
-              Log Out!
-            </button>
+
+          {/* User Info */}
+          <div style={{ width: "35%" }}>
+            <h1 style={{ color: "white", fontSize: "2vw", marginBottom: "2%" , fontSize:'22px'}}>
+              {name || `@Cookr${generateUniqueNumber(user)}`}
+              {!loading && planType && planType.toLowerCase() !== 'free' && (
+                <span style={{
+                  backgroundColor: '#e1af32',
+                  color: 'black',
+                  padding: '0.5% 2%',
+                  borderRadius: '15px',
+                  fontSize: '0.8vw',
+                  fontWeight: 'bold',
+                  fontStyle: 'italic',
+                  marginLeft: '3%',
+                  fontSize:'12px'
+                }}>
+                  Pro
+                </span>
+              )}
+            </h1>
+            <p style={{ color: "white", fontSize: "1vw", fontSize:'13px' }}>
+              Member since {joinDate}
+            </p>
           </div>
         </div>
-        <h1 style={{ margin: "40px 20px", color: "white"}}>Plans</h1>
-        <Plans planType={planType} />
+
+        {showPopup && (
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "30%",
+              height: "40%",
+              backgroundColor: "#383837",
+              borderRadius: "20px",
+              padding: "20px",
+              zIndex: 99999,
+              border: "2px solid white",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "20px",
+                color: "white",
+                fontSize: "30px",
+                cursor: "pointer"
+              }}
+              onClick={() => setShowPopup(false)}
+            >
+              ×
+            </span>
+            {!imageSrc ? (
+              <div
+                style={{
+                  width: "80%",
+                  height: "80%",
+                  border: "2px dashed white",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  cursor: "pointer",
+                  textAlign: "center"
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleImageUpload}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  id="upload-input"
+                  style={{
+                    position: "absolute",
+                    width: "80%",
+                    height: "80%",
+                    opacity: 0,
+                    cursor: "pointer"
+                  }}
+                />
+                <label htmlFor="upload-input" style={{ color: "white", fontWeight: "bold", cursor: "pointer" }}>
+                  Click or Drag & Drop to Upload
+                </label>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center" }}>
+                <img
+                  src={imageSrc}
+                  alt="Uploaded"
+                  style={{
+                    width: "80%",
+                    height: "80%",
+                    borderRadius: "10px",
+                    border: "2px solid white"
+                  }}
+                />
+                <div style={{ marginTop: "20px", display: "flex", gap: "20px", justifyContent: "center" }}>
+                  <button
+                    onClick={handleConfirm}
+                    style={{
+                      padding: "10px 20px",
+                      background: "black",
+                      color: "white",
+                      borderRadius: "10px",
+                      border: "none",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={handleRetake}
+                    style={{
+                      padding: "10px 20px",
+                      background: "#d4543f",
+                      color: "white",
+                      borderRadius: "10px",
+                      border: "none",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Retake
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stats Container */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            width: "90%",
+            marginBottom: "3%",
+            gap: "2%",
+          }}
+        >
+          {/* Streak Container */}
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "row", 
+            alignItems: "center", 
+            padding: "2%", 
+            borderRadius: "10px", 
+            backgroundColor: "#363636",
+            width: "45%",
+            height: "8vh"
+          }}>
+            <span style={{ fontSize: "2vw", color: '#FF8F1F', marginRight: "5%" }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 512 512"
+                width="2.5em"
+                height="2.5em"
+              >
+                <path
+                  fill="#FF8F1F"
+                  d="M266.91 500.44c-168.738 0-213.822-175.898-193.443-291.147c.887-5.016 7.462-6.461 10.327-2.249c8.872 13.04 16.767 31.875 29.848 30.24c19.661-2.458 33.282-175.946 149.807-224.761c3.698-1.549 7.567 1.39 7.161 5.378c-5.762 56.533 28.181 137.468 88.316 137.468c34.472 0 58.058-27.512 69.844-55.142c3.58-8.393 15.843-7.335 17.896 1.556c21.031 91.082 77.25 398.657-179.756 398.657"
+                ></path>
+              </svg>
+            </span>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center', width:'100%'}}>
+              <span style={{ fontSize: "35px", fontWeight: "bold", color: 'white' }}>
+                {streak || 0}
+              </span>              
+              <span style={{ fontSize: "14px", color:'white'}}>Streak</span>
+            </div>
+          </div>
+
+          {/* XP Container */}
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "row", 
+            alignItems: "center", 
+            padding: "2%", 
+            borderRadius: "10px", 
+            backgroundColor: "#363636", 
+            width: "45%",
+            height: "8vh"
+          }}>
+            <span style={{ fontSize: "2vw", color: '#2F88FF', marginRight: "5%" }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 48 48"
+                width="2.5em"
+                height="2.5em"
+              >
+                <path
+                  fill="#2F88FF"
+                  stroke="#000"
+                  strokeLinejoin="round"
+                  strokeWidth="4"
+                  d="M19 4H37L26 18H41L17 44L22 25H8L19 4Z"
+                ></path>
+              </svg>
+            </span>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center', width:'100%'}}>
+              <span style={{ fontSize: "2vw", fontWeight: "bold", color: 'white', fontSize:'35px'}}>
+                {formatXP(userXP)}
+              </span>  
+              <span style={{ fontSize: "14px", color:'white'}}>XP</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center", 
+          // padding: "2%",
+          paddingTop: "3%",
+          paddingBottom: "3%",
+          
+          borderRadius: "10px", 
+          backgroundColor: "#363636", 
+          width: "90%",
+          marginBottom: "3%"
+        }}>
+          <span style={{ fontSize: "1.2vw", fontWeight: "bold", color:'white', marginBottom: "2%", fontSize:'18px'}}>Recent Activity</span>
+          <span style={{ fontSize: "1vw", color:'white', fontSize:'18px'}}>
+            {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || "No Sets Yet :("}
+          </span>
+        </div>
+
+        {/* Plans Section */}
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center", 
+          // padding: "2%", 
+          borderRadius: "10px", 
+          width: "96%",
+          marginBottom: "3%"
+        }}>
+          <Plans planType={planType} />
+        </div>
       </div>
   )
 }
