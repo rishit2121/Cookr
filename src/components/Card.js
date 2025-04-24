@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import MathJax from 'react-mathjax';
 import Latex from "react-latex-next";
 
 
