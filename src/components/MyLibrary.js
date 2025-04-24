@@ -240,12 +240,12 @@ const MyLibrary = ({ mobileDimension }) => {
           <div style={{ 
             display: "flex", 
             flexDirection: "column",
-            gap: "20px",
-            padding: "5%",
+            gap: "1dvh",
+            padding: "0%",
             justifyContent: "flex-start",
             alignItems: "center",
             flex: 1,
-            marginTop: "10%"
+            marginTop: "5%"
           }}>
             <button
               style={{
@@ -259,7 +259,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 border: "none",
                 cursor: "pointer",
                 width: "90%",
-                height: "25dvh",
+                height: "20dvh",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
@@ -298,8 +298,8 @@ const MyLibrary = ({ mobileDimension }) => {
                 border: "none",
                 cursor: "pointer",
                 width: "90%",
-                marginTop:'5%',
-                height: "25dvh",
+                marginTop:'4dvh',
+                height: "20dvh",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
@@ -314,6 +314,55 @@ const MyLibrary = ({ mobileDimension }) => {
               }}
             >
               <span style={{ fontWeight: "bold" }}>Flashcards</span>
+
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 14 14"
+                width="15dvw"
+                height="15dvh"
+              >
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="8" height="6" x="5.5" y="1.5" rx="1"></rect>
+                  <path d="M11 10H4a1 1 0 0 1-1-1V4"></path>
+                  <path d="M9 12.5H1.5a1 1 0 0 1-1-1V6"></path>
+                </g>
+              </svg>
+
+            </button>
+            <button
+              style={{
+                color: "white",
+                background: `rgb(169, 0, 0)`,
+                boxShadow: `0px 2px 0px 5px rgb(255, 8, 8)`,
+                padding: "20px",
+                borderRadius: "10px",
+                fontSize: "23px",
+                textAlign: "center",
+                border: "none",
+                cursor: "pointer",
+                width: "90%",
+                marginTop:'4dvh',
+                height: "20dvh",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+              onClick={() => {
+                if (!selectedItem) return;
+                localStorage.setItem("currentSet", JSON.stringify(selectedItem));
+                localStorage.removeItem("lastSet");
+                localStorage.removeItem("lastFlashSet");
+                localStorage.setItem("mode", 2);
+                navigate("/");
+              }}
+            >
+              <span style={{ fontWeight: "bold" }}>Free Response</span>
 
 
               <svg

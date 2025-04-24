@@ -49,6 +49,7 @@ const QuestionCard = ({
   const [reveal, setReveal] = useState(savedState.reveal || false);
   const [user, setUser] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [language, setLanguage] = useState("en"); // Default to English
 
   // Save state to the shared dictionary whenever it changes
   useEffect(() => {
@@ -72,6 +73,8 @@ const QuestionCard = ({
         getDoc(userRef).then((docSnap) => {
           if (docSnap.exists()) {
             setHasSubscription(docSnap.data().subscription || false);
+            const userLanguage = docSnap.data().language || "en"; // Default to English
+            setLanguage(userLanguage);
           }
         });
       } else {
@@ -329,7 +332,7 @@ const QuestionCard = ({
         onDoubleClick={(localStorage.getItem("mode") == 1 || isFavorites) ? handleHeartClick : undefined}
       >
         {showPlus10 && (
-          <div className="plus10-animation">Correct! You Cooked.</div>
+          <div className="plus10-animation">Correct!</div>
         )}
         <div>
           <p
@@ -427,7 +430,7 @@ const QuestionCard = ({
                   }}
                   onClick={handleRevealAnswer}
                 >
-                  {localStorage.getItem("mode") === "2" ? (reveal ? "Hide Answer" : "Reveal Answer") : "Reveal Answer"}
+                  {localStorage.getItem("mode") === "2" ? (reveal ? "Hide" : "Reveal") : "Reveal"}
                 </button>
                 <div
                   style={{
@@ -872,52 +875,5 @@ const QuestionCard = ({
     </div>
   );
 };
-      {/* <div style={{display: 'flex', flexDirection:"column", height:"82vh", backgroundColor:'', margin: "50px 0px", justifyContent:'center'}}>
-      <i
-              onClick={toggleLiked}
-              style={{
-                fontSize: "28px",
-                cursor: "pointer",
-                
-                  marginTop:'33vh',
-                  marginLeft:"10%",
-                  padding: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  position: "relative",
-                  color: liked ? "" : "black", // Darker outline for unfilled heart
-
-
-              }}
-              className={`${liked ? "fa-solid" : "fa-regular"} fa-heart`}
-              id={liked? "heart-clicked" : "heart-unclicked"}
-            ></i>
-
-
-
-      <ShareButtons title={question} body={choices} />
-      <i
-              onClick={handleHeartClick}
-              style={{
-                fontSize: "28px",
-                cursor: "pointer",
-                
-                  marginTop:'10%',
-                  marginLeft:"20%",
-                  padding: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  position: "relative",
-                  color: isFavorite ? "" : "black", // Darker outline for unfilled heart
-
-
-              }}
-              className={`${isFavorite ? "fa-solid" : "fa-regular"} fa-bookmark`}
-              id={isFavorite ? "bookmark-clicked" : "bookmark-unclicked"}
-            ></i>
-      </div> */}
-
 
 export default QuestionCard;

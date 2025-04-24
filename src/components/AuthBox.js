@@ -55,9 +55,38 @@ const AuthBox = () => {
       alert("Please Provide a Valid Email");
     }
   };
+  const validateUsername = (value) => {
+    if (value.trim() === '') return 'Username cannot be empty';
+    if (value.includes(' ')) return 'Username cannot contain spaces';
+    if (value !== value.toLowerCase()) return 'Username cannot contain capital letters';
+    const specialChars = "!\"#$%&'()*+,-/:;<=>?@[]^_`{|}~";
+    if (value.split('').some(char => specialChars.includes(char))) return 'Username cannot contain special characters';
+    if (value.length < 4 || value.length > 18) return 'Username must be between 4 and 18 characters';
+  
+    const explicitWords = ['hey'];
+    const containsExplicitWord = explicitWords.some(word => value.toLowerCase().includes(word));
+    if (containsExplicitWord) return 'Username contains inappropriate content';
+  
+    return ''; // No error
+  };
   
   const register = async () => {
     try {
+      // Check for duplicate username first
+      const error = validateUsername(name);
+    if (error) {
+      setError(error);
+      return;
+    }
+      const usernamesDoc = await getDoc(doc(db, "usernames", "names"));
+      if (usernamesDoc.exists()) {
+        const usernames = usernamesDoc.data().usernames;
+        if (usernames.includes(name)) {
+          setError("This username is already taken. Please choose another one.");
+          return;
+        }
+      }
+
       console.log(typeof email, typeof password)
       console.log(typeof auth)
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -176,7 +205,8 @@ const AuthBox = () => {
           }}
         >
           <p>
-            Oops! {mode === 1 ? error : "There was a problem with the account!"}
+            {error}
+            {/* {error.startsWith("This username is already taken") ? error : `Oops! ${mode === 1 ? error : "There was a problem with the account!"}`} */}
           </p>
         </div>
       )}
@@ -243,7 +273,7 @@ const AuthBox = () => {
         >
           <label>Your email address</label>
           {mode == 0 && (
-            <p style={{ fontSize: "10px", color: "gray" }}>
+            <p style={{ fontSize: "10px", color: "black" }}>
               A verification email will be sent to this email address
             </p>
           )}

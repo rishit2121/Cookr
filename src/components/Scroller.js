@@ -61,6 +61,8 @@ const loadingStyle = {
 const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
+  const [userLanguage, setUserLanguage] = useState("English"); // default
+
   const [questions, setQuestions] = useState(
     localStorage.getItem("lastFlashSet")
       ? JSON.parse(localStorage.getItem("lastFlashSet"))
@@ -143,6 +145,23 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     const today = new Date();
     const userRef = doc(db, "users", user);
     const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      const langCode = userDoc.data().language || "en";
+      const langMap = {
+        en: "English",
+        es: "Spanish",
+        fr: "French",
+        de: "German",
+        zh: "Chinese",
+        hi: "Hindi",
+        ar: "Arabic",
+        pt: "Portuguese",
+        ru: "Russian",
+        ja: "Japanese",
+        ko: "Korean",
+      };
+      setUserLanguage(langMap[langCode] || "English");
+    }
 
     if (!userDoc.exists()) {
       // First time user
@@ -199,6 +218,29 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       setStreak(1);
     }
   };
+  const translateText = async (text, targetLanguage) => {
+    try {
+      console.log(text);
+      // Check if the text is empty
+      const response = await fetch("https://libretranslate.com/translate", {
+        method: "POST",
+        body: JSON.stringify({
+          q: text,
+          source: "auto",
+          target: targetLanguage,
+          format: "text",
+          api_key: "",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+  
+      const data = await response.json();
+      return data.translatedText || text; // Fallback to original text if translation fails
+    } catch (error) {
+      console.error("Error translating text:", error);
+      return text; // Fallback to original text
+    }
+  };
 
   // Add streak check on component mount
   useEffect(() => {
@@ -233,58 +275,140 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
         info: currentSet,
         lastQuestionSet: questions.slice(-10),
         mode: localStorage.getItem("mode"),
+        language: userLanguage,
       }),
     };
-
+  
     try {
       const response = await fetch(
         "https://hfob3eouy6.execute-api.us-west-2.amazonaws.com/production/",
         options
       );
-      console.log(response)
+  
       if (!response.ok) {
         throw new Error();
       }
-
+  
       const data = await response.json();
       const newQuestions = JSON.parse(jsonrepair(data));
-      const modifiedQuestions = newQuestions.map((question) => {
+  
+      // Skip translation if the user's language is English
+      if (userLanguage === "en" || userLanguage === "English") {
+        setQuestions((prevQuestions) => [...prevQuestions, ...newQuestions]);
+        localStorage.setItem("lastFlashSet", JSON.stringify(newQuestions));
+        setIsFetching(false);
+        return;
+      }
+      console.log('newQuestions')
+      console.log(newQuestions)
+      // Separate the first 5 questions and the last 5 questions
+      const firstHalf = newQuestions.slice(0, 5);
+      const secondHalf = newQuestions.slice(5);
+  
+      // Combine text fields for the first 5 questions
+      const firstHalfText = firstHalf
+        .map((question) => {
+          return [
+            question.question,
+            ...question.choices,
+            ...(question.comments || []),
+          ].join("|||"); // Use a delimiter to separate fields
+        })
+        .join("###"); // Use a delimiter to separate questions
+  
+      // Combine text fields for the last 5 questions
+      const secondHalfText = secondHalf
+        .map((question) => {
+          return [
+            question.question,
+            ...question.choices,
+            ...(question.comments || []),
+          ].join("|||"); // Use a delimiter to separate fields
+        })
+        .join("###"); // Use a delimiter to separate questions
+  
+      // Translate both halves
+      console.log("IM RUNNING")
+      const [translatedFirstHalf, translatedSecondHalf] = await Promise.all([
+        translateText(firstHalfText, userLanguage),
+        translateText(secondHalfText, userLanguage),
+      ]);
+  
+      // Process the translated first half
+      const translatedFirstHalfQuestions = translatedFirstHalf
+        .split("###")
+        .map((translatedQuestion, index) => {
+          const [translatedQuestionText, ...rest] = translatedQuestion.split("|||");
+          const translatedChoices = rest.slice(0, firstHalf[index].choices.length);
+          const translatedComments = rest.slice(firstHalf[index].choices.length);
+  
+          return {
+            ...firstHalf[index],
+            question: translatedQuestionText,
+            choices: translatedChoices,
+            comments: translatedComments,
+          };
+        });
+  
+      // Process the translated second half
+      const translatedSecondHalfQuestions = translatedSecondHalf
+        .split("###")
+        .map((translatedQuestion, index) => {
+          const [translatedQuestionText, ...rest] = translatedQuestion.split("|||");
+          const translatedChoices = rest.slice(0, secondHalf[index].choices.length);
+          const translatedComments = rest.slice(secondHalf[index].choices.length);
+  
+          return {
+            ...secondHalf[index],
+            question: translatedQuestionText,
+            choices: translatedChoices,
+            comments: translatedComments,
+          };
+        });
+  
+      // Combine the translated questions
+      const translatedQuestions = [
+        ...translatedFirstHalfQuestions,
+        ...translatedSecondHalfQuestions,
+      ];
+  
+      const modifiedQuestions = translatedQuestions.map((question) => {
         return {
           ...question,
           title: currentSet.title,
           color: currentSet.color,
         };
       });
-
-      if (Array.isArray(newQuestions)) {
+  
+      if (Array.isArray(modifiedQuestions)) {
         // Increment previousQuestionsLength by 10 for each new set
         const currentPreviousLength = localStorage.getItem("previousQuestionsLength");
         if (!currentPreviousLength) {
           localStorage.setItem("previousQuestionsLength", "0");
         } else {
-          localStorage.setItem("previousQuestionsLength", (parseInt(currentPreviousLength) + 10).toString());
+          localStorage.setItem(
+            "previousQuestionsLength",
+            (parseInt(currentPreviousLength) + 10).toString()
+          );
         }
-
+  
         // Clear old question states when loading new questions
         const questionStates = JSON.parse(localStorage.getItem("questionStates") || "{}");
         const newQuestionStates = {};
-        modifiedQuestions.forEach(q => {
-          const key = `question_${q.question.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        modifiedQuestions.forEach((q) => {
+          const key = `question_${q.question.replace(/[^a-zA-Z0-9]/g, "_")}`;
           if (questionStates[key]) {
             newQuestionStates[key] = questionStates[key];
           }
         });
         localStorage.setItem("questionStates", JSON.stringify(newQuestionStates));
-
-        setQuestions((prevQuestions) => [
-          ...prevQuestions,
-          ...modifiedQuestions,
-        ]);
+  
+        setQuestions((prevQuestions) => [...prevQuestions, ...modifiedQuestions]);
         localStorage.setItem("lastFlashSet", JSON.stringify(modifiedQuestions));
       } else {
-        console.error("Unexpected response format:", data);
+        console.error("Unexpected response fo format:", data);
       }
-
+  
       setIsFetching(false);
     } catch (e) {
       console.error("Error fetching questions:", e);
@@ -331,19 +455,19 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
               <div style={cardContainerStyle}>
                 {!isLoading && (
                   <QuestionCard
-                    question={item.question}
-                    choices={item.choices}
-                    answer={item.answer}
-                    selectedAnswer={item.selectedAnswer}
-                    comment={item.comments}
-                    setStreak={setStreak}
-                    setXP={setXP}
-                    title={item.title && item.title}
-                    color={item.color && item.color}
-                    fullJSON={item}
-                    currentIndex={currentIndex}
-                    mobileDimension={mobileDimension}
-                  />
+                  question={item.question || ""}
+                  choices={item.choices || []} // Default to an empty array if undefined
+                  answer={item.answer || ""}
+                  selectedAnswer={item.selectedAnswer || null}
+                  comment={item.comments || []} // Default to an empty array if undefined
+                  setStreak={setStreak}
+                  setXP={setXP}
+                  title={item.title || ""}
+                  color={item.color || ""}
+                  fullJSON={item}
+                  currentIndex={currentIndex}
+                  mobileDimension={mobileDimension}
+                />
                 )}
               </div>
             </div>

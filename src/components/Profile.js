@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef} from "react";
 import NewPrompt from "./NewPrompt";
-import { getDoc, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { getDoc, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
 import { db} from "./firebase/Firebase";
 import Plans from "./Plans";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +55,9 @@ const MyProfile = ({ mobileDimension }) => {
   const [planType, setPlanType] = useState('free');
   const [referalCode, setReferalCode] = useState();
   const [streak, setStreak] = useState(0);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -67,7 +70,10 @@ const MyProfile = ({ mobileDimension }) => {
   const [isEmailVisible, setIsEmailVisible] = useState(false);
   const [profileImage, setProfileImage] = useState(() => {
     return localStorage.getItem("profileImage") || null;
+    
   });
+
+
   const [joinDate, setJoinDate] = useState(() => {
     return localStorage.getItem("joinDate") || '';
   });
@@ -76,6 +82,11 @@ const MyProfile = ({ mobileDimension }) => {
   const link = "https://www.cookr.co/";
 
   const [copied, setCopied] = useState(false);
+
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editedUsername, setEditedUsername] = useState(name || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(link);
@@ -188,6 +199,8 @@ const MyProfile = ({ mobileDimension }) => {
       console.error("Error uploading image:", error);
     }
   };
+  const [isUsernameValid, setIsUsernameValid] = useState(null); // true, false, or null
+
   
   
   // Helper function to convert the data URL to a File object
@@ -242,35 +255,37 @@ const MyProfile = ({ mobileDimension }) => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        setUser(currentUser.email);
+      setUser(currentUser.email);
         const userName = currentUser.displayName ? currentUser.displayName : null;
-        const rawJoinDate = currentUser.metadata.creationTime;
-        const formattedJoinDate = formatJoinDate(rawJoinDate);
+      const rawJoinDate = currentUser.metadata.creationTime;
+      const formattedJoinDate = formatJoinDate(rawJoinDate);
 
         setName(userName);
-        setJoinDate(formattedJoinDate);
+      setJoinDate(formattedJoinDate);
         setLoading(false);
 
         // Set up Firestore listener only when we have a valid user
         try {
           const unsubscribeFirestore = onSnapshot(
             doc(db, "users", currentUser.email),
-            (doc) => {
-              if(name===null || name==='null'){
-                setName(doc.data().name);
-              }
+        (doc) => {
+              if(doc.data().name !== null){
+          setName(doc.data().name);
+          }
               setPlanType(doc.data().plan || 'free');
               setReferalCode(doc.data().myCode);
               setStreak(doc.data().streak || 0);
-              const profilePicture = doc.data().profilePicture;
-              setSelectedAlias(profilePicture ? profilePicture : '');
-            }
-          );
-          return () => unsubscribeFirestore(); // Cleanup Firestore listener
-        } catch (error) {
-          setPlanType('free');
-          alert("Error");
+          const profilePicture = doc.data().profilePicture;
+          setSelectedAlias(profilePicture ? profilePicture : '');
+          // Set the language from Firebase, defaulting to 'en' if not set
+          setSelectedLanguage(doc.data().language || 'en');
         }
+      );
+          return () => unsubscribeFirestore(); // Cleanup Firestore listener
+    } catch (error) {
+          setPlanType('free');
+      alert("Error");
+    }
       } else {
         // Handle case when user is not logged in
         setUser(null);
@@ -349,6 +364,206 @@ const MyProfile = ({ mobileDimension }) => {
   //     return () => unsubscribe();
   //   }
   // }, [loading, user]);
+  if (loading) {
+    return null; // Show nothing while loading
+  }
+
+  if (!user) {
+    return null; // Show nothing if no user
+  }
+
+  const handleUsernameEdit = async () => {
+    if (isEditingUsername) {
+      // Save the changes
+      if (editedUsername.trim() === '') {
+        setErrorMessage('Username cannot be empty');
+        return;
+      }
+
+      // Check if username is the same as current
+      if (editedUsername === name) {
+        setErrorMessage('Please enter a different or new username');
+        return;
+      }
+
+      // Check for spaces
+      if (editedUsername.includes(' ')) {
+        setErrorMessage('Username cannot contain spaces');
+        return;
+      }
+
+      // Check for capital letters
+      if (editedUsername !== editedUsername.toLowerCase()) {
+        setErrorMessage('Username cannot contain capital letters');
+        return;
+      }
+
+      // Check for special characters
+      const specialChars = "!\"#$%&'()*+,-/:;<=>?@[]^_`{|}~";
+      if (editedUsername.split('').some(char => specialChars.includes(char))) {
+        setErrorMessage('Username cannot contain special characters');
+        return;
+      }
+      // Check username length
+      if (editedUsername.length < 4 || editedUsername.length > 18) {
+        setErrorMessage('Username must be between 4 and 18 characters');
+        return;
+      }
+
+      // Check for explicit words
+      const explicitWords = [
+        "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat",
+        "damn", "hell", "crap", "prick", "slut", "whore", "sex", "sexy", "porn", "porno",
+        "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
+        "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
+        "rimjob", "milf", "bdsm", "fetish", "pegging", "squirting", "stripper", "stripclub",
+        "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
+        "chink", "gook", "nigga", "nigger", "kike", "spic", "wetback", "towelhead", "kill",
+        "murder", "rape", "shoot", "bomb", "terrorist", "suicide", "die", "hang", "slit",
+        "stab", "abuse", "abuser", "weed", "marijuana", "cocaine", "meth", "heroin", "lsd",
+        "ecstasy", "crack", "adderall", "xanax", "opioid", "ketamine", "shrooms", "stoner",
+        "druggie", "dope", "highaf", "420", "casino", "betting", "bet", "poker", "slots",
+        "lotto", "jackpot", "crypto", "scam", "fraud", "hustler", "onlyfans", "fuk", "fck",
+        "sht", "bi7ch", "b1tch", "ass", "a55", "c0ck", "d1ck", "pu55y", "cumslut", "s3x",
+        "p0rn", "n00d", "l0ser", "phuck"
+      ];
+       
+
+      const containsExplicitWord = explicitWords.some(word => 
+        editedUsername.toLowerCase().includes(word)
+      );
+
+      if (containsExplicitWord) {
+        setErrorMessage('Username contains inappropriate content');
+        return;
+      }
+      // Check for duplicate username
+      const usernamesDoc = await getDoc(doc(db, "usernames", "names"));
+      if (usernamesDoc.exists()) {
+        const usernames = usernamesDoc.data().usernames;
+        if (usernames.includes(editedUsername) && editedUsername !== name) {
+          setErrorMessage('This username is already taken');
+          return;
+        }
+      }
+
+      setIsSaving(true);
+      try {
+        // Update the username in the users collection
+        await updateDoc(doc(db, "users", user), {
+          name: editedUsername
+        });
+
+        // Update the usernames collection
+        if (usernamesDoc.exists()) {
+          const usernames = usernamesDoc.data().usernames;
+          if (name) {
+            // Remove old username if it exists
+            const index = usernames.indexOf(name);
+            if (index > -1) {
+              usernames.splice(index, 1);
+            }
+          }
+          // Add new username
+          usernames.push(editedUsername);
+          await updateDoc(doc(db, "usernames", "names"), {
+            usernames: usernames
+          });
+        } else {
+          // Create usernames collection if it doesn't exist
+          await setDoc(doc(db, "usernames", "names"), {
+            usernames: [editedUsername]
+          });
+        }
+        const leaderboardRef = doc(db, "leaderboard", "rankings");
+        const leaderboardDoc = await getDoc(leaderboardRef);
+
+        if (leaderboardDoc.exists()) {
+          const leaderboardData = leaderboardDoc.data();
+          const updatedRankings = leaderboardData.ranking.map(entry => {
+            if (entry.email === user) {
+              console.log('hey')
+              console.log(entry)
+              return { ...entry, name: editedUsername };
+            }
+            return entry;
+          });
+
+          await updateDoc(leaderboardRef, { ranking: updatedRankings });
+        }
+
+        setName(editedUsername);
+        setIsEditingUsername(false);
+        setErrorMessage('');
+      } catch (error) {
+        console.error('Error updating username:', error);
+        setErrorMessage('Error updating username. Please try again.');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      // Enter edit mode and set initial value to current username
+      setIsEditingUsername(true);
+      setEditedUsername(name || '');
+      setErrorMessage('');
+    }
+  };
+  const validateUsername = (value) => {
+    if (value.trim() === '') return 'Username cannot be empty';
+    if (value === name) return 'Please enter a different or new username';
+    if (value.includes(' ')) return 'Username cannot contain spaces';
+    if (value !== value.toLowerCase()) return 'Username cannot contain capital letters';
+    const specialChars = "!\"#$%&'()*+,-/:;<=>?@[]^_`{|}~";
+    if (value.split('').some(char => specialChars.includes(char))) return 'Username cannot contain special characters';
+    if (value.length < 4 || value.length > 18) return 'Username must be between 4 and 18 characters';
+  
+    const explicitWords = [
+      "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat",
+      "damn", "hell", "crap", "prick", "slut", "whore", "sex", "sexy", "porn", "porno",
+      "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
+      "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
+      "rimjob", "milf", "bdsm", "fetish", "pegging", "squirting", "stripper", "stripclub",
+      "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
+      "chink", "gook", "nigga", "nigger", "kike", "spic", "wetback", "towelhead", "kill",
+      "murder", "rape", "shoot", "bomb", "terrorist", "suicide", "die", "hang", "slit",
+      "stab", "abuse", "abuser", "weed", "marijuana", "cocaine", "meth", "heroin", "lsd",
+      "ecstasy", "crack", "adderall", "xanax", "opioid", "ketamine", "shrooms", "stoner",
+      "druggie", "dope", "highaf", "420", "casino", "betting", "bet", "poker", "slots",
+      "lotto", "jackpot", "crypto", "scam", "fraud", "hustler", "onlyfans", "fuk", "fck",
+      "sht", "bi7ch", "b1tch", "ass", "a55", "c0ck", "d1ck", "pu55y", "cumslut", "s3x",
+      "p0rn", "n00d", "l0ser", "phuck"
+    ];
+    const containsExplicitWord = explicitWords.some(word => value.toLowerCase().includes(word));
+    if (containsExplicitWord) return 'Username contains inappropriate content';
+  
+    return ''; // no error
+  };
+  
+
+  const handleLanguageSave = async () => {
+    if (!user) return;
+    
+    setIsSavingLanguage(true);
+    try {
+      // Update language in Firestore
+      await updateDoc(doc(db, "users", user), {
+        language: selectedLanguage
+      });
+      
+      setShowLanguageDropdown(false);
+    } catch (error) {
+      console.error('Error saving language:', error);
+    } finally {
+      setIsSavingLanguage(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingUsername(false);
+    setEditedUsername(name || '');
+    setErrorMessage('');
+  };
+
   if (loading) {
     return null; // Show nothing while loading
   }
@@ -626,26 +841,24 @@ const MyProfile = ({ mobileDimension }) => {
             <label style={{ display:'flex',color: "white", fontWeight: "bold", fontSize: "22px", width: '60%', flexDirection:'row'}}>
               {name || `@Cookr${generateUniqueNumber(user)}`}
               {!loading && planType && planType.toLowerCase() !== 'free' && (
-              <div style={{
-                backgroundColor: 'transparent',
-                backgroundColor: '#e1af32',
-
-                color: 'black',
-                padding: '0px 14px',
-                borderRadius: '15px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                fontStyle: 'italic',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginLeft: '10px'
-              }}>
-                Pro
-              </div>
-            )}
+                <div style={{
+                  backgroundColor: 'transparent',
+                  backgroundColor: '#e1af32',
+                  color: 'black',
+                  padding: '0px 14px',
+                  borderRadius: '15px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  fontStyle: 'italic',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: '10px'
+                }}>
+                  Pro
+                </div>
+              )}
             </label>
-            
           </div>
           <div
             style={{
@@ -876,23 +1089,23 @@ const MyProfile = ({ mobileDimension }) => {
                 onMouseOver={(e) => (e.target.style.opacity = 1)}
                 onMouseOut={(e) => (e.target.style.opacity = 1)}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 14 14"
-                  width="30px"
-                  height="30px"
-                  style={{marginTop:'2%'}}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 14 14"
+                width="30px"
+                height="30px"
+                style={{marginTop:'2%'}}
+              >
+                <g
+                  fill="none"
+                  stroke="black"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <g
-                    fill="none"
-                    stroke="black"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M10.64 1.54H3.36a1.07 1.07 0 0 0-.85.46L.69 4.52a1.05 1.05 0 0 0 .06 1.29l5.46 6.29a1 1 0 0 0 1.58 0l5.46-6.29a1.05 1.05 0 0 0 .06-1.29L11.49 2a1.07 1.07 0 0 0-.85-.46Z"></path>
-                    <path d="M6.48 1.53L4.04 5.31L7 12.46m.55-10.93l2.43 3.78L7 12.46M.52 5.31h12.96"></path>
-                  </g>
-                </svg>
+                  <path d="M10.64 1.54H3.36a1.07 1.07 0 0 0-.85.46L.69 4.52a1.05 1.05 0 0 0 .06 1.29l5.46 6.29a1 1 0 0 0 1.58 0l5.46-6.29a1.05 1.05 0 0 0 .06-1.29L11.49 2a1.07 1.07 0 0 0-.85-.46Z"></path>
+                  <path d="M6.48 1.53L4.04 5.31L7 12.46m.55-10.93l2.43 3.78L7 12.46M.52 5.31h12.96"></path>
+                </g>
+              </svg>
               </button>
               </div>
             </div>
@@ -955,6 +1168,7 @@ const MyProfile = ({ mobileDimension }) => {
         </div>
       ) : (
         <div
+
           style={{
             position: "fixed",
             top: 0,
@@ -973,15 +1187,182 @@ const MyProfile = ({ mobileDimension }) => {
           <div
             style={{
               position: "absolute",
-              left: "5%",
-              top: "1.4%",  // Adjust top position if needed
+              left: "4%",
+              marginTop: "4%",
               cursor: "pointer",
               fontSize: "30px",
+              display: "flex",
+              alignItems: "center",
             }}
             onClick={() => setShowSettings(false)}
           >
-            <i className="fas fa-chevron-left" style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              width="1em"
+              height="1em"
+              style={{ color: "white" }}
+            >
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="48"
+                d="M328 112L184 256l144 144"
+              ></path>
+            </svg>
           </div>
+          {/* Language Selector */}
+            <div
+              style={{
+                position: "absolute",
+                right: "4%",
+                marginTop: "4%",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#232323",
+                padding: "6px 12px",
+                borderRadius: "8px",
+              }}
+              onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1.2em"
+                height="1.2em"
+                fill="white"
+              >
+                <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+              </svg>
+              <span style={{ fontSize: "14px", fontWeight: "bold" }}>
+                {selectedLanguage.toUpperCase()}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                fill="white"
+                style={{ transform: showLanguageDropdown ? 'rotate(180deg)' : 'none' }}
+              >
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+          </div>
+
+            {/* Language Dropdown */}
+            {showLanguageDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "12%",
+                  right: "4%",
+                  backgroundColor: "#232323",
+                  borderRadius: "8px",
+                  padding: "8px 0",
+                  minWidth: "150px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  zIndex: 1001
+                }}
+              >
+                {[
+                  { code: 'en', name: 'English' },
+                  { code: 'es', name: 'Español' },
+                  { code: 'fr', name: 'Français' },
+                  { code: 'de', name: 'Deutsch' },
+                  { code: 'it', name: 'Italiano' },
+                  { code: 'pt', name: 'Português' },
+                  { code: 'ru', name: 'Русский' },
+                  { code: 'zh-Hans', name: '中文' },
+                  { code: 'ja', name: '日本語' },
+                  { code: 'ko', name: '한국어' }
+                ].map((lang) => (
+                  <div
+                    key={lang.code}
+              style={{
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      backgroundColor: selectedLanguage === lang.code ? "#363636" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                      gap: "8px"
+                    }}
+                    onClick={() => setSelectedLanguage(lang.code)}
+                  >
+                    <span style={{ fontSize: "14px" }}>{lang.name}</span>
+                    {selectedLanguage === lang.code && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="1em"
+                        height="1em"
+                        fill="rgba(0, 255, 0, 0.76)"
+                      >
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+                <div
+                style={{
+                    borderTop: "1px solid #363636",
+                    marginTop: "8px",
+                    padding: "8px 16px"
+                  }}
+                >
+                  <button
+                    onClick={handleLanguageSave}
+                    disabled={isSavingLanguage}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      backgroundColor: "#363636",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    {isSavingLanguage ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="1em"
+                          height="1em"
+                          fill="white"
+                          style={{ animation: "spin 1s linear infinite" }}
+                        >
+                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="1em"
+                          height="1em"
+                          fill="white"
+                        >
+                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        Save
+                      </>
+                    )}
+                  </button>
+            </div>
+              </div>
+            )}
+
 
           {/* Title */}
           <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>Settings</h3>  {/* Title centered */}
@@ -996,32 +1377,141 @@ const MyProfile = ({ mobileDimension }) => {
             }}
           />
 
-          {/* Alternative content when showPlans is false */}
+          {/* Username Section */}
           <div
             style={{
-              backgroundColor: "#232323", // Gray background
-              borderRadius: "15px", // Rounded corners
-              width: "90%", // Adjust width as needed
-              height: "10%", // Adjust height as needed
+              backgroundColor: "#232323",
+              borderRadius: "15px",
+              width: "90%",
+              height: isEditingUsername ? "15%" : "10%",
               display: "flex",
               flexDirection: "column",
-              // justifyContent: "space-between",
               color: "white",
               marginTop:'10%'
             }}
           >
-            {/* Title */}
-            <h4 style={{ fontWeight: "bold", marginLeft:'4%', marginTop:'3%'}}>
-               {`@${name}` || `@Cookr${generateUniqueNumber(user)}`}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
+              {isEditingUsername ? (
+                <div style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: "3%" }}>
+                  <h7 style={{ fontWeight: "bold", marginLeft: "1%",marginBottom:'2%'}}>Edit Username:</h7>
+                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                  <input
+  type="text"
+  value={editedUsername}
+  onChange={(e) => {
+    const val = e.target.value;
+    setEditedUsername(val);
+    const err = validateUsername(val);
+    setErrorMessage(err);
+  }}
+  style={{
+    flex: 1,
+    padding: "8px",
+    marginLeft: "2%",
+    borderRadius: "5px",
+    border: errorMessage
+      ? "2px solid #ff4444"
+      : editedUsername !== "" && !validateUsername(editedUsername)
+      ? "2px solid #00cc66"
+      : "1px solid #ccc",
+    marginRight: "10px",
+    backgroundColor: "#333",
+    color: "white",
+    outline: "none"
+  }}
+/>
+
+                    <button
+                      onClick={handleUsernameEdit}
+                      disabled={isSaving}
+                      style={{
+                        background: "rgba(0, 255, 0, 0.2)",
+                        border: "none",
+                        cursor: "pointer",
+                        marginRight: "10px",
+                        borderRadius: "5px",
+                        padding: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight:'10px',
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="24"
+                        height="24"
+                        fill="rgba(0, 255, 0, 0.76)"
+                      >
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      style={{
+                        background: "rgba(255, 0, 0, 0.2)",
+                        border: "none",
+                        cursor: "pointer",
+                        borderRadius: "5px",
+                        padding: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight:'5px',
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="24"
+                        height="24"
+                        fill="red"
+                      >
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  {errorMessage && (
+                    <p style={{ color: "red", fontSize: "12px", marginLeft: "4%", marginTop: "5px" }}>
+                      {errorMessage}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                  <h4 style={{ fontWeight: "bold", marginLeft: "4%", marginTop: "3%" }}>
+                    {name || `@Cookr${generateUniqueNumber(user)}`}
             </h4>
-
-            {/* Spacer */}
-            {/* <div style={{ flexGrow: 1 }}></div> Pushes email to the bottom */}
-
-            {/* Email */}
-            <p style={{ fontSize: "12px", marginLeft: "5%", marginTop:'2.5%'  }}>
+                  <button
+                    onClick={handleUsernameEdit}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      marginLeft: "auto",
+                      marginRight: "2%",
+                      marginTop:'1%'
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      height="24"
+                      fill="white"
+                    >
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+            {!isEditingUsername && (
+              <p style={{ fontSize: "12px", marginLeft: "5%", marginTop: "0%" }}>
               {user}
             </p>
+            )}
           </div>
           <div
             style={{
@@ -1064,7 +1554,22 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right" style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  width="1.5em"
+                  height="1.5em"
+                  style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                >
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="48"
+                    d="m184 112l144 144l-144 144"
+                  ></path>
+                </svg>
               </div>
               </div>
               {/* Divider */}
@@ -1095,7 +1600,22 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right"  style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  width="1.5em"
+                  height="1.5em"
+                  style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                >
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="48"
+                    d="m184 112l144 144l-144 144"
+                  ></path>
+                </svg>
               </div>
               </div>
               {/* Divider */}
@@ -1139,7 +1659,22 @@ const MyProfile = ({ mobileDimension }) => {
                 </div>
 
                 {/* Arrow */}
-                <i className="fas fa-chevron-right"  style={{ fontSize: "20px", color: "white", marginRight:'2%', alignItems:'flex-end', marginLeft:'auto' }}></i>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  width="1.5em"
+                  height="1.5em"
+                  style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                >
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="48"
+                    d="m184 112l144 144l-144 144"
+                  ></path>
+                </svg>
               </div>
               </div>
           </div>
@@ -1313,7 +1848,565 @@ const MyProfile = ({ mobileDimension }) => {
           left: '10%'
         }}
       >
-        {/* Profile Header */}
+        {/* Settings Button */}
+        <button
+          style={{
+            position: 'absolute',
+            top: '2%',
+            right: '2%',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'white',
+            backgroundColor: '#373737',
+            borderRadius: '100px',
+            padding: '5px',
+          }}
+          onClick={() => setShowSettings(true)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="1.7em"
+            height="1.7em"
+          >
+            <path
+              fill="currentColor"
+              d="M19.14 12.94c.04-.3.06-.61.06-.94c0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6s-1.62 3.6-3.6 3.6"
+            ></path>
+          </svg>
+        </button>
+
+        {/* Settings Popup */}
+        {showSettings && (
+        <div
+          style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100dvw",
+              height: "100vh",
+              backgroundColor: "black",
+            display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              color: "white",
+              zIndex: 1000
+            }}
+          >
+            {/* Back button */}
+          <div
+            style={{
+                position: "absolute",
+                left: "4%",
+                marginTop: "4%",
+                cursor: "pointer",
+                fontSize: "30px",
+              display: "flex",
+                alignItems: "center",
+                justifyContent:'center',
+              }}
+              onClick={() => setShowSettings(false)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 512 512"
+                width="1em"
+                height="1em"
+                style={{ color: "white" }}
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="48"
+                  d="M328 112L184 256l144 144"
+                ></path>
+              </svg>
+          </div>
+
+            {/* Language Selector */}
+            <div
+              style={{
+                position: "absolute",
+                right: "4%",
+                marginTop: "4%",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#232323",
+                padding: "6px 12px",
+                borderRadius: "8px",
+              }}
+              onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1.2em"
+                height="1.2em"
+                fill="white"
+              >
+                <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+              </svg>
+              <span style={{ fontSize: "14px", fontWeight: "bold" }}>
+                {selectedLanguage.toUpperCase()}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                fill="white"
+                style={{ transform: showLanguageDropdown ? 'rotate(180deg)' : 'none' }}
+              >
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </div>
+
+            {/* Language Dropdown */}
+            {showLanguageDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "12%",
+                  right: "4%",
+                  backgroundColor: "#232323",
+                  borderRadius: "8px",
+                  padding: "8px 0",
+                  minWidth: "150px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  zIndex: 1001
+                }}
+              >
+                {[
+                  { code: 'en', name: 'English' },
+                  { code: 'es', name: 'Español' },
+                  { code: 'fr', name: 'Français' },
+                  { code: 'de', name: 'Deutsch' },
+                  { code: 'it', name: 'Italiano' },
+                  { code: 'pt', name: 'Português' },
+                  { code: 'ru', name: 'Русский' },
+                  { code: 'zh-Hans', name: '中文' },
+                  { code: 'ja', name: '日本語' },
+                  { code: 'ko', name: '한국어' }
+                ].map((lang) => (
+                  <div
+                    key={lang.code}
+              style={{
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      backgroundColor: selectedLanguage === lang.code ? "#363636" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                      gap: "8px"
+                    }}
+                    onClick={() => setSelectedLanguage(lang.code)}
+                  >
+                    <span style={{ fontSize: "14px" }}>{lang.name}</span>
+                    {selectedLanguage === lang.code && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="1em"
+                        height="1em"
+                        fill="rgba(0, 255, 0, 0.76)"
+                      >
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+                <div
+                style={{
+                    borderTop: "1px solid #363636",
+                    marginTop: "8px",
+                    padding: "8px 16px"
+                  }}
+                >
+                  <button
+                    onClick={handleLanguageSave}
+                    disabled={isSavingLanguage}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      backgroundColor: "#363636",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    {isSavingLanguage ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="1em"
+                          height="1em"
+                          fill="white"
+                          style={{ animation: "spin 1s linear infinite" }}
+                        >
+                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="1em"
+                          height="1em"
+                          fill="white"
+                        >
+                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        Save
+                      </>
+                    )}
+                  </button>
+            </div>
+              </div>
+            )}
+
+            {/* Title */}
+            <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>Settings</h3>
+              
+            {/* Divider */}
+            <div
+              style={{
+                width: "100%",
+                height:'0.3px',
+                backgroundColor: "gray",
+                marginTop: "20px",
+              }}
+            />
+
+            {/* Username Section */}
+            <div
+              style={{
+                backgroundColor: "#232323",
+                borderRadius: "15px",
+                width: "90%",
+                height: isEditingUsername ? "15%" : "10%",
+                display: "flex",
+                flexDirection: "column",
+                color: "white",
+                marginTop:'4%'
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px", height:'50%' }}>
+                {isEditingUsername ? (
+                  <div style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: "3%" }}>
+                    <h7 style={{ fontWeight: "bold", marginLeft: "1%", marginBottom:'2%', marginTop:'2%'}}>Edit Username:</h7>
+                    <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                    <input
+  type="text"
+  value={editedUsername}
+  onChange={(e) => {
+    const val = e.target.value;
+    setEditedUsername(val);
+    const err = validateUsername(val);
+    setErrorMessage(err);
+  }}
+  style={{
+    flex: 1,
+    padding: "8px",
+    marginLeft: "2%",
+    borderRadius: "5px",
+    border: errorMessage
+      ? "2px solid #ff4444"
+      : editedUsername !== "" && !validateUsername(editedUsername)
+      ? "2px solid #00cc66"
+      : "1px solid #ccc",
+    marginRight: "10px",
+    backgroundColor: "#333",
+    color: "white",
+    outline: "none"
+  }}
+/>
+
+                      <button
+                        onClick={handleUsernameEdit}
+                        disabled={isSaving}
+                        style={{
+                          background: "rgba(0, 255, 0, 0.2)",
+                          border: "none",
+                          cursor: "pointer",
+                          marginRight: "10px",
+                          borderRadius: "5px",
+                          padding: "5px",
+                          display: "flex",
+                alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="24"
+                          height="24"
+                          fill="rgba(0, 255, 0, 0.76)"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                style={{
+                          background: "rgba(255, 0, 0, 0.2)",
+                          border: "none",
+                          cursor: "pointer",
+                          borderRadius: "5px",
+                  padding: "5px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="24"
+                          height="24"
+                          fill="red"
+                        >
+                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    {errorMessage && (
+                      <p style={{ color: "red", fontSize: "12px", marginLeft: "4%", marginTop: "5px" }}>
+                        {errorMessage}
+                      </p>
+                    )}
+            </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", width: "100%", height:'10%' }}>
+                    <h4 style={{ fontWeight: "bold", marginLeft: "4%", marginTop: "0%" }}>
+                      {name || `@Cookr${generateUniqueNumber(user)}`}
+                    </h4>
+            <button
+                      onClick={handleUsernameEdit}
+              style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        marginLeft: "auto",
+                        marginRight: "2%",
+                        marginTop:'1%'
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="24"
+                        height="24"
+                        fill="white"
+                      >
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+              {!isEditingUsername && (
+                <p style={{ fontSize: "12px", marginLeft: "4%", marginTop: "0%" }}>
+                  {user}
+                </p>
+              )}
+            </div>
+
+            {/* Share Section */}
+            <div
+              style={{
+                marginTop:'5%',
+                backgroundColor: "#232323",
+                borderRadius: "15px",
+                width: "90%",
+                height: "25%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                color: "white",
+              }}
+            >
+              {/* Section 1 */}
+              <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ padding: "10px", display: "flex", alignItems: "center", width:'100%', cursor: 'pointer'}} onClick={handleShare}>
+                  <div style={{ display: "flex", alignItems: "center", width:'90%', }}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 48 48"
+                      width="1.5em"
+                      height="1.5em"
+                      style={{marginRight:'7%', marginLeft:'2%'}}
+                    >
+                      <path
+                        fill="currentColor"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="4"
+                        d="m26 4l18 18l-18 17V28C12 28 6 43 6 43c0-17 5-28 20-28z"
+                      ></path>
+                    </svg>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Share With a Friend</p>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="1.5em"
+                    height="1.5em"
+                    style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="48"
+                      d="m184 112l144 144l-144 144"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <div style={{ borderBottom: "1px solid black", margin: "0px 0", width:'100%' }}></div>
+
+              {/* Section 2 */}
+              <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ padding: "10px", display: "flex", alignItems: "center", width:'100%', cursor: 'pointer' }} onClick={handleContact}>
+                  <div style={{ display: "flex", alignItems: "center", width:'90%', }}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      width="1.5em"
+                      height="1.5em"
+                      style={{marginRight:'7%', marginLeft:'2%'}}
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4l-8 5l-8-5V6l8 5l8-5z"
+                      ></path>
+                    </svg>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Contact The Team</p>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="1.5em"
+                    height="1.5em"
+                    style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="48"
+                      d="m184 112l144 144l-144 144"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              {/* Divider */}
+              <div style={{ borderBottom: "1px solid black", margin: "0px 0" }}></div>
+
+              {/* Section 3 */}
+              <div style={{ display:'flex', height:'33.33%', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ padding: "10px", display: "flex", alignItems: "center", width:'100%', cursor: 'pointer' }} onClick={handleTerms}>
+                  <div style={{ display: "flex", alignItems: "center", width: '90%' }}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                      width="1.5em"
+                      height="1.5em"
+                      style={{marginRight:'7%', marginLeft:'2%'}}
+                    >
+                      <path
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinejoin="round"
+                        strokeWidth="32"
+                        d="M416 221.25V416a48 48 0 0 1-48 48H144a48 48 0 0 1-48-48V96a48 48 0 0 1 48-48h98.75a32 32 0 0 1 22.62 9.37l141.26 141.26a32 32 0 0 1 9.37 22.62Z"
+                      ></path>
+                      <path
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="32"
+                        d="M256 56v120a32 32 0 0 0 32 32h120m-232 80h160m-160 80h160"
+                      ></path>
+                    </svg>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Terms and Conditions</p>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="1.5em"
+                    height="1.5em"
+                    style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="48"
+                      d="m184 112l144 144l-144 144"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout Section */}
+            <div
+              style={{
+                backgroundColor: "#232323",
+                borderRadius: "15px",
+                width: "90%",
+                height: "12%",
+                display: "flex",
+                flexDirection: "column",
+                color: "white",
+                marginTop:'5%'
+              }}
+            >
+              <button
+                style={{
+                  marginTop: "3%",
+                  color: "black",
+                  background: `#F05858`,
+                  padding: "5px 1px",
+                borderRadius: "10px",
+                  fontSize: "20px",
+                textAlign: "center",
+                border: "none",
+                cursor: "pointer",
+                  width:'80%',
+                  marginLeft:'10%',
+                  height:'50%',
+                fontWeight: "bold",
+              }}
+              onClick={async () => logout()}
+            >
+                Log Out
+            </button>
+          </div>
+        </div>
+        )}
+
+        {/* Original Profile Header */}
         <div
           style={{
             display: "flex",
@@ -1347,13 +2440,13 @@ const MyProfile = ({ mobileDimension }) => {
 
           {/* User Info */}
           <div style={{ width: "35%" }}>
-            <h1 style={{ color: "white", fontSize: "2vw", marginBottom: "2%" , fontSize:'22px'}}>
+            <h1 style={{ color: "white", fontSize: "2vw", marginBottom: "2%", fontSize:'22px'}}>
               {name || `@Cookr${generateUniqueNumber(user)}`}
               {!loading && planType && planType.toLowerCase() !== 'free' && (
                 <span style={{
                   backgroundColor: '#e1af32',
                   color: 'black',
-                  padding: '0.5% 2%',
+                  padding: '5px 16px',
                   borderRadius: '15px',
                   fontSize: '0.8vw',
                   fontWeight: 'bold',
@@ -1371,129 +2464,15 @@ const MyProfile = ({ mobileDimension }) => {
           </div>
         </div>
 
-        {showPopup && (
-          <div
-            style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "30%",
-              height: "40%",
-              backgroundColor: "#383837",
-              borderRadius: "20px",
-              padding: "20px",
-              zIndex: 99999,
-              border: "2px solid white",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "20px",
-                color: "white",
-                fontSize: "30px",
-                cursor: "pointer"
-              }}
-              onClick={() => setShowPopup(false)}
-            >
-              ×
-            </span>
-            {!imageSrc ? (
-              <div
-                style={{
-                  width: "80%",
-                  height: "80%",
-                  border: "2px dashed white",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  cursor: "pointer",
-                  textAlign: "center"
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleImageUpload}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  id="upload-input"
-                  style={{
-                    position: "absolute",
-                    width: "80%",
-                    height: "80%",
-                    opacity: 0,
-                    cursor: "pointer"
-                  }}
-                />
-                <label htmlFor="upload-input" style={{ color: "white", fontWeight: "bold", cursor: "pointer" }}>
-                  Click or Drag & Drop to Upload
-                </label>
-              </div>
-            ) : (
-              <div style={{ textAlign: "center" }}>
-                <img
-                  src={imageSrc}
-                  alt="Uploaded"
-                  style={{
-                    width: "80%",
-                    height: "80%",
-                    borderRadius: "10px",
-                    border: "2px solid white"
-                  }}
-                />
-                <div style={{ marginTop: "20px", display: "flex", gap: "20px", justifyContent: "center" }}>
-                  <button
-                    onClick={handleConfirm}
-                    style={{
-                      padding: "10px 20px",
-                      background: "black",
-                      color: "white",
-                      borderRadius: "10px",
-                      border: "none",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={handleRetake}
-                    style={{
-                      padding: "10px 20px",
-                      background: "#d4543f",
-                      color: "white",
-                      borderRadius: "10px",
-                      border: "none",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Retake
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Stats Container */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            width: "90%",
-            marginBottom: "3%",
-            gap: "2%",
-          }}
-        >
+        <div style={{ 
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: "90%",
+          marginBottom: "3%",
+          gap: "2%",
+        }}>
           {/* Streak Container */}
           <div style={{ 
             display: "flex", 
@@ -1567,10 +2546,8 @@ const MyProfile = ({ mobileDimension }) => {
           display: "flex", 
           flexDirection: "column", 
           alignItems: "center", 
-          // padding: "2%",
           paddingTop: "3%",
           paddingBottom: "3%",
-          
           borderRadius: "10px", 
           backgroundColor: "#363636", 
           width: "90%",
@@ -1584,15 +2561,14 @@ const MyProfile = ({ mobileDimension }) => {
 
         {/* Plans Section */}
         <div style={{ 
-          display: "flex", 
-          flexDirection: "column", 
+          display: "flex",
+          flexDirection: "column",
           alignItems: "center", 
-          // padding: "2%", 
-          borderRadius: "10px", 
+          borderRadius: "10px",
           width: "96%",
           marginBottom: "3%"
         }}>
-          <Plans planType={planType} />
+        <Plans planType={planType} />
         </div>
       </div>
   )

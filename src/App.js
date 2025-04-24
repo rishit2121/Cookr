@@ -1,3 +1,5 @@
+import React from 'react';
+import './i18n';
 import Navbar from "./components/Navbar";
 import Scroller from "./components/Scroller";
 import { Routes, Route } from 'react-router-dom';
