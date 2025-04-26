@@ -19,6 +19,11 @@ const SavedQuestions = () => {
       : null
   );
   const [savedQuestions, setSavedQuestions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
@@ -54,9 +59,12 @@ const SavedQuestions = () => {
   
       const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
-          setSavedQuestions(docSnapshot.data().cards || []);
+          const questions = docSnapshot.data().cards || [];
+          setSavedQuestions(questions);
+          setFilteredQuestions(questions);
         } else {
           setSavedQuestions([]);
+          setFilteredQuestions([]);
         }
       });
   
@@ -64,9 +72,51 @@ const SavedQuestions = () => {
       return () => unsubscribe();
     } else {
       setSavedQuestions([]);
+      setFilteredQuestions([]);
     }
   }, [user]);
   
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredQuestions(savedQuestions);
+      // Show all unique subjects and questions when search is empty
+      const uniqueSubjects = [...new Set(savedQuestions.map(q => q.title))];
+      const allQuestions = [...savedQuestions];
+      setSuggestions([
+        ...uniqueSubjects.map(title => ({ type: 'subject', title })),
+        ...allQuestions.map(q => ({ type: 'question', ...q }))
+      ]);
+    } else {
+      const filtered = savedQuestions.filter(question => 
+        question.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (question.title && question.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+      setFilteredQuestions(filtered);
+      
+      // Show all matching subjects and questions
+      const matchingSubjects = [...new Set(filtered.map(q => q.title))]
+        .filter(title => title.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchingQuestions = filtered
+        .filter(q => q.question.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      setSuggestions([
+        ...matchingSubjects.map(title => ({ type: 'subject', title })),
+        ...matchingQuestions.map(q => ({ type: 'question', ...q }))
+      ]);
+    }
+  }, [searchQuery, savedQuestions]);
+
+  const handleSuggestionClick = (item) => {
+    if (item.type === 'subject') {
+      setSearchQuery(item.title);
+      setShowSuggestions(false);
+    } else {
+      setSearchQuery(item.question);
+      setSelectedQuestion(item);
+      setShowSuggestions(false);
+    }
+  };
 
   return (
     <div
@@ -74,16 +124,133 @@ const SavedQuestions = () => {
       style={{ display: "flex", height: "100dvh", overflow: "hidden", backgroundColor: "black"}}
     >
       <Navbar setMobileDimension={setMobileDimension} />
-      <div style={{ width: "5%", backgroundColor: "black"}}></div>
       {user ? (
         <div
-          style={{ flex: 1, height:mobileDimension? "90%":"100%",flexDirection:'column', justifyContent:'center', overflow: "auto", padding: "20px", backgroundColor: "black"
+          style={{ flex: 1, height:mobileDimension? "90%":"100%",flexDirection:'column', justifyContent:'center', overflow: "auto", backgroundColor: "black", marginTop:'10px'
           }}
         >
-          <h2 style={{color: "white"}}>Saved Questions</h2>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "20px",
+            marginTop: "10px",
+            width: "calc(99% - 20px)",
+
+            boxSizing: "border-box",
+          }}>
+            <h2 style={{
+              color: "white",
+              fontSize: "1.8rem",
+              whiteSpace: "nowrap",
+              marginLeft:'5%'
+            }}>
+              Favorites
+            </h2>
+
+            {/* Search bar wrapper aligned right */}
+            <div style={{
+              flexGrow: 1,
+              display: "flex",
+              justifyContent: "flex-end"
+            }}>
+              <div style={{
+                width: "60%",
+                position: "relative",
+               
+              }}>
+                <input
+                  type="text"
+                  placeholder="Search questions..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                    setSelectedQuestion(null);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  style={{
+                    
+                    width: "100%",
+                    padding: "10px 7px",
+                    borderRadius: "8px",
+                    border: "1px solid white",
+                    backgroundColor: "#282828",
+                    color: "white",
+                    outline: "none",
+                    fontSize: "1rem"
+                  }}
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    backgroundColor: "#282828",
+                    border: "1px solid white",
+                    borderRadius: "8px",
+                    marginTop: "4px",
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    zIndex: 1000,
+                    width: "calc(100% + 14px)",
+                    // padding: "10px 14px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+                  }}>
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        style={{
+                          padding: "10px 14px",
+                          cursor: "pointer",
+                          color: "white",
+                          borderBottom: index < suggestions.length - 1 ? "1px solid #444" : "none",
+                          backgroundColor: suggestion.type === 'subject' ? '#333' : 'transparent',
+                          transition: "background-color 0.2s ease"
+                        }}
+                      >
+                        {suggestion.type === 'subject' ? (
+                          <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{suggestion.title}</div>
+                        ) : (
+                          <>
+                            <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{suggestion.title || "Untitled"}</div>
+                            <div style={{ fontSize: "0.9rem", color: "#aaa", marginTop: "4px" }}>
+                              {suggestion.question.length > 50
+                                ? suggestion.question.substring(0, 50) + "..."
+                                : suggestion.question}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0% 20%", justifyContent:'center' }}>
-            {savedQuestions.length > 0 ? (
-              savedQuestions.map((questionData, index) => (
+            {selectedQuestion ? (
+              <QuestionCard
+                question={selectedQuestion.question}
+                choices={selectedQuestion.choices}
+                answer={selectedQuestion.answer}
+                comment={selectedQuestion.comments}
+                selectedAnswer={selectedQuestion.selectedAnswer}
+                setStreak={setStreak}
+                setXP={setXP}
+                title={selectedQuestion.title}
+                color={selectedQuestion.color}
+                fullJSON={selectedQuestion}
+                isFavorites={true}
+                savedQuestions={savedQuestions}
+              />
+            ) : filteredQuestions.length > 0 ? (
+              filteredQuestions.map((questionData, index) => (
                 <QuestionCard
                   key={index}
                   question={questionData.question}

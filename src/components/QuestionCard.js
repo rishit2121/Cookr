@@ -588,7 +588,7 @@ const QuestionCard = ({
                     bottom: "0",
                     left: "0",
                     width: "100%",
-                    backgroundColor: "#282828",
+                    backgroundColor: "#1B1B1B",
                     borderTopLeftRadius: "15px",
                     borderTopRightRadius: "15px",
                     padding: "20px",
@@ -618,7 +618,7 @@ const QuestionCard = ({
                         fontWeight: "500",
                       }}
                     >
-                      Sample Answer
+                      Answer Guideline:
                     </h3>
                     <button
                       onClick={() => {

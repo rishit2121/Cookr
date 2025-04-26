@@ -1,3 +1,5 @@
+import React from 'react';
+import './i18n';
 import Navbar from "./components/Navbar";
 import Scroller from "./components/Scroller";
 import { Routes, Route } from 'react-router-dom';
@@ -41,7 +43,7 @@ function App() {
           {/* <Route path="/explore" element={<Explore />} /> */}
           {/* <Route path="/quiz" element={<Quiz />} /> */}
           {/* <Route path="/results" element={<Results />} /> */}
-          {/* <Route path="/featured" element={<Featured />} /> */}
+          <Route path="/featured" element={<Featured />} />
           <Route path="/flashcards" element={<FlashCard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/paypal" element={<Paypal />} />

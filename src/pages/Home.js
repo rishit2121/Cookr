@@ -219,7 +219,7 @@ useEffect(() => {
                   mobileDimension={mobileDimension}
                 />
               </div>
-            ) : (sets && sets.length) > 0 && !currentSet ? (
+            ) : user && !currentSet ? (
               <div
                 style={{
                   display: "flex",
