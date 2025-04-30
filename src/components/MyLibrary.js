@@ -12,6 +12,96 @@ import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
+const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
+  return (
+    <>
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 999999999
+      }} onClick={onClose} />
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#28282B',
+        padding: '20px',
+        borderRadius: '10px',
+        boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+        zIndex: 999999999,
+        width: '80%',
+        maxWidth: '400px',
+        border: '1px solid #353935'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '15px'
+        }}>
+          <h3 style={{ margin: 0, color: 'white' }}>Delete Set</h3>
+          <svg
+            onClick={onClose}
+            style={{
+              cursor: 'pointer'
+            }}
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+        <p style={{ color: 'white', marginBottom: '20px' }}>
+          Are you sure you want to delete this set?
+        </p>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '10px'
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '5px',
+              border: 'none',
+              background: '#555',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '5px',
+              border: 'none',
+              background: '#a90000',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const MyLibrary = ({ mobileDimension }) => {
   const [sets, setSets] = useState([]);
@@ -21,9 +111,10 @@ const MyLibrary = ({ mobileDimension }) => {
   const [style, setStyle] = useState(0); // Manage the style with useState
   const [params, setParams] = useState([]); // Manage the params with useState
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState('rishit.agrawal121@gmail.com');
+  const [user, setUser] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -48,10 +139,12 @@ const MyLibrary = ({ mobileDimension }) => {
     return () => unsubscribe(); // Cleanup listener
   }, []);
   // Updated generateBlob function with dynamic width and height
-  const deleteItemFromFirestore = async (subtitle,subcontent,subsubject,subpromptmode,subselectedmode,subcolor,subtag) => {
+  const deleteItemFromFirestore = async (subtitle, subcontent, subsubject, subpromptmode, subselectedmode, subcolor, subtag) => {
+    console.log("deleteItemFromFirestore called with:", { subtitle, subcontent });
     try {
       const userEmail = user;
       const docRef = doc(db, "users", userEmail);
+      const featuredDocRef = doc(db, "sets", "featured");
 
       // Fetch the current data from Firestore
       const docSnap = await getDoc(docRef);
@@ -63,34 +156,62 @@ const MyLibrary = ({ mobileDimension }) => {
       // Get the current sets array
       let currentSets = docSnap.data().sets || [];
 
-      // Filter out the item to be deleted
-      currentSets = currentSets.filter(
+      
+      const setToDelete = currentSets.find(
         (item) =>
-          !(
-            item.title === subtitle &&
-            item.content === subcontent &&
-            item.subject === subsubject &&
-            item.promptMode === subpromptmode &&
-            item.scrollGenerationMode == subselectedmode &&
-            item.color === subcolor &&
-            item.tag === subtag
-          )
+          item.title === subtitle &&
+          item.content === subcontent
       );
 
-      // Update the Firestore document with the modified sets array
-      await updateDoc(docRef, { sets: currentSets });
-      setSets(currentSets)
+      if (!setToDelete) {
+        console.log("Set not found in user's sets");
+        return;
+      }
 
-      // Remove from localStorage if necessary
+      console.log("Found set to delete:", setToDelete);
+      console.log("Is set public?", setToDelete.isPublic);
+
+      if (setToDelete && setToDelete.isPublic) {
+        console.log("Attempting to remove from featured sets");
+        const featuredSnap = await getDoc(featuredDocRef);
+        if (featuredSnap.exists()) {
+          const featuredSets = featuredSnap.data().sets || [];
+          
+        
+          const matchingFeaturedSet = featuredSets.find(
+            set => set.title === subtitle && 
+                  set.content === subcontent && 
+                  set.author === userEmail
+          );
+
+          if (matchingFeaturedSet) {
+            console.log("Found matching featured set:", matchingFeaturedSet);
+            await updateDoc(featuredDocRef, {
+              sets: arrayRemove(matchingFeaturedSet)
+            });
+            console.log("Removed from featured sets");
+          }
+        }
+      }
+
+      
+      const updatedSets = currentSets.filter(
+        (item) => !(item.title === subtitle && item.content === subcontent)
+      );
+
+      await updateDoc(docRef, { sets: updatedSets });
+      setSets(updatedSets);
+
+    
       const currentSet = JSON.parse(localStorage.getItem("currentSet"));
       if (currentSet && currentSet.title === subtitle) {
         localStorage.removeItem("currentSet");
       }
 
-      setOpenNewTopic(false);
-    } catch (e) {
-      console.error("Error deleting item:", e);
-      setOpenNewTopic(false);
+      console.log("Delete operation completed successfully");
+
+    } catch (error) {
+      console.error("Error in deleteItemFromFirestore:", error);
     }
   };
   const generateBlob = (
@@ -164,8 +285,26 @@ const MyLibrary = ({ mobileDimension }) => {
   };
 
   const handleDelete = () => {
-    if (!selectedItem) return;
-    deleteItemFromFirestore(selectedItem.title, selectedItem.content, selectedItem.subject, selectedItem.promptMode, selectedItem.scrollGenerationMode, selectedItem.color, selectedItem.tag);
+    console.log("Delete button clicked");
+    if (!selectedItem) {
+      console.log("No item selected");
+      return;
+    }
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = () => {
+    console.log("Confirming delete for selected item:", selectedItem);
+    deleteItemFromFirestore(
+      selectedItem.title, 
+      selectedItem.content, 
+      selectedItem.subject, 
+      selectedItem.promptMode, 
+      selectedItem.scrollGenerationMode, 
+      selectedItem.color, 
+      selectedItem.tag
+    );
+    setShowDeleteConfirmation(false);
   };
 
   return (
@@ -574,6 +713,12 @@ const MyLibrary = ({ mobileDimension }) => {
           style={style}
           params={params}
           mobileDimension={mobileDimension}
+        />
+      )}
+      {showDeleteConfirmation && (
+        <DeleteConfirmationPopup 
+          onClose={() => setShowDeleteConfirmation(false)}
+          onConfirm={confirmDelete}
         />
       )}
     </div>

@@ -27,18 +27,38 @@ function Featured() {
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100vh", overflow: "hidden" }}
+      style={{ 
+        display: "flex", 
+        height: "100vh", 
+        overflow: "hidden",
+        backgroundColor: "black",
+        width: "100vw",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}
     >
-      <div>
+      <div style={{ backgroundColor: "black" }}>
         <Navbar setMobileDimension={setMobileDimension}/>
       </div>
-      <div style={{ flex: 1, padding: "10px", overflowY: "auto", justifyContent:mobileDimension&&"center", display:"flex", width:"100%", backgroundColor: isDarkMode ? "black": "whitesmoke" }}>
-        {localStorage.getItem('email')?<Feature />: <div
+      <div style={{ 
+        flex: 1, 
+        padding: "10px", 
+        overflowY: "auto", 
+        justifyContent: mobileDimension && "center", 
+        display: "flex", 
+        width: "100%", 
+        backgroundColor: "black"
+      }}>
+        {localStorage.getItem('email') ? <Feature /> : <div
           style={{
             position: "absolute",
             left: "50%",
             top: "50%",
-            transform: mobileDimension?"translate(-50%, -50%)":"translate(0%, -50%)",
+            transform: mobileDimension ? "translate(-50%, -50%)" : "translate(0%, -50%)",
+            backgroundColor: "black"
           }}
         >
           <p style={{fontSize:"21px"}}>Hey 👋, welcome to{" "}</p>
