@@ -6,6 +6,7 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  setDoc,
 } from "firebase/firestore";
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
@@ -120,6 +121,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     subtag,
     subtitle,
     subselectedmode,
+    subauthor
   ] = params;
   const [selectedMode, setSelectedMode] = useState(subselectedmode);
   const [title, setTitle] = useState(style === 1 ? subtitle : "");
@@ -138,6 +140,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [isClosing, setIsClosing] = useState(false);
   const [isOpening, setIsOpening] = useState(true);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  // Define canEdit based on author
+  const canEdit = !subauthor || subauthor === user;
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -333,13 +338,14 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
       let currentSets = docSnap.data().sets || [];
 
-      
+      // Find the set to delete to check if it was public
       const setToDelete = currentSets.find(
         item =>
           item.title === subtitle &&
           item.content === subcontent
       );
 
+      // If the set was public, remove it from featured sets
       if (setToDelete?.isPublic) {
         const featuredSnap = await getDoc(featuredDocRef);
         if (featuredSnap.exists()) {
@@ -373,11 +379,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           )
       );
 
-      
       await updateDoc(docRef, { sets: currentSets });
       localStorage.setItem('sets', JSON.stringify(currentSets));
 
-      
       const currentSet = JSON.parse(localStorage.getItem("currentSet"));
       if (currentSet && currentSet.title === subtitle) {
         localStorage.removeItem("currentSet");
@@ -385,6 +389,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
       setOpenNewTopic(false);
     } catch (error) {
+      console.error("Error in deleteItemFromFirestore:", error);
       setOpenNewTopic(false);
     }
   };
@@ -431,6 +436,21 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
   const saveToFirestore = async (isDelete = false) => {
     try {
+      console.log('Starting saveToFirestore with:', {
+        title,
+        content,
+        subject,
+        promptMode,
+        style,
+        user
+      });
+
+      if (!user) {
+        console.error('No user email found');
+        alert('Please sign in to save sets');
+        return;
+      }
+
       if (title.trim() === "") {
         setTitleError(true);
         return;
@@ -451,70 +471,105 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
       });
       const userEmail = user;
       const docRef = doc(db, "users", userEmail);
+      const featuredDocRef = doc(db, "sets", "featured");
+      
       // Fetch the current data from Firestore
       const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        console.error("Document not found");
-        return;
+      console.log('Current user document:', docSnap.exists() ? docSnap.data() : 'Document does not exist');
+
+      let currentSets = [];
+      if (docSnap.exists()) {
+        currentSets = docSnap.data().sets || [];
+      } else {
+        // Create a new document if it doesn't exist
+        try {
+          await setDoc(docRef, { sets: [] });
+          console.log('Created new user document');
+        } catch (createError) {
+          console.error('Error creating new user document:', createError);
+          throw new Error('Failed to create new user document');
+        }
       }
 
-      const userData = docSnap.data();
-      let currentSets = userData.sets || [];
+      console.log('Current sets:', currentSets);
+
+      // Check if user can edit based on author
+      const canEdit = !subauthor || subauthor === user;
 
       if (style === 1) {
-        // Remove the item if style === 1
-        currentSets = currentSets.filter(
+        // Find the original set to check if it was public
+        const originalSet = currentSets.find(
           (item) =>
-            !(
-              item.title === subtitle &&
-              item.content === subcontent &&
-              item.subject === subsubject &&
-              item.promptMode === subpromptmode &&
-              item.scrollGenerationMode == subselectedmode &&
-              item.color === subcolor &&
-              item.tag === subtag
-            )
+            item.title === subtitle &&
+            item.content === subcontent &&
+            item.subject === subsubject &&
+            item.promptMode === subpromptmode &&
+            item.scrollGenerationMode == subselectedmode &&
+            item.color === subcolor &&
+            item.tag === subtag
         );
-        // Wrap the removeItemFromLocalStorage call in a try-catch block
-        try {
-          removeItemFromLocalStorage({
-            title: subtitle,
-            content: subcontent,
-            subject: subsubject,
-            promptMode: subpromptmode,
-            color: subcolor,
-          });
-        } catch (removeError) {
-          console.error("Error removing item from localStorage:", removeError);
+        console.log('Original set found:', originalSet);
+
+        // Create the updated set
+        const updatedSet = {
+          title: title,
+          content: content,
+          subject: subject,
+          promptMode: promptMode,
+          color: subcolor,
+          isPublic: originalSet?.isPublic || false,
+          author: originalSet?.author || userEmail,
+          tag: tag,
+          scrollGenerationMode: selectedMode
+        };
+        console.log('Updated set:', updatedSet);
+
+        // Update the set in the array
+        const setIndex = currentSets.findIndex(
+          (item) =>
+            item.title === subtitle &&
+            item.content === subcontent &&
+            item.subject === subsubject &&
+            item.promptMode === subpromptmode &&
+            item.scrollGenerationMode == subselectedmode &&
+            item.color === subcolor &&
+            item.tag === subtag
+        );
+
+        if (setIndex !== -1) {
+          currentSets[setIndex] = updatedSet;
         }
-        // Add the new item at the same index
-        const index = docSnap
-          .data()
-          .sets.findIndex(
-            (item) =>
-              item.title === subtitle &&
-              item.content === subcontent &&
-              item.subject === subsubject &&
-              item.promptMode === subpromptmode &&
-              item.color === subcolor 
-          );
-        if (index !== -1) {
-          currentSets.splice(index, 0, {
-            title: title,
-            content: content,
-            subject: subject,
-            promptMode: promptMode,
-            color: subcolor,
-          });
-        } else {
-          // If item was not found, just add to the end
-          currentSets.push({
-            title: title,
-            content: content,
-            subject: subject,
-            promptMode: promptMode,
-            color: subcolor,
-          });
+
+        // If the original set was public, update it in featured sets
+        if (originalSet?.isPublic) {
+          try {
+            const featuredSnap = await getDoc(featuredDocRef);
+            if (featuredSnap.exists()) {
+              const featuredSets = featuredSnap.data().sets || [];
+              const updatedFeaturedSets = featuredSets.map(set => {
+                if (set.title === subtitle && 
+                    set.content === subcontent && 
+                    set.author === userEmail) {
+                  return {
+                    ...set,
+                    title: title,
+                    content: content,
+                    subject: subject,
+                    promptMode: promptMode,
+                    color: subcolor,
+                    tag: tag,
+                    scrollGenerationMode: selectedMode
+                  };
+                }
+                return set;
+              });
+              await updateDoc(featuredDocRef, { sets: updatedFeaturedSets });
+              console.log('Successfully updated featured sets');
+            }
+          } catch (featuredError) {
+            console.error('Error updating featured sets:', featuredError);
+            // Continue with the rest of the operation even if featured sets update fails
+          }
         }
       } else {
         // Check subscription status before limiting sets
@@ -523,26 +578,38 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           return;
         }
         
-        currentSets.push({
+        const newSet = {
           title: title,
           content: content,
           subject: subject,
           promptMode: promptMode,
           color: color,
-        });
+          isPublic: false,
+          author: userEmail,
+          tag: tag,
+          scrollGenerationMode: selectedMode || 1 // Ensure scrollGenerationMode is set
+        };
+        console.log('New set to be added:', newSet);
+        currentSets.push(newSet);
       }
 
       // Update the Firestore document
-      await updateDoc(docRef, { sets: currentSets });
+      console.log('Updating Firestore with sets:', currentSets);
+      try {
+        await updateDoc(docRef, { sets: currentSets });
+        console.log('Successfully updated Firestore');
+      } catch (updateError) {
+        console.error('Error updating Firestore:', updateError);
+        throw new Error('Failed to update Firestore document');
+      }
 
       // Update localStorage
-      if (
-        localStorage.getItem("currentSet") == null ||
-        localStorage.getItem("currentSet") == undefined
-      ) {
-        localStorage.setItem(
-          "currentSet",
-          JSON.stringify({
+      try {
+        if (
+          localStorage.getItem("currentSet") == null ||
+          localStorage.getItem("currentSet") == undefined
+        ) {
+          const currentSet = {
             title: title,
             content: content,
             subject: subject,
@@ -550,14 +617,27 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             color: color,
             tag: tag,
             scrollGenerationMode: selectedMode,
-          })
-        );
+          };
+          console.log('Setting currentSet in localStorage:', currentSet);
+          localStorage.setItem("currentSet", JSON.stringify(currentSet));
+        }
+        localStorage.setItem('sets', JSON.stringify(currentSets));
+        console.log('Successfully updated localStorage');
+      } catch (storageError) {
+        console.error('Error updating localStorage:', storageError);
+        // Continue even if localStorage update fails
       }
-      localStorage.setItem('sets', JSON.stringify(currentSets))
 
+      // Close the modal
       setOpenNewTopic(false);
     } catch (e) {
-      console.error(e);
+      console.error('Error in saveToFirestore:', e);
+      console.error('Error details:', {
+        message: e.message,
+        code: e.code,
+        stack: e.stack
+      });
+      alert('Failed to save set. Please try again.');
       setOpenNewTopic(false);
     }
   };
@@ -707,8 +787,11 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               boxSizing: "border-box",
               color: "white",
               fontSize: "16px",
+              cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+              opacity: style === 1 && !canEdit ? 0.5 : 1
             }}
             placeholder={"Chef Shark"}
+            disabled={style === 1 && !canEdit}
           />
           {titleError && (
             <p style={{ 
@@ -754,8 +837,11 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   background: "#28282B",
                   color: "white",
                   fontSize: "16px",
+                  cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                  opacity: style === 1 && !canEdit ? 0.5 : 1
                 }}
                 maxLength={hasSubscription ? 15000 : 8000}
+                disabled={style === 1 && !canEdit}
               />
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {contentError && (
@@ -781,40 +867,42 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 >
                   {content.length}/{hasSubscription ? 15000 : 8000}
                 </p>
-                <form
-                  style={{ position: "absolute", bottom: "5px", left: "5px" }}
-                >
-                  <label
-                    htmlFor="fileUpload"
-                    style={{
-                      display: "inline-block",
-                      padding: "5px 8px", // Reduced padding
-                      borderRadius: "8px", // Reduced border radius
-                      cursor: "pointer",
-                      backgroundColor: "white",
-                      fontSize: "12px", // Reduced font size
-                      color: "white",
-                      textAlign: "center",
-                      boxSizing: "border-box",
-                      background: "#6A6CFF",
-                      boxShadow: "0px 2px 0px 0px #484AC3", // Shadow added here
-                    }}
+                {canEdit && (
+                  <form
+                    style={{ position: "absolute", bottom: "5px", left: "5px" }}
                   >
-                    Upload Notes
-                    <input
-                      id="fileUpload"
-                      type="file"
-                      name="file"
-                      accept=".pdf, image/*" // Accepts PDF files and all image formats
-                      onChange={handleFile}
+                    <label
+                      htmlFor="fileUpload"
                       style={{
-                        display: "none",
-                        background: "#28282B",
-                        outline: "1px solid #353935",
+                        display: "inline-block",
+                        padding: "5px 8px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        backgroundColor: "white",
+                        fontSize: "12px",
+                        color: "white",
+                        textAlign: "center",
+                        boxSizing: "border-box",
+                        background: "#6A6CFF",
+                        boxShadow: "0px 2px 0px 0px #484AC3",
                       }}
-                    />
-                  </label>
-                </form>
+                    >
+                      Upload Notes
+                      <input
+                        id="fileUpload"
+                        type="file"
+                        name="file"
+                        accept=".pdf, image/*"
+                        onChange={handleFile}
+                        style={{
+                          display: "none",
+                          background: "#28282B",
+                          outline: "1px solid #353935",
+                        }}
+                      />
+                    </label>
+                  </form>
+                )}
               </div>
             </div>
           </div>
@@ -851,9 +939,12 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   background: "#28282B",
                   color: "white",
                   fontSize: "16px",
+                  cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                  opacity: style === 1 && !canEdit ? 0.5 : 1
                 }}
                 placeholder="Chain rule for AP Calculus BC..."
                 maxLength={1000}
+                disabled={style === 1 && !canEdit}
               />
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {subjectError && (
@@ -929,28 +1020,30 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           }}>
             <button
               onClick={() => saveToFirestore(false)}
+              disabled={!canEdit}
               style={{
                 width: "47%",
-                background: "#6A6CFF",
-                boxShadow: "0px 5px 0px 0px #484AC3",
+                background: "transparent",
                 border: "none",
-                padding: "15px",
+                padding: "10px",
                 borderRadius: "10px",
-                cursor: "pointer",
+                cursor: !canEdit ? "not-allowed" : "pointer",
                 color: "white",
-                fontSize: "16px",
-                fontWeight: "500"
+                background: !canEdit ? "#666666" : "#6A6CFF",
+                boxShadow: !canEdit ? "0px 2px 0px 0px rgb(56, 56, 56)" : "0px 2px 0px 0px #484AC3",
+                fontSize: '15px',
+                opacity: !canEdit ? 0.7 : 1
               }}
             >
               Save
             </button>
-            <div style={{ width: "6%" }}></div>
+            <div style={{ width: !canEdit ? "6%" : "6%" }}></div>
             <button
               onClick={handleDeleteClick}
               style={{
-                width: "47%",
-                background: "#6A6CFF",
-                boxShadow: "0px 5px 0px 0px #484AC3",
+                width: !canEdit ? "47%" : "47%",
+                background: "#ff4444",
+                boxShadow: "0px 5px 0px 0px #cc0000",
                 border: "none",
                 padding: "15px",
                 borderRadius: "10px",

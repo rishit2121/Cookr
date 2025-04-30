@@ -17,7 +17,9 @@ import {
 var randomColor = require("randomcolor"); // import the script
 
 const generateUniqueNumber = (email) => {
-  
+  if (!email) {
+    return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  }
 
   let hash = 0;
   for (let i = 0; i < email.length; i++) {
@@ -52,6 +54,8 @@ const Features= ({ mobileDimension }) => {
     return localStorage.getItem("darkMode") === "true";
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
   const [user, setUser] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [mySets, setMySets] = useState([]); 
@@ -80,18 +84,30 @@ const Features= ({ mobileDimension }) => {
   }, []);
   useEffect(() => {
     try {
-      
       const fetchFeaturedSets = async () => {
         const featuredDoc = await getDoc(doc(db, "sets", "featured"));
         const data = featuredDoc.data();
         const sets = data?.sets || [];
-        
         
         const sortedSets = [...sets].sort((a, b) => {
           const timesAddedA = a.timesAdded || 0;
           const timesAddedB = b.timesAdded || 0;
           return timesAddedB - timesAddedA;
         });
+        
+        // Check for already added sets immediately
+        if (user) {
+          const userRef = doc(db, "users", user);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userSets = userDoc.data().sets || [];
+            const alreadyAdded = new Set();
+            userSets.forEach(set => {
+              alreadyAdded.add(getSetKey(set.title, set.content));
+            });
+            setDuplicateSet(alreadyAdded);
+          }
+        }
         
         setFeaturedSets(sortedSets);
         setSets(sortedSets);
@@ -101,7 +117,7 @@ const Features= ({ mobileDimension }) => {
     } catch (error) {
       console.error("Error fetching featured sets:", error);
     }
-  }, []); 
+  }, [user]); 
   useEffect(() => {
     if (user) {
       const userRef = doc(db, "users", user);
@@ -157,11 +173,35 @@ const Features= ({ mobileDimension }) => {
     }
   };
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.length > 0) {
+      const searchResults = selected === "Community Sets" ? 
+        featuredSets.filter(item => 
+          item.title?.toLowerCase().includes(query.toLowerCase()) ||
+          item.content?.toLowerCase().includes(query.toLowerCase())
+        ) :
+        mySets.filter(item => 
+          item.title?.toLowerCase().includes(query.toLowerCase()) ||
+          item.content?.toLowerCase().includes(query.toLowerCase())
+        );
+      
+      setRecommendations(searchResults.slice(0, 5));
+      setShowRecommendations(true);
+    } else {
+      setShowRecommendations(false);
+    }
   };
+
+  const handleRecommendationClick = (item) => {
+    setSearchQuery(item.title);
+    setShowRecommendations(false);
+  };
+
   const handleClick = async (text) => {
     setSelected(text);
-    
+
     
     if (text === "Community Sets") {
       try {
@@ -214,31 +254,158 @@ const Features= ({ mobileDimension }) => {
     return recentlyAdded.has(getSetKey(title, content));
   };
 
-  // Updated generateBlob function with dynamic width and height
-  const saveToFirestore = async (title, content, subject, promptMode, tag, isOwnSet = false) => {
+  const handlePublicToggle = async (item) => {
     try {
-      if (isOwnSet) {
-        setOwnSetAttempt(prev => new Set([...prev, getSetKey(title, content)]));
-        setShowDuplicateWarning(true);
+      const featuredDocRef = doc(db, 'sets', 'featured');
+      const userRef = doc(db, "users", user);
+      
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        return;
+      }
+      const currentSets = userDoc.data().sets || [];
+
+      const featuredDoc = await getDoc(featuredDocRef);
+      if (!featuredDoc.exists()) {
+        return;
+      }
+      const featuredSets = featuredDoc.data()?.sets || [];
+
+      // Check if the set is already in featured sets
+      const isCurrentlyPublic = featuredSets.some(set => 
+        set.title === item.title && 
+        set.content === item.content && 
+        set.color === item.color && 
+        set.author === user
+      );
+
+      if (isCurrentlyPublic) {
+        // Remove from featured sets
+        const updatedFeaturedSets = featuredSets.filter(set => 
+          !(set.title === item.title && 
+            set.content === item.content && 
+            set.color === item.color && 
+            set.author === user)
+        );
+        
+        await updateDoc(featuredDocRef, {
+          sets: updatedFeaturedSets
+        });
+
+        // Update user's sets
+        const updatedSets = currentSets.map(set => 
+          set.title === item.title && 
+          set.content === item.content &&
+          set.color === item.color
+            ? { ...set, isPublic: false }
+            : set
+        );
+        
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      } else {
+        if (!item.title || !item.content) {
+          return;
+        }
+
+        // Add to featured sets
+        const publicItem = {
+          ...item,
+          isPublic: true,
+          author: user,
+          timesAdded: item.timesAdded || 0
+        };
+
+        await updateDoc(featuredDocRef, {
+          sets: [...featuredSets, publicItem]
+        });
+
+        // Update user's sets
+        const updatedSets = currentSets.map(set => 
+          set.title === item.title && 
+          set.content === item.content &&
+          set.color === item.color
+            ? { ...set, isPublic: true }
+            : set
+        );
+        
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      }
+    } catch (error) {
+      console.error('Error in handlePublicToggle:', error);
+    }
+  };
+
+  // Add a new function to handle set updates
+  const updateSetInBothCollections = async (updatedSet) => {
+    try {
+      const userRef = doc(db, "users", user);
+      const featuredDocRef = doc(db, 'sets', 'featured');
+
+      // Update in user's sets
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        const currentSets = userDoc.data().sets || [];
+        const updatedSets = currentSets.map(set => 
+          set.title === updatedSet.title && 
+          set.content === updatedSet.content &&
+          set.color === updatedSet.color
+            ? { ...set, ...updatedSet }
+            : set
+        );
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      }
+
+      // Update in featured sets if the set is public
+      const featuredDoc = await getDoc(featuredDocRef);
+      if (featuredDoc.exists()) {
+        const featuredSets = featuredDoc.data()?.sets || [];
+        const updatedFeaturedSets = featuredSets.map(set => 
+          set.title === updatedSet.title && 
+          set.content === updatedSet.content &&
+          set.color === updatedSet.color &&
+          set.author === user
+            ? { ...set, ...updatedSet }
+            : set
+        );
+        await updateDoc(featuredDocRef, {
+          sets: updatedFeaturedSets
+        });
+      }
+    } catch (error) {
+      console.error('Error updating set:', error);
+    }
+  };
+
+  // Updated saveToFirestore function
+  const saveToFirestore = async (title, content, subject, promptMode, tag) => {
+    try {
+      console.log('Starting saveToFirestore with:', { title, content, subject, promptMode, tag });
+      
+      const userEmail = user;
+      if (!userEmail) {
+        console.error('No user email found');
         return;
       }
 
-      const userEmail = user;
       const docRef = doc(db, "users", userEmail);
       const featuredDocRef = doc(db, "sets", "featured");
       
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
-        console.error("Document not found");
+        console.error("User document not found");
         return;
       }
-
+  
       let currentSets = docSnap.data().sets || [];
-
-      const isDuplicate = currentSets.some(set => 
-        set.title === title && set.content === content
-      );
+      console.log('Current sets:', currentSets);
+  
+      // Use the same duplicate checking logic as the button color
+      const isDuplicate = isSetDuplicate(title, content) || isSetAddedOrRecent(title, content);
       if (isDuplicate) {
+        console.log('Duplicate set detected');
         setDuplicateSet(prev => new Set([...prev, getSetKey(title, content)]));
         setShowDuplicateWarning(true);
         return;
@@ -246,31 +413,19 @@ const Features= ({ mobileDimension }) => {
 
       // Check subscription status before adding new set
       if (!hasSubscription && currentSets.length >= 10) {
+        console.log('Set limit reached for free user');
         setShowSubscriptionWarning(true);
         return;
       }
 
-      
+      // Find the original set in featured sets to get the author
       const featuredSnap = await getDoc(featuredDocRef);
-      if (featuredSnap.exists()) {
-        const featuredSets = featuredSnap.data().sets || [];
-        const updatedFeaturedSets = featuredSets.map(set => {
-          if (set.title === title && set.author === set.author) {
-            return {
-              ...set,
-              timesAdded: (parseInt(set.timesAdded) || 0) + 1
-            };
-          }
-          return set;
-        });
+      const featuredSets = featuredSnap.exists() ? featuredSnap.data().sets || [] : [];
+      const originalSet = featuredSets.find(set => 
+        set.title === title && 
+        set.content === content
+      );
 
-        
-        await updateDoc(featuredDocRef, {
-          sets: updatedFeaturedSets
-        });
-      }
-
-      
       const newSet = {
         title: title,
         content: content,
@@ -279,23 +434,33 @@ const Features= ({ mobileDimension }) => {
         color: randomColor({ luminosity: "dark" }),
         tag: tag,
         scrollGenerationMode: 1,
+        author: originalSet?.author || userEmail, // Use original author if from community, otherwise use current user
+        isPublic: false,
+        isAddedFromCommunity: !!originalSet // Set to true if the set was found in featured sets
       };
-      currentSets.push(newSet);
-
-    
-      await updateDoc(docRef, { sets: currentSets });
-
+      console.log('New set to be added:', newSet);
       
+      currentSets.push(newSet);
+      console.log('Updated sets array:', currentSets);
+  
+      await updateDoc(docRef, { sets: currentSets });
+      console.log('Successfully updated Firestore');
+  
       localStorage.setItem("sets", JSON.stringify(currentSets));
       if (!localStorage.getItem("currentSet")) {
         localStorage.setItem("currentSet", JSON.stringify(newSet));
       }
-
-      
+  
       setRecentlyAdded(prev => new Set([...prev, getSetKey(title, content)]));
+      console.log('Successfully completed saveToFirestore');
 
     } catch (e) {
-      console.error("Error adding set:", e);
+      console.error("Error in saveToFirestore:", e);
+      console.error("Error details:", {
+        message: e.message,
+        code: e.code,
+        stack: e.stack
+      });
     }
   };
   
@@ -322,121 +487,6 @@ const Features= ({ mobileDimension }) => {
     return path;
   };
 
-  const handlePublicToggle = async (item) => {
-    try {
-      const featuredDocRef = doc(db, 'sets', 'featured');
-      const userRef = doc(db, "users", user);
-      
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) {
-        return;
-      }
-      const currentSets = userDoc.data().sets || [];
-
-      const featuredDoc = await getDoc(featuredDocRef);
-      if (!featuredDoc.exists()) {
-        return;
-      }
-      const featuredSets = featuredDoc.data()?.sets || [];
-
-      
-      const isCurrentlyPublic = featuredSets.some(set => 
-        set.title === item.title && 
-        set.content === item.content && 
-        set.color === item.color && 
-        set.author === user
-      );
-
-      if (isCurrentlyPublic) {
-        // stores timesAdded
-        const currentSet = featuredSets.find(set => 
-          set.title === item.title && 
-          set.content === item.content && 
-          set.color === item.color && 
-          set.author === user
-        );
-        const savedTimesAdded = currentSet?.timesAdded || 0;
-        
-        // stores timesAdded in localStorage
-        localStorage.setItem(`timesAdded_${item.title}_${item.color}`, savedTimesAdded.toString());
-
-        const updatedFeaturedSets = featuredSets.filter(set => 
-          !(set.title === item.title && 
-            set.content === item.content && 
-            set.color === item.color && 
-            set.author === user)
-        );
-        
-        await updateDoc(featuredDocRef, {
-          sets: updatedFeaturedSets
-        });
-
-        const updatedSets = currentSets.map(set => 
-          set.title === item.title && 
-          set.content === item.content &&
-          set.color === item.color
-            ? { ...set, isPublic: false }
-            : set
-        );
-        
-        await updateDoc(userRef, { sets: updatedSets });
-        setMySets(updatedSets);
-      } else {
-        if (!item.title || !item.content) {
-          return;
-        }
-
-        // retrieves the saved timesAdded value
-        const savedTimesAdded = parseInt(localStorage.getItem(`timesAdded_${item.title}_${item.color}`)) || 0;
-
-        const publicItem = {
-          ...item,
-          isPublic: true,
-          author: user,
-          timesAdded: savedTimesAdded 
-        };
-
-        
-        const isDuplicate = featuredSets.some(set => {
-          if (!set.title || !set.content) {
-            return false;
-          }
-          
-          const normalizedSetTitle = set.title.trim().toLowerCase();
-          const normalizedItemTitle = item.title.trim().toLowerCase();
-          const normalizedSetContent = set.content.trim().toLowerCase();
-          const normalizedItemContent = item.content.trim().toLowerCase();
-          
-          return normalizedSetTitle === normalizedItemTitle && 
-                 normalizedSetContent === normalizedItemContent;
-        });
-
-        if (isDuplicate) {
-          setShowAlreadyFeaturedWarning(true);
-          return;
-        }
-
-        await updateDoc(featuredDocRef, {
-          sets: [...featuredSets, publicItem]
-        });
-
-        const updatedSets = currentSets.map(set => 
-          set.title === item.title && 
-          set.content === item.content &&
-          set.color === item.color
-            ? { ...set, isPublic: true }
-            : set
-        );
-        
-        await updateDoc(userRef, { sets: updatedSets });
-        setMySets(updatedSets);
-      }
-    } catch (error) {
-      console.error('Error in handlePublicToggle:', error);
-    }
-  };
-
-  
   const handleNewClick = () => {
     setStyle(0); 
     setParams([]); 
@@ -541,7 +591,7 @@ const Features= ({ mobileDimension }) => {
             marginBottom: '15px'
           }}>
             <h3 style={{ margin: 0, color: 'white' }}>
-              {isOwnLibrary ? "This is your own library!" : "Set Already Exists"}
+              Set Already Exists
             </h3>
             <button
               onClick={onClose}
@@ -558,7 +608,7 @@ const Features= ({ mobileDimension }) => {
             </button>
           </div>
           <p style={{ color: 'white', marginBottom: '20px' }}>
-            {isOwnLibrary ? "You can't add sets from your own library!" : "This set already exists in your library!"}
+            This set already exists in your library!
           </p>
         </div>
       </>
@@ -620,6 +670,10 @@ const Features= ({ mobileDimension }) => {
   };
 
   const getUsername = async (email) => {
+    if (!email) {
+      return `@Cookr${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+    }
+
     if (usernameCache[email]) return usernameCache[email];
 
     try {
@@ -644,7 +698,7 @@ const Features= ({ mobileDimension }) => {
     const [username, setUsername] = useState(usernameCache[email] || '');
 
     useEffect(() => {
-      if (!username) {
+      if (!username && email) {
         getUsername(email).then(name => setUsername(name));
       }
     }, [email]);
@@ -764,12 +818,27 @@ const Features= ({ mobileDimension }) => {
 
   const navigate = useNavigate();
 
+  const PersonIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="1em"
+      height="1em"
+      style={{ width: '16px', height: '16px', marginRight: '4px' }}
+    >
+      <path
+        fill="currentColor"
+        d="M13 8c0-2.21-1.79-4-4-4S5 5.79 5 8s1.79 4 4 4s4-1.79 4-4m2 2v2h3v3h2v-3h3v-2h-3V7h-2v3zM1 18v2h16v-2c0-2.66-5.33-4-8-4s-8 1.34-8 4"
+      ></path>
+    </svg>
+  );
+
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflow: "hidden",
         backgroundColor: "black",
         position: "relative"
@@ -782,96 +851,180 @@ const Features= ({ mobileDimension }) => {
         padding: "20px 50px",
         display: "flex",
         flexDirection: "column",
-        alignItems: window.innerWidth <= 768 ? "center" : "flex-start",
         width: "100%",
         boxSizing: "border-box",
         position: "relative",
-        marginTop: "20px"
+        marginTop: "10px",
+        alignItems: "center"
       }}>
-        <button
-          onClick={() => navigate('/library')}
-          style={{
-            position: "absolute",
-            left: "-1px", // Push all the way to the left
-            top: "-17.5px", // Push all the way to the top
-            backgroundColor: "#333",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            padding: "7px 16px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            fontSize: "14px",
-            zIndex: 2
-          }}
-        >
-          ← Back to Library
-        </button>
         <div style={{
-          display: "flex",
-          flexDirection: "row",
-          width: "100%",
-          alignItems: "center",
-          justifyContent: window.innerWidth <= 768 ? "center" : "space-between",
-          flexWrap: "wrap",
-          gap: "20px",
-          marginBottom: "20px",
+            display: "flex",
+            flexDirection: "row",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            marginBottom: "20px"
         }}>
+          {window.innerWidth <= 768 ? (
+            <svg
+              onClick={() => navigate('/library')}
+              style={{
+                position: "absolute",
+                left: "-30px",
+                top: "0px",
+                cursor: "pointer",
+                width: "35px",
+                height: "35px",
+                fill: "white"
+              }}
+              viewBox="0 0 24 24"
+            >
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          ) : (
+        <button
+              onClick={() => navigate('/library')}
+            style={{
+              position: "absolute",
+                left: "-30px",
+                top: "0px",
+                cursor: "pointer",
+                display: "flex",
+              alignItems: "center",
+                gap: "8px",
+                background: "linear-gradient(90deg, #1a1a1a, #333333, #1a1a1a)",
+                border: "none",
+                color: "white",
+                fontSize: "13px",
+                padding: "8px 8px",
+                borderRadius: "5px"
+              }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="white"
+              >
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+              </svg>
+              Back to Library
+          </button>
+          )}
           <h1 style={{ 
-            margin: "5px 0", 
             color: "white",
             minWidth: "200px",
-            textAlign: window.innerWidth <= 768 ? "center" : "left"
+            textAlign: "center",
+            margin: 0
           }}>
-            Explore Featured Sets
+            Explore Sets
           </h1>
+        </div>
+        <div style={{
+          display: "flex",
+          flexDirection: window.innerWidth <= 768 ? "column" : "row",
+          width: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "20px",
+          gap: window.innerWidth <= 768 ? "20px" : "0",
+        }}>
           <div style={{
             display: "flex",
             alignItems: "center",
             gap: "20px",
             minWidth: "300px",
             maxWidth: "500px",
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "auto",
+            position: "relative"
           }}>
-            <button
-              style={{
-                borderRadius: "10px",
-                backgroundColor: "#FF8C00",
-                width: "50px",
-                height: "50px",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                border: "none",
-                cursor: "pointer",
-                color: "white",
-                fontSize: "30px",
-                flexShrink: 0,
-              }}
-              onClick={handleNewClick}
-            >
-              +
-            </button>
-            <input
-              type="text"
-              placeholder="Search..."
-              style={{
-                flex: 1,
-                borderRadius: "20px",
-                backgroundColor: "#f0f0f0",
-                border: "1px solid #808080",
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                color: "#333",
-                outline: "none",
-                fontSize: "16px",
-                height: "50px",
-                paddingLeft: "20px",
-                minWidth: "200px",
-              }}
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+            <div style={{ position: "relative", flex: 1 }}>
+        <input
+        type="text"
+        placeholder="Search..."
+        style={{
+                  width: "100%",
+            borderRadius: "20px",
+                  backgroundColor: "#f0f0f0",
+                  border: "1px solid #808080",
+                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                  color: "#333",
+                  outline: "none",
+            fontSize: "16px",
+                  height: "50px",
+            paddingLeft: "20px",
+                  minWidth: "200px",
+                  maxWidth: window.innerWidth <= 768 ? "100%" : "none"
+        }}
+        value={searchQuery}
+        onChange={handleSearchChange}
+                onBlur={() => setTimeout(() => setShowRecommendations(false), 200)}
+              />
+              {showRecommendations && recommendations.length > 0 && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#28282B",
+                  border: "1px solid #353935",
+                  borderRadius: "10px",
+                  marginTop: "5px",
+                  zIndex: 1000,
+                  maxHeight: "180px",
+                  overflowY: "auto"
+                }}>
+                  {recommendations.slice(0, 10).map((item, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleRecommendationClick(item)}
+                      style={{
+                        padding: "10px 20px",
+                        cursor: "pointer",
+                        color: "white",
+                        borderBottom: index < recommendations.length - 1 ? "1px solid #353935" : "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "5px",
+                        minHeight: "60px",
+                        overflow: "hidden"
+                      }}
+                    >
+                      <div style={{ 
+                        fontWeight: "bold",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {item.title}
+                      </div>
+                      <div style={{ 
+                        fontSize: "12px", 
+                        color: "#999",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {item.content?.substring(0, 100)}...
+                      </div>
+                      {item.author && (
+                        <div style={{ 
+                          fontSize: "12px",
+                          color: "#999",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}>
+                          <AuthorDisplay email={item.author} />
+        </div>
+        )}
+    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {/* Tabs section */}
@@ -879,48 +1032,48 @@ const Features= ({ mobileDimension }) => {
           display: 'flex', 
           flexDirection: 'row', 
           width: '300px',
-          justifyContent: window.innerWidth <= 768 ? "center" : "flex-start"
+          justifyContent: "center"
         }}>
-          <p
-            style={getStyle("Community Sets")}
-            onClick={() => handleClick("Community Sets")}
-          >
-            Community Sets
-            {selected === "Community Sets" && (
-              <span
-                style={{
-                  position: "absolute",
+    <p
+        style={getStyle("Community Sets")}
+        onClick={() => handleClick("Community Sets")}
+      >
+        Community Sets
+        {selected === "Community Sets" && (
+          <span
+            style={{
+              position: "absolute",
                   bottom: "-4px",
-                  left: "0",
-                  width: "100%",
+              left: "0",
+              width: "100%",
                   height: "3px",
                   backgroundColor: "white",
-                  borderRadius: "2px",
-                }}
-              ></span>
-            )}
-          </p>
+              borderRadius: "2px",
+            }}
+          ></span>
+        )}
+      </p>
           <div style={{ display: 'flex', width: '30px' }}></div>
-          <p
-            style={getStyle("My Sets")}
-            onClick={() => handleClick("My Sets")}
-          >
-            My Sets
-            {selected === "My Sets" && (
-              <span
-                style={{
-                  position: "absolute",
+      <p
+        style={getStyle("My Sets")}
+        onClick={() => handleClick("My Sets")}
+      >
+        My Sets
+        {selected === "My Sets" && (
+          <span
+            style={{
+              position: "absolute",
                   bottom: "-4px",
-                  left: "0",
-                  width: "100%",
+              left: "0",
+              width: "100%",
                   height: "3px",
                   backgroundColor: "white",
-                  borderRadius: "2px",
-                }}
-              ></span>
-            )}
-          </p>
-        </div>
+              borderRadius: "2px",
+            }}
+          ></span>
+        )}
+      </p>
+    </div>
       </div>
 
       {/*container for the cards*/}
@@ -930,12 +1083,14 @@ const Features= ({ mobileDimension }) => {
           display: "flex",
           flexDirection: "row",
           flexWrap: "wrap",
-          justifyContent: window.innerWidth <= 768 ? "center" : "flex-start", // Updated
+          justifyContent: "center",
           alignItems: "flex-start",
           overflowY: "auto",
           padding: window.innerWidth <= 768 ? "0" : "20px 50px", 
           gap: "20px",
           width: "100%",
+          height: window.innerWidth <= 768 ? "calc(100vh - 200px)" : "auto",
+          marginBottom: window.innerWidth <= 768 ? "80px" : "0"
         }}
       >
         {selected === "Community Sets" ? (
@@ -944,94 +1099,114 @@ const Features= ({ mobileDimension }) => {
             flexDirection: "row",
             flexWrap: "wrap",
             gap: "20px",
-            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start", // Updated
-            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)", // Updated width
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)",
             overflow: "visible",
             alignItems: "flex-start",
-            padding: window.innerWidth <= 768 ? "0 20px" : "0", // Added horizontal padding for mobile
-            marginRight: window.innerWidth <= 768 ? "0" : "10px" // Updated margin
+            padding: window.innerWidth <= 768 ? "0 20px" : "0",
+            marginRight: window.innerWidth <= 768 ? "0" : "10px"
           }}>
             {featuredSets
               .filter(item => 
-                item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.content?.toLowerCase().includes(searchQuery.toLowerCase())
               )
-              .map((item, index) => (
-                <div
-                  key={index}
+      .map((item, index) => (
+              <div
+                key={index}
                   className="libCard"
-                  style={{
-                    borderRadius: "10px",
-                    display: "flex",
+                style={{
+                  borderRadius: "10px",
+                  display: "flex",
                     border: "1px solid #353935",
                     backgroundColor: "#28282B",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                     position: "relative",
-                    width: window.innerWidth <= 768 ? "100%" : "300px", // Updated width
+                    width: window.innerWidth <= 768 ? "100%" : "300px",
                     maxWidth: "300px",
                     margin: "0",
                     padding: "20px",
-                    flexShrink: 0
+                    flexShrink: 0,
+                    minHeight: window.innerWidth <= 768 ? "200px" : "auto"
                   }}
                 >
-                  <div>
-                    <h3 style={{
-                      margin: 0,
-                      color: "white",
-                      fontSize: "18px",
-                      marginBottom: "4px"
-                    }}>
-                      {item.title}
-                    </h3>
-                    <AuthorDisplay email={item.author} />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '10px', 
+                    right: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    <PersonIcon />
+                    {item.timesAdded || 0}
+                  </div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <h3 style={{
+                          margin: 0,
+                          color: "white",
+                          fontSize: "18px"
+                        }}>
+                          {item.title}
+                        </h3>
+                        <AuthorDisplay email={item.author} />
+                </div>
+                </div>
                     <div style={{
                       color: "#ccc",
                       fontSize: "14px",
-                      marginBottom: "20px",
+                      marginTop: "10px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       display: "-webkit-box",
-                      WebkitLineClamp: "4",
+                      WebkitLineClamp: "7",
                       WebkitBoxOrient: "vertical",
-                      maxHeight: "80px"
+                      maxHeight: "140px",
+                      flex: 1
                     }}>
                       {item.content}
                     </div>
                   </div>
-                  <button
+                <button 
                     onClick={() => {
                       if (!user) {
                         alert("Please sign in to add sets to your library");
                         return;
                       }
-                      const isOwnSet = selected === "My Sets";
                       saveToFirestore(
                         item.title,
                         item.content,
                         item.subject || "",
                         item.promptMode || "",
-                        item.tag || "",
-                        isOwnSet
+                        item.tag || ""
                       );
                     }}
-                    style={{
-                      backgroundColor: isSetDuplicate(item.title, item.content) ? "#ff4444" : 
+                    style={{ 
+                      backgroundColor: isSetDuplicate(item.title, item.content) ? "#4CAF50" : 
                                       isSetAddedOrRecent(item.title, item.content) ? "#4CAF50" : "#FF8C00",
                       color: "white",
                       border: "none",
                       borderRadius: "5px",
                       padding: "8px 16px",
-                      cursor: isSetDuplicate(item.title, item.content) || 
-                              isSetAddedOrRecent(item.title, item.content) ? "not-allowed" : "pointer",
+                      cursor: "pointer",
                       fontSize: "14px",
                       transition: "background-color 0.7s ease",
+                      marginTop: "auto",
+                      opacity: isSetDuplicate(item.title, item.content) || 
+                              isSetAddedOrRecent(item.title, item.content) ? 0.7 : 1,
+                      pointerEvents: isSetDuplicate(item.title, item.content) || 
+                                   isSetAddedOrRecent(item.title, item.content) ? "none" : "auto"
                     }}
                     disabled={isSetDuplicate(item.title, item.content) || 
                               isSetAddedOrRecent(item.title, item.content)}
                   >
-                    {isSetDuplicate(item.title, item.content) ? "Set Already in Library" :
-                     isSetAddedOrRecent(item.title, item.content) ? "Added to Library!" : "Add to Library"}
-                  </button>
+                    {isSetDuplicate(item.title, item.content) ? "Already Added" :
+                     isSetAddedOrRecent(item.title, item.content) ? "Already Added" : "Add to Library"}
+                </button>
                 </div>
               ))}
           </div>
@@ -1041,22 +1216,23 @@ const Features= ({ mobileDimension }) => {
             flexDirection: "row",
             flexWrap: "wrap",
             gap: "20px",
-            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start", // Updated
-            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)", // Updated width
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)",
             overflow: "visible",
             alignItems: "flex-start",
-            padding: window.innerWidth <= 768 ? "0 20px" : "0", // Added horizontal padding for mobile
-            marginRight: window.innerWidth <= 768 ? "0" : "10px" // Updated margin
+            padding: window.innerWidth <= 768 ? "0 20px" : "0",
+            marginRight: window.innerWidth <= 768 ? "0" : "10px"
           }}>
             {mySets
               .filter(item => 
-                item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.content?.toLowerCase().includes(searchQuery.toLowerCase())
               )
               .map((item, index) => (
                 <div
                   key={index}
                   className="libCard"
-                  style={{
+                    style={{
                     borderRadius: "10px",
                     display: "flex",
                     border: "1px solid #353935",
@@ -1064,47 +1240,51 @@ const Features= ({ mobileDimension }) => {
                     flexDirection: "column",
                     justifyContent: "space-between",
                     position: "relative",
-                    width: window.innerWidth <= 768 ? "100%" : "300px", // Updated width
+                    width: window.innerWidth <= 768 ? "100%" : "300px",
                     maxWidth: "300px",
                     margin: "0",
                     padding: "20px",
-                    flexShrink: 0
+                    flexShrink: 0,
+                    minHeight: window.innerWidth <= 768 ? "200px" : "auto"
                   }}
                 >
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "15px"
-                  }}>
-                    <h3 style={{
-                      margin: 0,
-                      color: "white",
-                      fontSize: "18px"
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <h3 style={{
+                          margin: 0,
+                          color: "white",
+                          fontSize: "18px"
+                        }}>
+                          {item.title}
+                        </h3>
+                        <AuthorDisplay email={item.author} />
+                      </div>
+                      {selected === "My Sets" && (item.author === user || !item.author) && (
+                        <Toggle
+                          id={index}
+                          isChecked={item.isPublic || false}
+                          handleChange={() => handlePublicToggle(item)}
+                        />
+                      )}
+                    </div>
+                    <div style={{
+                      color: "#ccc",
+                      fontSize: "14px",
+                      marginTop: "10px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: "7",
+                      WebkitBoxOrient: "vertical",
+                      maxHeight: "140px",
+                      flex: 1
                     }}>
-                      {item.title}
-                    </h3>
-                    <Toggle
-                      id={index}
-                      isChecked={item.isPublic || false}
-                      handleChange={() => handlePublicToggle(item)}
-                    />
-                  </div>
-                  <div style={{
-                    color: "#ccc",
-                    fontSize: "14px",
-                    marginTop: "10px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: "7",
-                    WebkitBoxOrient: "vertical",
-                    maxHeight: "140px"
-                  }}>
-                    {item.content}
-                  </div>
-                </div>
-              ))}
+                      {item.content}
+                    </div>
+              </div>
+            </div>
+        ))}
           </div>
         )}
       </div>

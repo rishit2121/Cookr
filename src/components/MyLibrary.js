@@ -156,10 +156,9 @@ const MyLibrary = ({ mobileDimension }) => {
       // Get the current sets array
       let currentSets = docSnap.data().sets || [];
 
-      
       const setToDelete = currentSets.find(
         (item) =>
-          item.title === subtitle &&
+            item.title === subtitle &&
           item.content === subcontent
       );
 
@@ -171,13 +170,13 @@ const MyLibrary = ({ mobileDimension }) => {
       console.log("Found set to delete:", setToDelete);
       console.log("Is set public?", setToDelete.isPublic);
 
+      // If the set is public, remove it from featured sets
       if (setToDelete && setToDelete.isPublic) {
         console.log("Attempting to remove from featured sets");
         const featuredSnap = await getDoc(featuredDocRef);
         if (featuredSnap.exists()) {
           const featuredSets = featuredSnap.data().sets || [];
           
-        
           const matchingFeaturedSet = featuredSets.find(
             set => set.title === subtitle && 
                   set.content === subcontent && 
@@ -194,7 +193,7 @@ const MyLibrary = ({ mobileDimension }) => {
         }
       }
 
-      
+      // Remove from user's sets
       const updatedSets = currentSets.filter(
         (item) => !(item.title === subtitle && item.content === subcontent)
       );
@@ -202,7 +201,7 @@ const MyLibrary = ({ mobileDimension }) => {
       await updateDoc(docRef, { sets: updatedSets });
       setSets(updatedSets);
 
-    
+      // Clear from localStorage if it's the current set
       const currentSet = JSON.parse(localStorage.getItem("currentSet"));
       if (currentSet && currentSet.title === subtitle) {
         localStorage.removeItem("currentSet");
@@ -316,19 +315,54 @@ const MyLibrary = ({ mobileDimension }) => {
         alignItems: mobileDimension ? "center" : "flex-start",
         overflowX: "hidden",
         height: mobileDimension? '88%': '100%',
+        position: "relative"
       }}
     >
+      <button
+        onClick={() => navigate("/featured")}
+        style={{
+          background: "linear-gradient(90deg, #1a1a1a, #333333, #1a1a1a)",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          padding: "8px 16px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          position: "fixed",
+          right: "10px",
+          top: "20px",
+          zIndex: 2,
+          fontSize: mobileDimension ? "10px" : "14px"
+        }}
+      >
+        Collections
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </button>
       {openMode && (
         <div
           style={{
-            position: "absolute",
+            position: "fixed",
             backgroundColor: "#181818",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
+            left: 0,
+            top: 0,
+            width: "100vw",
+            height: "100vh",
             zIndex: "999999999",
-            height: "100dvh",
-            width: "100dvw",
             display: "flex",
             flexDirection: "column",
             boxSizing: "border-box",
@@ -484,16 +518,18 @@ const MyLibrary = ({ mobileDimension }) => {
                 fontSize: "23px",
                 textAlign: "center",
                 border: "none",
-                cursor: "pointer",
+                cursor: hasSubscription ? "pointer" : "not-allowed",
                 width: "90%",
                 marginTop:'4dvh',
                 height: "20dvh",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center"
+                alignItems: "center",
+                opacity: hasSubscription ? 1 : 0.5,
+                position: "relative"
               }}
               onClick={() => {
-                if (!selectedItem) return;
+                if (!selectedItem || !hasSubscription) return;
                 localStorage.setItem("currentSet", JSON.stringify(selectedItem));
                 localStorage.removeItem("lastSet");
                 localStorage.removeItem("lastFlashSet");
@@ -502,8 +538,32 @@ const MyLibrary = ({ mobileDimension }) => {
               }}
             >
               <span style={{ fontWeight: "bold" }}>Free Response</span>
-
-
+              {!hasSubscription && (
+                <div style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  color: "gold",
+                  fontSize: "14px"
+                }}>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  Pro Only
+                </div>
+              )}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 14 14"
@@ -521,12 +581,19 @@ const MyLibrary = ({ mobileDimension }) => {
                   <path d="M9 12.5H1.5a1 1 0 0 1-1-1V6"></path>
                 </g>
               </svg>
-
             </button>
           </div>
         </div>
       )}
-      <h1 style={{ margin: "20px 50px", color: "white" }}>My Library</h1>
+      <div style={{ 
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "20px 50px",
+        position: "relative"
+      }}>
+        <h1 style={{ margin: 0, color: "white" }}>My Library</h1>
+      </div>
       <div style={{ 
         textAlign: mobileDimension ? "center" : "left", 
         color: (!hasSubscription && sets.length >= 10) ? "#ff4444" : "white", 
@@ -568,7 +635,7 @@ const MyLibrary = ({ mobileDimension }) => {
               </span>
             </div>
           ) : (
-            `${sets.length} out of 10 on Free`
+            `${sets.length} out of 10 on free`
           )
         )}
       </div>
@@ -582,22 +649,22 @@ const MyLibrary = ({ mobileDimension }) => {
           alignItems: mobileDimension ? "center" : "flex-start",
         }}
       >
-        <div
-          className="libCard"
-          style={{
+          <div
+            className="libCard"
+            style={{
             position: "fixed",
             bottom: mobileDimension ? "90px" : "30px",
             right: mobileDimension ? "3%" : "30px",
             width: mobileDimension ?"75px": "85px",
             height: mobileDimension ?"75px": "85px",
             borderRadius: "50%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
             cursor: (!hasSubscription && sets.length >= 10) ? "not-allowed" : "pointer",
             color: (!hasSubscription && sets.length >= 10) ? "#666666" : "white",
-            border: "1px solid #353935",
+              border: "1px solid #353935",
             background: "radial-gradient(circle at center,rgb(20, 18, 18), #1a1a1d)",
             boxShadow: "0 0px 12px rgb(155, 155, 155)",
             borderColor: "#8a8a8a",
@@ -605,21 +672,21 @@ const MyLibrary = ({ mobileDimension }) => {
             opacity: (!hasSubscription && sets.length >= 10) ? 0.5 : 1,
           }}
           onClick={() => (!hasSubscription && sets.length >= 10) ? null : handleNewClick()}
-        >
-          <svg  
-            width="32" 
-            height="32" 
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
           >
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </div>
+            <svg 
+              width="32" 
+              height="32" 
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
         {sets &&
           sets.map((item, index) => (
             <div>
@@ -662,6 +729,7 @@ const MyLibrary = ({ mobileDimension }) => {
                         item.tag,
                         item.title,
                         item.scrollGenerationMode,
+                        item.author
                       ]);
                       setOpenNewTopic(!openNewTopic);
                     }}
