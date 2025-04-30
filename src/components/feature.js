@@ -11,12 +11,36 @@ import {
   } from "firebase/firestore";
   import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
   import { onAuthStateChanged } from "firebase/auth";
+  import { useNavigate } from 'react-router-dom';
+  import Bottom from "./BottomNav";
 
 var randomColor = require("randomcolor"); // import the script
 
+const generateUniqueNumber = (email) => {
+  if (!email) {
+    return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  }
+
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    const char = email.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; 
+  }
+  return Math.abs(hash).toString().slice(0, 6); 
+};
 
 const Features= ({ mobileDimension }) => {
-  const [isVisible, setIsVisible] = useState(window.innerWidth >1100);
+  const [streak, setStreak] = useState(
+    localStorage.getItem("streak") ? parseInt(localStorage.getItem("streak")) : 0
+  );
+  const [xp, setXP] = useState(
+    localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
+  );
+  const [currentSet, setCurrentSet] = useState(
+    localStorage.getItem("currentSet") ? JSON.parse(localStorage.getItem("currentSet")) : null
+  );
+  const [isVisible, setIsVisible] = useState(window.innerWidth > 1100);
   const [sets, setSets] = useState([]);
   const [newPrompt, setNewPrompt] = useState("");
   const [openNewTopic, setOpenNewTopic] = useState(false);
@@ -30,8 +54,19 @@ const Features= ({ mobileDimension }) => {
     return localStorage.getItem("darkMode") === "true";
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState("rishit.agrawal121@gmail.com");
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [user, setUser] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [mySets, setMySets] = useState([]); 
+  const [featuredSets, setFeaturedSets] = useState([]); 
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [showSubscriptionWarning, setShowSubscriptionWarning] = useState(false);
+  const [usernameCache, setUsernameCache] = useState({});
+  const [recentlyAdded, setRecentlyAdded] = useState(new Set());
+  const [duplicateSet, setDuplicateSet] = useState(new Set());
+  const [ownSetAttempt, setOwnSetAttempt] = useState(new Set());
+  const [showAlreadyFeaturedWarning, setShowAlreadyFeaturedWarning] = useState(false);
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -49,26 +84,50 @@ const Features= ({ mobileDimension }) => {
   }, []);
   useEffect(() => {
     try {
-      const unsubscribe = onSnapshot(doc(db, "sets", "featured"), (doc) => {
-        const data = doc.data();
-        setSets(data?.sets || []); // Default to an empty array if no sets are found
-      });
-  
-      return () => unsubscribe(); // Cleanup listener on unmount
+      const fetchFeaturedSets = async () => {
+        const featuredDoc = await getDoc(doc(db, "sets", "featured"));
+        const data = featuredDoc.data();
+        const sets = data?.sets || [];
+        
+        const sortedSets = [...sets].sort((a, b) => {
+          const timesAddedA = a.timesAdded || 0;
+          const timesAddedB = b.timesAdded || 0;
+          return timesAddedB - timesAddedA;
+        });
+        
+        // Check for already added sets immediately
+        if (user) {
+          const userRef = doc(db, "users", user);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userSets = userDoc.data().sets || [];
+            const alreadyAdded = new Set();
+            userSets.forEach(set => {
+              alreadyAdded.add(getSetKey(set.title, set.content));
+            });
+            setDuplicateSet(alreadyAdded);
+          }
+        }
+        
+        setFeaturedSets(sortedSets);
+        setSets(sortedSets);
+      };
+
+      fetchFeaturedSets();
     } catch (error) {
-      alert("Error fetching sets");
+      console.error("Error fetching featured sets:", error);
     }
-  }, []);
+  }, [user]); 
   useEffect(() => {
-    try {
-        const document = onSnapshot(
-            doc(db, "users", user),
-            (doc) => {
-                setCurrentSets(doc.data().sets);
-            }
-          );
-    } catch (error) {
-      alert("Error");
+    if (user) {
+      const userRef = doc(db, "users", user);
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          setMySets(doc.data().sets || []);
+        }
+      });
+
+      return () => unsubscribe();
     }
   }, [user]);
   useEffect(() => {
@@ -89,7 +148,6 @@ const Features= ({ mobileDimension }) => {
     return () => unsubscribe(); // Cleanup listener
   }, []);
 
-
   const handleDelete = async (item) => {
     try {
       // Reference to the 'featured' document
@@ -108,18 +166,61 @@ const Features= ({ mobileDimension }) => {
 
   // Function to handle the "My Sets" filtering
   const filterMySets = () => {
-    const userEmail = user;
-    const mySets = sets.filter((item) => item.author === userEmail);
-    setFilteredSets(mySets);
+    if (currentsets && currentsets.length > 0) {
+      setFilteredSets(currentsets);
+    } else {
+      setFilteredSets([]);
+    }
   };
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.length > 0) {
+      const searchResults = selected === "Community Sets" ? 
+        featuredSets.filter(item => 
+          item.title?.toLowerCase().includes(query.toLowerCase()) ||
+          item.content?.toLowerCase().includes(query.toLowerCase())
+        ) :
+        mySets.filter(item => 
+          item.title?.toLowerCase().includes(query.toLowerCase()) ||
+          item.content?.toLowerCase().includes(query.toLowerCase())
+        );
+      
+      setRecommendations(searchResults.slice(0, 5));
+      setShowRecommendations(true);
+    } else {
+      setShowRecommendations(false);
+    }
   };
-  const handleClick = (text) => {
+
+  const handleRecommendationClick = (item) => {
+    setSearchQuery(item.title);
+    setShowRecommendations(false);
+  };
+
+  const handleClick = async (text) => {
     setSelected(text);
 
-    if (text === "My Sets") {
-      filterMySets();
+    
+    if (text === "Community Sets") {
+      try {
+        const featuredDoc = await getDoc(doc(db, "sets", "featured"));
+        const data = featuredDoc.data();
+        const sets = data?.sets || [];
+        
+        
+        const sortedSets = [...sets].sort((a, b) => {
+          const timesAddedA = a.timesAdded || 0;
+          const timesAddedB = b.timesAdded || 0;
+          return timesAddedB - timesAddedA;
+        });
+        
+        setFeaturedSets(sortedSets);
+        setSets(sortedSets);
+      } catch (error) {
+        console.error("Error fetching featured sets:", error);
+      }
     }
   };
 
@@ -130,71 +231,236 @@ const Features= ({ mobileDimension }) => {
     justifyContent: text === "My Sets" ? "center" : "flex-start",
     alignItems: "center",
     fontWeight: selected === text ? "bold" : "normal",
-    position: "relative", // Needed for the underline
+    position: "relative",
     cursor: "pointer",
+    color: "white"
   });
   
 
-  const isSetAdded = (title) => {
+  
+  const getSetKey = (title, content) => `${title}-${content}`;
 
-    return currentsets.some((set) => set.title === title);
+  const isSetAdded = (title, content) => {
+    return currentsets.some((set) => 
+      set.title === title && set.content === content
+    );
   };
-  // Updated generateBlob function with dynamic width and height
+
+  const isSetDuplicate = (title, content) => {
+    return duplicateSet.has(getSetKey(title, content));
+  };
+
+  const isSetAddedOrRecent = (title, content) => {
+    return recentlyAdded.has(getSetKey(title, content));
+  };
+
+  const handlePublicToggle = async (item) => {
+    try {
+      const featuredDocRef = doc(db, 'sets', 'featured');
+      const userRef = doc(db, "users", user);
+      
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        return;
+      }
+      const currentSets = userDoc.data().sets || [];
+
+      const featuredDoc = await getDoc(featuredDocRef);
+      if (!featuredDoc.exists()) {
+        return;
+      }
+      const featuredSets = featuredDoc.data()?.sets || [];
+
+      // Check if the set is already in featured sets
+      const isCurrentlyPublic = featuredSets.some(set => 
+        set.title === item.title && 
+        set.content === item.content && 
+        set.color === item.color && 
+        set.author === user
+      );
+
+      if (isCurrentlyPublic) {
+        // Remove from featured sets
+        const updatedFeaturedSets = featuredSets.filter(set => 
+          !(set.title === item.title && 
+            set.content === item.content && 
+            set.color === item.color && 
+            set.author === user)
+        );
+        
+        await updateDoc(featuredDocRef, {
+          sets: updatedFeaturedSets
+        });
+
+        // Update user's sets
+        const updatedSets = currentSets.map(set => 
+          set.title === item.title && 
+          set.content === item.content &&
+          set.color === item.color
+            ? { ...set, isPublic: false }
+            : set
+        );
+        
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      } else {
+        if (!item.title || !item.content) {
+          return;
+        }
+
+        // Add to featured sets
+        const publicItem = {
+          ...item,
+          isPublic: true,
+          author: user,
+          timesAdded: item.timesAdded || 0
+        };
+
+        await updateDoc(featuredDocRef, {
+          sets: [...featuredSets, publicItem]
+        });
+
+        // Update user's sets
+        const updatedSets = currentSets.map(set => 
+          set.title === item.title && 
+          set.content === item.content &&
+          set.color === item.color
+            ? { ...set, isPublic: true }
+            : set
+        );
+        
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      }
+    } catch (error) {
+      console.error('Error in handlePublicToggle:', error);
+    }
+  };
+
+  // Add a new function to handle set updates
+  const updateSetInBothCollections = async (updatedSet) => {
+    try {
+      const userRef = doc(db, "users", user);
+      const featuredDocRef = doc(db, 'sets', 'featured');
+
+      // Update in user's sets
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        const currentSets = userDoc.data().sets || [];
+        const updatedSets = currentSets.map(set => 
+          set.title === updatedSet.title && 
+          set.content === updatedSet.content &&
+          set.color === updatedSet.color
+            ? { ...set, ...updatedSet }
+            : set
+        );
+        await updateDoc(userRef, { sets: updatedSets });
+        setMySets(updatedSets);
+      }
+
+      // Update in featured sets if the set is public
+      const featuredDoc = await getDoc(featuredDocRef);
+      if (featuredDoc.exists()) {
+        const featuredSets = featuredDoc.data()?.sets || [];
+        const updatedFeaturedSets = featuredSets.map(set => 
+          set.title === updatedSet.title && 
+          set.content === updatedSet.content &&
+          set.color === updatedSet.color &&
+          set.author === user
+            ? { ...set, ...updatedSet }
+            : set
+        );
+        await updateDoc(featuredDocRef, {
+          sets: updatedFeaturedSets
+        });
+      }
+    } catch (error) {
+      console.error('Error updating set:', error);
+    }
+  };
+
+  // Updated saveToFirestore function
   const saveToFirestore = async (title, content, subject, promptMode, tag) => {
     try {
-      const color = randomColor({
-        luminosity: "dark",
-      });
-      const selectedMode = 1;
-      const userEmail = user;
-      const docRef = doc(db, "users", userEmail);
+      console.log('Starting saveToFirestore with:', { title, content, subject, promptMode, tag });
       
-      // Fetch the current data from Firestore
+      const userEmail = user;
+      if (!userEmail) {
+        console.error('No user email found');
+        return;
+      }
+
+      const docRef = doc(db, "users", userEmail);
+      const featuredDocRef = doc(db, "sets", "featured");
+      
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
-        console.error("Document not found");
+        console.error("User document not found");
         return;
       }
   
       let currentSets = docSnap.data().sets || [];
+      console.log('Current sets:', currentSets);
   
-      // Check if the title already exists in currentSets
-      const isDuplicate = currentSets.some(set => set.title === title);
+      // Use the same duplicate checking logic as the button color
+      const isDuplicate = isSetDuplicate(title, content) || isSetAddedOrRecent(title, content);
       if (isDuplicate) {
-        window.alert("This set already exists in your library!");
-        return; // Exit early if duplicate
-      }
-  
-      // Check subscription status before adding new set
-      if (!hasSubscription && currentSets.length >= 10) {
-        window.alert("You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!");
+        console.log('Duplicate set detected');
+        setDuplicateSet(prev => new Set([...prev, getSetKey(title, content)]));
+        setShowDuplicateWarning(true);
         return;
       }
-  
-      // Add the new set
+
+      // Check subscription status before adding new set
+      if (!hasSubscription && currentSets.length >= 10) {
+        console.log('Set limit reached for free user');
+        setShowSubscriptionWarning(true);
+        return;
+      }
+
+      // Find the original set in featured sets to get the author
+      const featuredSnap = await getDoc(featuredDocRef);
+      const featuredSets = featuredSnap.exists() ? featuredSnap.data().sets || [] : [];
+      const originalSet = featuredSets.find(set => 
+        set.title === title && 
+        set.content === content
+      );
+
       const newSet = {
         title: title,
         content: content,
         subject: subject,
         promptMode: promptMode,
-        color: color,
+        color: randomColor({ luminosity: "dark" }),
         tag: tag,
-        scrollGenerationMode: selectedMode,
+        scrollGenerationMode: 1,
+        author: originalSet?.author || userEmail, // Use original author if from community, otherwise use current user
+        isPublic: false,
+        isAddedFromCommunity: !!originalSet // Set to true if the set was found in featured sets
       };
+      console.log('New set to be added:', newSet);
+      
       currentSets.push(newSet);
+      console.log('Updated sets array:', currentSets);
   
-      // Update Firestore
       await updateDoc(docRef, { sets: currentSets });
+      console.log('Successfully updated Firestore');
   
-      // Update localStorage
       localStorage.setItem("sets", JSON.stringify(currentSets));
-  
       if (!localStorage.getItem("currentSet")) {
         localStorage.setItem("currentSet", JSON.stringify(newSet));
       }
   
+      setRecentlyAdded(prev => new Set([...prev, getSetKey(title, content)]));
+      console.log('Successfully completed saveToFirestore');
+
     } catch (e) {
-      console.error("Error adding set:", e);
+      console.error("Error in saveToFirestore:", e);
+      console.error("Error details:", {
+        message: e.message,
+        code: e.code,
+        stack: e.stack
+      });
     }
   };
   
@@ -221,84 +487,553 @@ const Features= ({ mobileDimension }) => {
     return path;
   };
 
-  
-
-  // Function to change style and params when a button is clicked
   const handleNewClick = () => {
-    setStyle(0); // Toggle style between 0 and 1
-    setParams([]); // Example params
+    setStyle(0); 
+    setParams([]); 
     setOpenNewTopic(!openNewTopic);
   };
+
+  const Toggle = ({ isChecked, handleChange, id }) => {
+    const toggleStyles = {
+      container: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      },
+      input: {
+        visibility: "hidden",
+        width: 0,
+        height: 0,
+      },
+      switch: {
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer",
+        width: "60px",
+        height: "30px",
+        borderRadius: "30px",
+        transition: "background-color 0.3s ease",
+      },
+      button: {
+        position: "absolute",
+        top: "2px",
+        left: "2px",
+        width: "26px",
+        height: "26px",
+        borderRadius: "50%",
+        background: "white",
+        transition: "transform 0.3s ease",
+        transform: isChecked ? "translateX(30px)" : "translateX(0)",
+      },
+      text: {
+        color: "white",
+        fontSize: "14px",
+        marginLeft: "8px",
+      }
+    };
+
+    return (
+      <div style={toggleStyles.container}>
+        <input
+          type="checkbox"
+          id={`toggle-${id}`}
+          style={toggleStyles.input}
+          checked={isChecked}
+          onChange={(e) => handleChange(e.target.checked)}
+        />
+        <label 
+          htmlFor={`toggle-${id}`} 
+          style={{
+            ...toggleStyles.switch,
+            backgroundColor: isChecked ? "#4CAF50" : "#f44336"
+          }}
+        >
+          <span 
+            style={toggleStyles.button}
+            id={`toggle-button-${id}`}
+          />
+        </label>
+        <span style={toggleStyles.text}>Make Public</span>
+      </div>
+    );
+  };
+
+  const DuplicateWarningPopup = ({ onClose, isOwnLibrary }) => {
+    return (
+      <>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 999
+        }} onClick={onClose} />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'translate(-25.5%, -50%)',
+          backgroundColor: '#28282B',
+          padding: '20px',
+          borderRadius: '10px',
+          boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          width: '400px',
+          border: '1px solid #353935'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '15px'
+          }}>
+            <h3 style={{ margin: 0, color: 'white' }}>
+              Set Already Exists
+            </h3>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#999',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '5px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ color: 'white', marginBottom: '20px' }}>
+            This set already exists in your library!
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  const SubscriptionWarningPopup = ({ onClose }) => {
+    return (
+      <>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 999
+        }} onClick={onClose} />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'translate(-25.5%, -50%)',
+          backgroundColor: '#28282B',
+          padding: '20px',
+          borderRadius: '10px',
+          boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          width: '400px',
+          border: '1px solid #353935'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '15px'
+          }}>
+            <h3 style={{ margin: 0, color: 'white' }}>Subscription Required</h3>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#999',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '5px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ color: 'white', marginBottom: '20px' }}>
+            You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  const getUsername = async (email) => {
+    if (!email) {
+      return `@Cookr${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+    }
+
+    if (usernameCache[email]) return usernameCache[email];
+
+    try {
+      const userDoc = await getDoc(doc(db, "users", email));
+      let username;
+      
+      if (userDoc.exists()) {
+        username = userDoc.data().name || `@Cookr${generateUniqueNumber(email)}`;
+      } else {
+        username = `@Cookr${generateUniqueNumber(email)}`;
+      }
+
+      setUsernameCache(prev => ({ ...prev, [email]: username }));
+      return username;
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      return `@Cookr${generateUniqueNumber(email)}`;
+    }
+  };
+
+  const AuthorDisplay = ({ email }) => {
+    const [username, setUsername] = useState(usernameCache[email] || '');
+
+    useEffect(() => {
+      if (!username && email) {
+        getUsername(email).then(name => setUsername(name));
+      }
+    }, [email]);
+
+    if (!username) return null;
+
+    return (
+      <p style={{ margin: 0, color: "#999", fontSize: "14px", marginBottom: "12px" }}>
+        By {username}
+      </p>
+    );
+  };
+
+  useEffect(() => {
+    const fetchUsernames = async () => {
+      try {
+        const usernamesDoc = await getDoc(doc(db, "usernames", "names"));
+        if (usernamesDoc.exists()) {
+          const usernames = usernamesDoc.data().usernames;
+          const usernameMapping = {};
+          if (Array.isArray(usernames)) {
+            usernames.forEach(entry => {
+              if (entry && entry.email) {
+                usernameMapping[entry.email] = entry.name;
+              }
+            });
+          }
+          setUsernameCache(usernameMapping);
+        }
+      } catch (error) {
+        console.error("Error fetching usernames:", error);
+      }
+    };
+
+    fetchUsernames();
+  }, []);
+
+  const AlreadyFeaturedWarningPopup = ({ onClose }) => {
+    return (
+      <>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 999
+        }} onClick={onClose} />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'translate(-25.5%, -50%)',
+          backgroundColor: '#28282B',
+          padding: '20px',
+          borderRadius: '10px',
+          boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          width: '400px',
+          border: '1px solid #353935'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '15px'
+          }}>
+            <h3 style={{ margin: 0, color: 'white' }}>Already Featured</h3>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#999',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '5px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ color: 'white', marginBottom: '20px' }}>
+            The same set is already featured in the community sets.
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  const addTimesAddedToSets = async () => {
+    
+    try {
+      const featuredDocRef = doc(db, 'sets', 'featured');
+      const featuredDoc = await getDoc(featuredDocRef);
+      
+      if (featuredDoc.exists()) {
+        const featuredSets = featuredDoc.data().sets || [];
+        const updatedSets = featuredSets.map(set => ({
+          ...set,
+          timesAdded: set.timesAdded || 0
+        }));
+
+        await updateDoc(featuredDocRef, {
+          sets: updatedSets
+        });
+      }
+    } catch (error) {
+      console.error('Error adding timesAdded to sets:', error);
+    }
+  };
+
+  useEffect(() => {
+    addTimesAddedToSets();
+  }, []); 
+
+  const navigate = useNavigate();
+
+  const PersonIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="1em"
+      height="1em"
+      style={{ width: '16px', height: '16px', marginRight: '4px' }}
+    >
+      <path
+        fill="currentColor"
+        d="M13 8c0-2.21-1.79-4-4-4S5 5.79 5 8s1.79 4 4 4s4-1.79 4-4m2 2v2h3v3h2v-3h3v-2h-3V7h-2v3zM1 18v2h16v-2c0-2.66-5.33-4-8-4s-8 1.34-8 4"
+      ></path>
+    </svg>
+  );
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: mobileDimension ? "center" : "flex-start",
+        height: "100dvh",
+        overflow: "hidden",
+        backgroundColor: "black",
+        position: "relative"
       }}
     >
-        <div
-            style={{
+      {/*container for top portion*/}
+      <div style={{
+        backgroundColor: "black",
+        zIndex: 1,
+        padding: "20px 50px",
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        boxSizing: "border-box",
+        position: "relative",
+        marginTop: "10px",
+        alignItems: "center"
+      }}>
+        <div style={{
             display: "flex",
             flexDirection: "row",
             width: "100%",
-            }}
-        >
-        <h1 style={{ margin: "5px 50px", color: isDarkMode ? "#fff" : "#000" }}>
-        Explore Featured Sets
-        </h1>
-        {isVisible && (
-        <div style={{
-            position: "absolute",
-            right: "20px", // Adjust this value for spacing from the screen edge
-            top: "10px", // Align with the title
-            padding: "10px 15px",
-            width:'30%',
-            height:'5%'}}>
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            marginBottom: "20px"
+        }}>
+          {window.innerWidth <= 768 ? (
+            <svg
+              onClick={() => navigate('/library')}
+              style={{
+                position: "absolute",
+                left: "-30px",
+                top: "0px",
+                cursor: "pointer",
+                width: "35px",
+                height: "35px",
+                fill: "white"
+              }}
+              viewBox="0 0 24 24"
+            >
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          ) : (
         <button
+              onClick={() => navigate('/library')}
             style={{
-              borderRadius: "10px",
-              backgroundColor: "#FF8C00",
               position: "absolute",
-              right: "88%",
-              width: "50px",
-              height: "50px",
-              justifyContent: "center",
+                left: "-30px",
+                top: "0px",
+                cursor: "pointer",
+                display: "flex",
               alignItems: "center",
-              border: "none", // Removed outline
-              cursor: "pointer", // Optional: for better UX
-              color: "white", // Text color
-              fontSize: "30px", // Size of "+"
-            }}
-            onClick={handleNewClick}
-          >
-            +
+                gap: "8px",
+                background: "linear-gradient(90deg, #1a1a1a, #333333, #1a1a1a)",
+                border: "none",
+                color: "white",
+                fontSize: "13px",
+                padding: "8px 8px",
+                borderRadius: "5px"
+              }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="white"
+              >
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+              </svg>
+              Back to Library
           </button>
+          )}
+          <h1 style={{ 
+            color: "white",
+            minWidth: "200px",
+            textAlign: "center",
+            margin: 0
+          }}>
+            Explore Sets
+          </h1>
+        </div>
+        <div style={{
+          display: "flex",
+          flexDirection: window.innerWidth <= 768 ? "column" : "row",
+          width: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "20px",
+          gap: window.innerWidth <= 768 ? "20px" : "0",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "20px",
+            minWidth: "300px",
+            maxWidth: "500px",
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "auto",
+            position: "relative"
+          }}>
+            <div style={{ position: "relative", flex: 1 }}>
         <input
         type="text"
         placeholder="Search..."
         style={{
-            position: "absolute",
-            right: "0px", // Adjust this value for spacing from the screen edge
+                  width: "100%",
             borderRadius: "20px",
-            backgroundColor: "#f0f0f0", // Light gray background
-            border: "1px solid #808080", // Dark gray outline
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Subtle shadow
-            color: "#333", // Text color
-            outline: "none", // Remove default focus outline
+                  backgroundColor: "#f0f0f0",
+                  border: "1px solid #808080",
+                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                  color: "#333",
+                  outline: "none",
             fontSize: "16px",
-            width:'80%',
-            height:'50px',
+                  height: "50px",
             paddingLeft: "20px",
+                  minWidth: "200px",
+                  maxWidth: window.innerWidth <= 768 ? "100%" : "none"
         }}
         value={searchQuery}
         onChange={handleSearchChange}
-        />
+                onBlur={() => setTimeout(() => setShowRecommendations(false), 200)}
+              />
+              {showRecommendations && recommendations.length > 0 && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#28282B",
+                  border: "1px solid #353935",
+                  borderRadius: "10px",
+                  marginTop: "5px",
+                  zIndex: 1000,
+                  maxHeight: "180px",
+                  overflowY: "auto"
+                }}>
+                  {recommendations.slice(0, 10).map((item, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleRecommendationClick(item)}
+                      style={{
+                        padding: "10px 20px",
+                        cursor: "pointer",
+                        color: "white",
+                        borderBottom: index < recommendations.length - 1 ? "1px solid #353935" : "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "5px",
+                        minHeight: "60px",
+                        overflow: "hidden"
+                      }}
+                    >
+                      <div style={{ 
+                        fontWeight: "bold",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {item.title}
+                      </div>
+                      <div style={{ 
+                        fontSize: "12px", 
+                        color: "#999",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {item.content?.substring(0, 100)}...
+                      </div>
+                      {item.author && (
+                        <div style={{ 
+                          fontSize: "12px",
+                          color: "#999",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}>
+                          <AuthorDisplay email={item.author} />
         </div>
         )}
     </div>
-    <div style={{display:'flex', flexDirection:'row', margin: "20px 50px",width:'300px'}}>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Tabs section */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          width: '300px',
+          justifyContent: "center"
+        }}>
     <p
         style={getStyle("Community Sets")}
         onClick={() => handleClick("Community Sets")}
@@ -308,17 +1043,17 @@ const Features= ({ mobileDimension }) => {
           <span
             style={{
               position: "absolute",
-              bottom: "-4px", // Adjust the vertical position of the underline
+                  bottom: "-4px",
               left: "0",
               width: "100%",
-              height: "3px", // Thickness of the underline
-              backgroundColor: "black", // Color of the underline
+                  height: "3px",
+                  backgroundColor: "white",
               borderRadius: "2px",
             }}
           ></span>
         )}
       </p>
-      <div style={{display:'flex', width:'30px'}}></div>
+          <div style={{ display: 'flex', width: '30px' }}></div>
       <p
         style={getStyle("My Sets")}
         onClick={() => handleClick("My Sets")}
@@ -328,165 +1063,230 @@ const Features= ({ mobileDimension }) => {
           <span
             style={{
               position: "absolute",
-              bottom: "-4px", // Adjust the vertical position of the underline
+                  bottom: "-4px",
               left: "0",
               width: "100%",
-              height: "3px", // Thickness of the underline
-              backgroundColor: "black", // Color of the underline
+                  height: "3px",
+                  backgroundColor: "white",
               borderRadius: "2px",
             }}
           ></span>
         )}
       </p>
     </div>
+      </div>
+
+      {/*container for the cards*/}
       <div
         style={{
-          margin: "5px 50px",
+          flex: 1,
           display: "flex",
           flexDirection: "row",
           flexWrap: "wrap",
-          justifyContent: mobileDimension ? "center" : "flex-start",
-          alignItems: mobileDimension ? "center" : "flex-start",
-          
+          justifyContent: "center",
+          alignItems: "flex-start",
+          overflowY: "auto",
+          padding: window.innerWidth <= 768 ? "0" : "20px 50px", 
+          gap: "20px",
+          width: "100%",
+          height: window.innerWidth <= 768 ? "calc(100vh - 200px)" : "auto",
+          marginBottom: window.innerWidth <= 768 ? "80px" : "0"
         }}
       >
-        {Array.isArray(sets) &&
-    sets
-      .filter((item) => {
-        // Filter based on selected sets (My Sets or Community Sets)
-        const isMySet = selected === "My Sets" ? item.author === user : true;
-        
-        // Filter based on search query (matching title or content)
-        const isSearchMatch =
-          item.Title.toLowerCase().includes(searchQuery.toLowerCase()) 
-        //   item.content.toLowerCase().includes(searchQuery.toLowerCase());
-
-        return isMySet && isSearchMatch;
-      })
+        {selected === "Community Sets" ? (
+          <div style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: "20px",
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)",
+            overflow: "visible",
+            alignItems: "flex-start",
+            padding: window.innerWidth <= 768 ? "0 20px" : "0",
+            marginRight: window.innerWidth <= 768 ? "0" : "10px"
+          }}>
+            {featuredSets
+              .filter(item => 
+                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.content?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
       .map((item, index) => (
-            <div>
               <div
                 key={index}
+                  className="libCard"
                 style={{
-                  width: "400px",
-                  height: "250px",
-                  boxShadow: `0px 0px 1px 1px ${item.color}`,
                   borderRadius: "10px",
                   display: "flex",
-                  margin: "10px 10px",
-                  backgroundColor: `${item.color}10`,
+                    border: "1px solid #353935",
+                    backgroundColor: "#28282B",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  position: "relative", // Ensure relative positioning
-                }}
-              >
-                <div style={{display:'flex', flexDirection:'row', width:"400px"}}>
-                <div>
-                <p
-                  style={{
-                    color: item.color,
-                    padding: "10px 10px",
-                    display: "flex",
-                    width:'300px',
-                    flexDirection: "column",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    textShadow: `0px 0px 10px ${item.color}90`,
-                    whiteSpace: "nowrap", // Prevents text from wrapping
-                    overflow: "hidden", // Ensures text does not overflow the container
-                    textOverflow: "ellipsis", // Displays ellipsis (...) if the text is too long
+                    position: "relative",
+                    width: window.innerWidth <= 768 ? "100%" : "300px",
+                    maxWidth: "300px",
+                    margin: "0",
+                    padding: "20px",
+                    flexShrink: 0,
+                    minHeight: window.innerWidth <= 768 ? "200px" : "auto"
                   }}
                 >
-                  {item.Title.slice(0,12)}
-                </p>
-                
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '10px', 
+                    right: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    <PersonIcon />
+                    {item.timesAdded || 0}
+                  </div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <h3 style={{
+                          margin: 0,
+                          color: "white",
+                          fontSize: "18px"
+                        }}>
+                          {item.title}
+                        </h3>
+                        <AuthorDisplay email={item.author} />
                 </div>
-                {item.author === "Stellar" && (
-                <button style={{ background: 'none', border: 'none', outline: 'none',display:'flex',marginTop:'10px',marginRight:'10px',justifyContent: "flex-end", width:'70px', zIndex:50.0}} onClick={() => (window.location.href = 'https://stellarlearning.app/')}>
-                <img 
-                    src={Stellar} 
-                    alt="Description of image" 
-                    style={{ width: "85px", height: "25px", borderRadius: "10px",}}
-                />
-                </button>
-                )}
-     
                 </div>
-
-                {/* Updated SVG to fit inside the div */}
-                <svg
-                  width="100%" // Adjust to fit the div's width
-                  height="100%" // Adjust to fit the div's height
-                  viewBox="0 0 400 250" // Adjust viewbox to match div's dimensions
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    zIndex: 0,
-                    borderRadius: 10, // Ensure SVG is behind the text
-                  }}
-                >
-                  <path d={generateBlob(400, 250)} fill={`${item.color}19`} />
-                </svg>
-                {item.author === user && (
+                    <div style={{
+                      color: "#ccc",
+                      fontSize: "14px",
+                      marginTop: "10px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: "7",
+                      WebkitBoxOrient: "vertical",
+                      maxHeight: "140px",
+                      flex: 1
+                    }}>
+                      {item.content}
+                    </div>
+                  </div>
                 <button 
+                    onClick={() => {
+                      if (!user) {
+                        alert("Please sign in to add sets to your library");
+                        return;
+                      }
+                      saveToFirestore(
+                        item.title,
+                        item.content,
+                        item.subject || "",
+                        item.promptMode || "",
+                        item.tag || ""
+                      );
+                    }}
                     style={{ 
-                        margin: "10px 10px",
-                        color: "#ffffff", // Explicit white color for text
-                        background: "#ff4d4d", // Fallback to a dark background
-                        boxShadow: `0px 0px 10px 1px ${item.color || "#000000"}`, // Subtle glow
-                        padding: "7px 20px",
-                        borderRadius: "100px",
-                        textAlign: "center",
-                        display: "inline-block",
-                        zIndex:20,
-                        marginTop:'90px',
-                        border: "0px solid gainsboro",
-                    }} 
-                    onClick={() => handleDelete(item)}
-                >
-                    Delete
+                      backgroundColor: isSetDuplicate(item.title, item.content) ? "#4CAF50" : 
+                                      isSetAddedOrRecent(item.title, item.content) ? "#4CAF50" : "#FF8C00",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "5px",
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      transition: "background-color 0.7s ease",
+                      marginTop: "auto",
+                      opacity: isSetDuplicate(item.title, item.content) || 
+                              isSetAddedOrRecent(item.title, item.content) ? 0.7 : 1,
+                      pointerEvents: isSetDuplicate(item.title, item.content) || 
+                                   isSetAddedOrRecent(item.title, item.content) ? "none" : "auto"
+                    }}
+                    disabled={isSetDuplicate(item.title, item.content) || 
+                              isSetAddedOrRecent(item.title, item.content)}
+                  >
+                    {isSetDuplicate(item.title, item.content) ? "Already Added" :
+                     isSetAddedOrRecent(item.title, item.content) ? "Already Added" : "Add to Library"}
                 </button>
-                )}
-                {isSetAdded(item.Title) ? (
-                    <p
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: "20px",
+            justifyContent: "center",
+            width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)",
+            overflow: "visible",
+            alignItems: "flex-start",
+            padding: window.innerWidth <= 768 ? "0 20px" : "0",
+            marginRight: window.innerWidth <= 768 ? "0" : "10px"
+          }}>
+            {mySets
+              .filter(item => 
+                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.content?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((item, index) => (
+                <div
+                  key={index}
+                  className="libCard"
                     style={{
-                        margin: "10px 10px",
-                        color: "#ffffff", // Explicit white color for text
-                        background: item.color || "#333333", // Fallback to a dark background
-                        boxShadow: `0px 0px 10px 1px ${item.color || "#000000"}`, // Subtle glow
-                        padding: "7px 20px",
-                        borderRadius: "100px",
-                        textAlign: "center",
-                        display: "inline-block",
-                        zIndex:20,
-                        border: "0px solid gainsboro",
-                    }}
-                    >
-                    Added Already
-                    </p>
-                ):(
-                    <button
-                    style={{
-                        margin: "10px 10px",
-                        color: "#ffffff", // Explicit white color for text
-                        background: item.color || "#333333", // Fallback to a dark background
-                        boxShadow: `0px 0px 10px 1px ${item.color || "#000000"}`, // Subtle glow
-                        padding: "7px 20px",
-                        borderRadius: "100px",
-                        textAlign: "center",
-                        display: "inline-block",
-                        zIndex:20,
-                        border: "0px solid gainsboro",
-                    }}
-                    onClick={() => saveToFirestore(item.Title, "", "", 3, 'fa-solid fa-calculator')} // Fix here
-                    >
-                    Add To Library
-                    </button>
-                )}
+                    borderRadius: "10px",
+                    display: "flex",
+                    border: "1px solid #353935",
+                    backgroundColor: "#28282B",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    position: "relative",
+                    width: window.innerWidth <= 768 ? "100%" : "300px",
+                    maxWidth: "300px",
+                    margin: "0",
+                    padding: "20px",
+                    flexShrink: 0,
+                    minHeight: window.innerWidth <= 768 ? "200px" : "auto"
+                  }}
+                >
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <h3 style={{
+                          margin: 0,
+                          color: "white",
+                          fontSize: "18px"
+                        }}>
+                          {item.title}
+                        </h3>
+                        <AuthorDisplay email={item.author} />
+                      </div>
+                      {selected === "My Sets" && (item.author === user || !item.author) && (
+                        <Toggle
+                          id={index}
+                          isChecked={item.isPublic || false}
+                          handleChange={() => handlePublicToggle(item)}
+                        />
+                      )}
+                    </div>
+                    <div style={{
+                      color: "#ccc",
+                      fontSize: "14px",
+                      marginTop: "10px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: "7",
+                      WebkitBoxOrient: "vertical",
+                      maxHeight: "140px",
+                      flex: 1
+                    }}>
+                      {item.content}
+                    </div>
               </div>
             </div>
         ))}
+          </div>
+        )}
       </div>
 
       {openNewTopic && (
@@ -495,6 +1295,31 @@ const Features= ({ mobileDimension }) => {
           style={style}
           params={params}
           type={3}
+        />
+      )}
+      {showDuplicateWarning && (
+        <DuplicateWarningPopup 
+          onClose={() => {
+            setShowDuplicateWarning(false);
+          }} 
+          isOwnLibrary={selected === "My Sets"}
+        />
+      )}
+      {showSubscriptionWarning && (
+        <SubscriptionWarningPopup onClose={() => setShowSubscriptionWarning(false)} />
+      )}
+      {showAlreadyFeaturedWarning && (
+        <AlreadyFeaturedWarningPopup onClose={() => setShowAlreadyFeaturedWarning(false)} />
+      )}
+      {window.innerWidth <= 768 && (
+        <Bottom
+          streak={streak}
+          currentPage={'featured'}
+          xp={xp}
+          sets={sets}
+          currentSet={currentSet}
+          setCurrentSet={setCurrentSet}
+          mobileDimension={true}
         />
       )}
     </div>
