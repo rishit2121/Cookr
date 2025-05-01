@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import NewPrompt from "./NewPrompt";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
-import Stellar from "../assets/stellar.png";
 import {
     getDoc,
     updateDoc,
@@ -65,7 +64,6 @@ const Features= ({ mobileDimension }) => {
   const [usernameCache, setUsernameCache] = useState({});
   const [recentlyAdded, setRecentlyAdded] = useState(new Set());
   const [duplicateSet, setDuplicateSet] = useState(new Set());
-  const [ownSetAttempt, setOwnSetAttempt] = useState(new Set());
   const [showAlreadyFeaturedWarning, setShowAlreadyFeaturedWarning] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -280,7 +278,14 @@ const Features= ({ mobileDimension }) => {
       );
 
       if (isCurrentlyPublic) {
-        // Remove from featured sets
+        // Remove from featured sets but preserve the timesAdded value
+        const removedSet = featuredSets.find(set => 
+          set.title === item.title && 
+          set.content === item.content && 
+          set.color === item.color && 
+          set.author === user
+        );
+        
         const updatedFeaturedSets = featuredSets.filter(set => 
           !(set.title === item.title && 
             set.content === item.content && 
@@ -292,12 +297,12 @@ const Features= ({ mobileDimension }) => {
           sets: updatedFeaturedSets
         });
 
-        // Update user's sets
+        // Update user's sets while preserving timesAdded
         const updatedSets = currentSets.map(set => 
           set.title === item.title && 
           set.content === item.content &&
           set.color === item.color
-            ? { ...set, isPublic: false }
+            ? { ...set, isPublic: false, timesAdded: removedSet.timesAdded || 0 }
             : set
         );
         
@@ -308,12 +313,12 @@ const Features= ({ mobileDimension }) => {
           return;
         }
 
-        // Add to featured sets
+        // Add to featured sets with preserved timesAdded
         const publicItem = {
           ...item,
           isPublic: true,
           author: user,
-          timesAdded: item.timesAdded || 0
+          timesAdded: item.timesAdded || 0 // Preserve the existing timesAdded value
         };
 
         await updateDoc(featuredDocRef, {
@@ -398,11 +403,10 @@ const Features= ({ mobileDimension }) => {
         console.error("User document not found");
         return;
       }
-  
+
       let currentSets = docSnap.data().sets || [];
       console.log('Current sets:', currentSets);
-  
-      // Use the same duplicate checking logic as the button color
+
       const isDuplicate = isSetDuplicate(title, content) || isSetAddedOrRecent(title, content);
       if (isDuplicate) {
         console.log('Duplicate set detected');
@@ -411,20 +415,39 @@ const Features= ({ mobileDimension }) => {
         return;
       }
 
-      // Check subscription status before adding new set
       if (!hasSubscription && currentSets.length >= 10) {
         console.log('Set limit reached for free user');
         setShowSubscriptionWarning(true);
         return;
       }
 
-      // Find the original set in featured sets to get the author
+      // Find the original set in featured sets
       const featuredSnap = await getDoc(featuredDocRef);
       const featuredSets = featuredSnap.exists() ? featuredSnap.data().sets || [] : [];
       const originalSet = featuredSets.find(set => 
         set.title === title && 
         set.content === content
       );
+
+      if (originalSet) {
+        // Only increment timesAdded if this user hasn't added it before
+        if (!originalSet.addedByUsers?.includes(userEmail)) {
+          const updatedFeaturedSets = featuredSets.map(set => {
+            if (set.title === title && set.content === content) {
+              return {
+                ...set,
+                timesAdded: (set.timesAdded || 0) + 1,
+                addedByUsers: [...(set.addedByUsers || []), userEmail]
+              };
+            }
+            return set;
+          });
+
+          await updateDoc(featuredDocRef, {
+            sets: updatedFeaturedSets
+          });
+        }
+      }
 
       const newSet = {
         title: title,
@@ -433,24 +456,59 @@ const Features= ({ mobileDimension }) => {
         promptMode: promptMode,
         color: randomColor({ luminosity: "dark" }),
         tag: tag,
-        scrollGenerationMode: 1,
-        author: originalSet?.author || userEmail, // Use original author if from community, otherwise use current user
+        scrollGenerationMode: originalSet?.scrollGenerationMode || 1,
+        author: originalSet?.author || userEmail,
         isPublic: false,
-        isAddedFromCommunity: !!originalSet // Set to true if the set was found in featured sets
+        isAddedFromCommunity: !!originalSet,
+        timesAdded: originalSet?.timesAdded || 0,
+        addedByUsers: originalSet?.addedByUsers || []
       };
-      console.log('New set to be added:', newSet);
-      
+
+      // If this is a set being added from community
+      if (originalSet) {
+        // Only add user to addedByUsers if they haven't added it before
+        if (!originalSet.addedByUsers?.includes(userEmail)) {
+          newSet.addedByUsers = [...(originalSet.addedByUsers || []), userEmail];
+          
+          // Update the featured set with the new user
+          try {
+            const featuredDocRef = doc(db, "sets", "featured");
+            const featuredSnap = await getDoc(featuredDocRef);
+            if (featuredSnap.exists()) {
+              const featuredSets = featuredSnap.data().sets || [];
+              const updatedFeaturedSets = featuredSets.map(set => {
+                if (set.title === title && set.content === content && set.author === originalSet.author) {
+                  return {
+                    ...set,
+                    addedByUsers: newSet.addedByUsers
+                  };
+                }
+                return set;
+              });
+              await updateDoc(featuredDocRef, { sets: updatedFeaturedSets });
+            }
+          } catch (error) {
+            console.error("Error updating featured set:", error);
+          }
+        }
+      }
+
+      // Only increment timesAdded if this is a new set or if the user hasn't added it before
+      if (!originalSet || !originalSet.addedByUsers?.includes(userEmail)) {
+        newSet.timesAdded = (originalSet?.timesAdded || 0) + 1;
+      }
+
       currentSets.push(newSet);
       console.log('Updated sets array:', currentSets);
-  
+
       await updateDoc(docRef, { sets: currentSets });
       console.log('Successfully updated Firestore');
-  
+
       localStorage.setItem("sets", JSON.stringify(currentSets));
       if (!localStorage.getItem("currentSet")) {
         localStorage.setItem("currentSet", JSON.stringify(newSet));
       }
-  
+
       setRecentlyAdded(prev => new Set([...prev, getSetKey(title, content)]));
       console.log('Successfully completed saveToFirestore');
 
@@ -498,7 +556,7 @@ const Features= ({ mobileDimension }) => {
       container: {
         display: "flex",
         alignItems: "center",
-        gap: "8px",
+        gap: "4px",  // Reduced from 8px to 4px
       },
       input: {
         visibility: "hidden",
@@ -529,7 +587,7 @@ const Features= ({ mobileDimension }) => {
       text: {
         color: "white",
         fontSize: "14px",
-        marginLeft: "8px",
+        marginLeft: "4px",  // Reduced from 8px to 4px
       }
     };
 
@@ -967,7 +1025,7 @@ const Features= ({ mobileDimension }) => {
                   position: "absolute",
                   top: "100%",
                   left: 0,
-                  right: 0,
+                  width: window.innerWidth <= 768 ? "105%" : "108%", // Match full width of search bar
                   backgroundColor: "#28282B",
                   border: "1px solid #353935",
                   borderRadius: "10px",
@@ -981,14 +1039,13 @@ const Features= ({ mobileDimension }) => {
                       key={index}
                       onClick={() => handleRecommendationClick(item)}
                       style={{
-                        padding: "10px 20px",
+                        padding: "8px 20px 4px 20px", // Reduced bottom padding to 4px
                         cursor: "pointer",
                         color: "white",
                         borderBottom: index < recommendations.length - 1 ? "1px solid #353935" : "none",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "5px",
-                        minHeight: "60px",
+                        gap: "4px",
                         overflow: "hidden"
                       }}
                     >
@@ -1015,7 +1072,8 @@ const Features= ({ mobileDimension }) => {
                           color: "#999",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
-                          whiteSpace: "nowrap"
+                          whiteSpace: "nowrap",
+                          marginBottom: 0 // Ensure no bottom margin
                         }}>
                           <AuthorDisplay email={item.author} />
         </div>
@@ -1044,8 +1102,8 @@ const Features= ({ mobileDimension }) => {
             style={{
               position: "absolute",
                   bottom: "-4px",
-              left: "0",
-              width: "100%",
+                  left: "-11%",
+                  width: "110%",
                   height: "3px",
                   backgroundColor: "white",
               borderRadius: "2px",
@@ -1088,7 +1146,7 @@ const Features= ({ mobileDimension }) => {
           overflowY: "auto",
           padding: window.innerWidth <= 768 ? "0" : "20px 50px", 
           gap: "20px",
-          width: "100%",
+          width: window.innerWidth <= 768 ? "100%" : "95.5%",
           height: window.innerWidth <= 768 ? "calc(100vh - 200px)" : "auto",
           marginBottom: window.innerWidth <= 768 ? "80px" : "0"
         }}
@@ -1128,7 +1186,7 @@ const Features= ({ mobileDimension }) => {
                     margin: "0",
                     padding: "20px",
                     flexShrink: 0,
-                    minHeight: window.innerWidth <= 768 ? "200px" : "auto"
+                    height: "200px" // Fixed height for the card
                   }}
                 >
                   <div style={{ 
@@ -1144,29 +1202,50 @@ const Features= ({ mobileDimension }) => {
                     {item.timesAdded || 0}
                   </div>
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div style={{ 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "flex-start", 
+                      marginBottom: "15px",
+                      width: "100%",
+                      marginTop: "-10px"
+                    }}>
+                      <div style={{ 
+                        display: "flex", 
+                        flexDirection: "column",
+                        width: "calc(100% - 40px)"
+                      }}>
                         <h3 style={{
                           margin: 0,
                           color: "white",
-                          fontSize: "18px"
+                          fontSize: "18px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          width: "100%",
+                          lineHeight: "1.2",
+                          padding: "2px 0"
                         }}>
                           {item.title}
                         </h3>
-                        <AuthorDisplay email={item.author} />
-                </div>
-                </div>
+                        <div style={{
+                          minHeight: "20px"
+                        }}>
+                          {item.author && <AuthorDisplay email={item.author} />}
+                        </div>
+                      </div>
+                    </div>
                     <div style={{
                       color: "#ccc",
                       fontSize: "14px",
-                      marginTop: "10px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       display: "-webkit-box",
-                      WebkitLineClamp: "7",
+                      WebkitLineClamp: "5",  // Changed from 4 to 5 lines
                       WebkitBoxOrient: "vertical",
-                      maxHeight: "140px",
-                      flex: 1
+                      maxHeight: "100px",    // Adjusted from 80px to 100px for 5 lines
+                      flex: "0 1 auto",
+                      marginTop: "-7px"      // Added negative margin to move content up
                     }}>
                       {item.content}
                     </div>
@@ -1192,14 +1271,13 @@ const Features= ({ mobileDimension }) => {
                       border: "none",
                       borderRadius: "5px",
                       padding: "8px 16px",
-                      cursor: "pointer",
+                      cursor: isSetDuplicate(item.title, item.content) || 
+                              isSetAddedOrRecent(item.title, item.content) ? "not-allowed" : "pointer",
                       fontSize: "14px",
                       transition: "background-color 0.7s ease",
-                      marginTop: "auto",
+                      marginTop: "15px",
                       opacity: isSetDuplicate(item.title, item.content) || 
-                              isSetAddedOrRecent(item.title, item.content) ? 0.7 : 1,
-                      pointerEvents: isSetDuplicate(item.title, item.content) || 
-                                   isSetAddedOrRecent(item.title, item.content) ? "none" : "auto"
+                              isSetAddedOrRecent(item.title, item.content) ? 0.7 : 1
                     }}
                     disabled={isSetDuplicate(item.title, item.content) || 
                               isSetAddedOrRecent(item.title, item.content)}
@@ -1249,39 +1327,53 @@ const Features= ({ mobileDimension }) => {
                   }}
                 >
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <h3 style={{
-                          margin: 0,
-                          color: "white",
-                          fontSize: "18px"
-                        }}>
-                          {item.title}
-                        </h3>
-                        <AuthorDisplay email={item.author} />
-                      </div>
-                      {selected === "My Sets" && (item.author === user || !item.author) && (
-                        <Toggle
-                          id={index}
-                          isChecked={item.isPublic || false}
-                          handleChange={() => handlePublicToggle(item)}
-                        />
-                      )}
-                    </div>
-                    <div style={{
-                      color: "#ccc",
-                      fontSize: "14px",
-                      marginTop: "10px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: "7",
-                      WebkitBoxOrient: "vertical",
-                      maxHeight: "140px",
-                      flex: 1
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                  <div style={{ 
+                    display: "flex", 
+                    flexDirection: "column",
+                    height: "40px"  // Fixed height for the header section
+                  }}>
+                    <h3 style={{
+                      margin: 0,
+                      color: "white",
+                      fontSize: "18px"
                     }}>
-                      {item.content}
+                      {item.title.length > 12 
+                        ? `${item.title.substring(0, 12)}...` 
+                        : item.title}
+                    </h3>
+                    <div style={{
+                      minHeight: "20px"  // Reserved space for author display
+                    }}>
+                      {(selected === "Community Sets" || (selected === "My Sets" && item.author && item.author !== user)) && 
+                        <AuthorDisplay email={item.author} />
+                      }
                     </div>
+                  </div>
+                  {selected === "My Sets" && (item.author === user || !item.author) && (
+                    <Toggle
+                      id={index}
+                      isChecked={item.isPublic || false}
+                      handleChange={() => handlePublicToggle(item)}
+                    />
+                  )}
+                  </div>
+                  <div style={{
+                    color: "#ccc",
+                    fontSize: "14px",
+                    marginTop: "10px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: "7",
+                    WebkitBoxOrient: "vertical",
+                    lineHeight: "1.4em",  // Set explicit line height
+                    height: "9.8em",      // Set height to exactly 7 lines (1.4em * 7)
+                    marginBottom: "10px", // Add margin to separate from any elements below
+                    flex: "0 1 auto"      // Changed from flex: 1
+                  }}>
+                    {item.content}
+                  </div>
               </div>
             </div>
         ))}

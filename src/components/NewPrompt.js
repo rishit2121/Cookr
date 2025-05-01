@@ -520,7 +520,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           isPublic: originalSet?.isPublic || false,
           author: originalSet?.author || userEmail,
           tag: tag,
-          scrollGenerationMode: selectedMode
+          scrollGenerationMode: selectedMode || 1
         };
         console.log('Updated set:', updatedSet);
 
@@ -558,7 +558,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                     promptMode: promptMode,
                     color: subcolor,
                     tag: tag,
-                    scrollGenerationMode: selectedMode
+                    scrollGenerationMode: selectedMode || 1
                   };
                 }
                 return set;
@@ -616,7 +616,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             promptMode: promptMode,
             color: color,
             tag: tag,
-            scrollGenerationMode: selectedMode,
+            scrollGenerationMode: selectedMode || 1 ,
           };
           console.log('Setting currentSet in localStorage:', currentSet);
           localStorage.setItem("currentSet", JSON.stringify(currentSet));
@@ -1018,25 +1018,26 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             marginTop: "20px",
             marginBottom: "10px"
           }}>
-            <button
-              onClick={() => saveToFirestore(false)}
-              disabled={!canEdit}
-              style={{
-                width: "47%",
-                background: "transparent",
-                border: "none",
-                padding: "10px",
-                borderRadius: "10px",
-                cursor: !canEdit ? "not-allowed" : "pointer",
-                color: "white",
-                background: !canEdit ? "#666666" : "#6A6CFF",
-                boxShadow: !canEdit ? "0px 2px 0px 0px rgb(56, 56, 56)" : "0px 2px 0px 0px #484AC3",
-                fontSize: '15px',
-                opacity: !canEdit ? 0.7 : 1
-              }}
-            >
-              Save
-            </button>
+              <button
+                onClick={() => saveToFirestore(false)}
+                disabled={!canEdit}
+                style={{
+                  width: "47%",
+                  background: !canEdit ? "#999" : "#6A6CFF",
+                  boxShadow: !canEdit ? "none" : "0px 5px 0px 0px #484AC3",
+                  border: "none",
+                  padding: "15px",
+                  borderRadius: "10px",
+                  cursor: !canEdit ? "not-allowed" : "pointer",
+                  color: "white",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  opacity: !canEdit ? 0.7 : 1
+                }}
+              >
+                Save
+              </button>
+
             <div style={{ width: !canEdit ? "6%" : "6%" }}></div>
             <button
               onClick={handleDeleteClick}
