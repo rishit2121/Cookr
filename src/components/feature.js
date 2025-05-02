@@ -430,20 +430,23 @@ const Features= ({ mobileDimension }) => {
       );
 
       if (originalSet) {
-        // Increment timesAdded in the featured set
-        const updatedFeaturedSets = featuredSets.map(set => {
-          if (set.title === title && set.content === content) {
-            return {
-              ...set,
-              timesAdded: (set.timesAdded || 0) + 1
-            };
-          }
-          return set;
-        });
+        // Only increment timesAdded if this user hasn't added it before
+        if (!originalSet.addedByUsers?.includes(userEmail)) {
+          const updatedFeaturedSets = featuredSets.map(set => {
+            if (set.title === title && set.content === content) {
+              return {
+                ...set,
+                timesAdded: (set.timesAdded || 0) + 1,
+                addedByUsers: [...(set.addedByUsers || []), userEmail]
+              };
+            }
+            return set;
+          });
 
-        await updateDoc(featuredDocRef, {
-          sets: updatedFeaturedSets
-        });
+          await updateDoc(featuredDocRef, {
+            sets: updatedFeaturedSets
+          });
+        }
       }
 
       const newSet = {
@@ -453,12 +456,47 @@ const Features= ({ mobileDimension }) => {
         promptMode: promptMode,
         color: randomColor({ luminosity: "dark" }),
         tag: tag,
-        scrollGenerationMode: 1,
+        scrollGenerationMode: originalSet?.scrollGenerationMode || 1,
         author: originalSet?.author || userEmail,
         isPublic: false,
         isAddedFromCommunity: !!originalSet,
-        timesAdded: originalSet?.timesAdded || 0 // Preserve the timesAdded value
+        timesAdded: originalSet?.timesAdded || 0,
+        addedByUsers: originalSet?.addedByUsers || []
       };
+
+      // If this is a set being added from community
+      if (originalSet) {
+        // Only add user to addedByUsers if they haven't added it before
+        if (!originalSet.addedByUsers?.includes(userEmail)) {
+          newSet.addedByUsers = [...(originalSet.addedByUsers || []), userEmail];
+          
+          // Update the featured set with the new user
+          try {
+            const featuredDocRef = doc(db, "sets", "featured");
+            const featuredSnap = await getDoc(featuredDocRef);
+            if (featuredSnap.exists()) {
+              const featuredSets = featuredSnap.data().sets || [];
+              const updatedFeaturedSets = featuredSets.map(set => {
+                if (set.title === title && set.content === content && set.author === originalSet.author) {
+                  return {
+                    ...set,
+                    addedByUsers: newSet.addedByUsers
+                  };
+                }
+                return set;
+              });
+              await updateDoc(featuredDocRef, { sets: updatedFeaturedSets });
+            }
+          } catch (error) {
+            console.error("Error updating featured set:", error);
+          }
+        }
+      }
+
+      // Only increment timesAdded if this is a new set or if the user hasn't added it before
+      if (!originalSet || !originalSet.addedByUsers?.includes(userEmail)) {
+        newSet.timesAdded = (originalSet?.timesAdded || 0) + 1;
+      }
 
       currentSets.push(newSet);
       console.log('Updated sets array:', currentSets);
