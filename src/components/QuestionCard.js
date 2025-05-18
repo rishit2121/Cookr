@@ -3,6 +3,7 @@ import "../index.css";
 import Latex from "react-latex-next";
 import "katex/dist/katex.min.css";
 import correct from "../assets/correct-answer-sound-effect-19.wav";
+import { useTranslation } from 'react-i18next';
 import {
   doc,
   updateDoc,
@@ -66,6 +67,18 @@ const QuestionCard = ({
   const [textAreaMaxHeight, setTextAreaMaxHeight] = useState(0); // for free response mode text area
   const [textAreaMinHeight, setTextAreaMinHeight] = useState(0); // for free response mode text area
   const [isClosing, setIsClosing] = useState(false); // for free response mode answer container to close
+  const { t } = useTranslation();
+
+  const getCorrectAnswerIndex = () => {
+    if (typeof answer === 'number') return answer;
+    
+    if (typeof answer === 'string' && answer.trim() !== '') {
+      const parsed = parseInt(answer);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    return 0;
+  };
 
   // Save state to the shared dictionary whenever it changes
   useEffect(() => {
@@ -159,7 +172,10 @@ const QuestionCard = ({
     setSelectedChoice(choice);
     setIsAnswered(true);
     setReveal(true);
-    if (choice === parseInt(answer)) {
+    
+    const correctAnswer = getCorrectAnswerIndex();
+    
+    if (choice === correctAnswer) {
       if (isFavorites) {
         return;
       } else {
@@ -385,12 +401,14 @@ const QuestionCard = ({
           padding: "10px 20px",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start", // Ensures content stays at the top
+          justifyContent: "flex-start",
           position: "relative",
           animation: shake ? "shake 0.5s ease-out" : "none",
-          outline: mobileDimension ? "none" : `1px solid ${color}80`,
-          transition: "transform 0.3s ease-in-out",
-          minHeight: "300px", // Ensures the card has enough space to work with
+          outline: mobileDimension ? "none" : 
+            localStorage.getItem("mode") == "2" ? 
+            `1px solid ${color}60` : `1px solid ${color}80`,
+          transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+          minHeight: "300px",
         }}
         onDoubleClick={
           localStorage.getItem("mode") == 1 || isFavorites
@@ -399,7 +417,7 @@ const QuestionCard = ({
         }
       >
         {showPlus10 && (
-          <div className="plus10-animation">Correct! You Cooked.</div>
+          <div className="plus10-animation">{t("correctMessage")}</div>
         )}
         <div>
           <p
@@ -448,13 +466,13 @@ const QuestionCard = ({
                     cursor: isAnswered ? "not-allowed" : "pointer",
                     backgroundColor: true
                       ? selectedChoice === index
-                        ? selectedChoice === parseInt(answer)
+                        ? selectedChoice === getCorrectAnswerIndex()
                           ? "palegreen"
                           : "salmon"
-                        : isAnswered && index === parseInt(answer) && reveal
+                        : isAnswered && index === getCorrectAnswerIndex() && reveal
                         ? "palegreen"
                         : "gainsboro"
-                      : choice == parseInt(answer)
+                      : choice == getCorrectAnswerIndex()
                       ? "palegreen"
                       : "whitesmoke",
                     opacity: isAnswered && selectedChoice !== index ? 0.6 : 1,
@@ -494,7 +512,7 @@ const QuestionCard = ({
                         color: "black",
                         boxSizing: "border-box" 
                       }}
-                      placeholder="Type your answer here..."
+                      placeholder={t("typeYourAnswer")}
                       value={userAnswer}
                       onChange={(e) => setUserAnswer(e.target.value)}
                       disabled={isSubmitted}
@@ -529,7 +547,7 @@ const QuestionCard = ({
                       }}
                       disabled={isSubmitted}
                     >
-                      Submit Answer
+                      {t("submitAnswer")}
                     </button>
                     {showWarning2 === true ? (
                       userAnswer.trim() === "" ? (
@@ -541,7 +559,7 @@ const QuestionCard = ({
                             textAlign: "center",
                           }}
                         >
-                          Response cannot be blank
+                          {t("responseCannotBeBlank")}
                         </p>
                       ) : null
                     ) : null}
@@ -558,27 +576,32 @@ const QuestionCard = ({
                   >
                     {/* reveals the answer in flashcard mode */}
                     {localStorage.getItem("mode") == "2" && reveal && (
-                <div
-                  style={{
-                    backgroundColor: "#6A6CFF20",
-                    padding: "15px",
-                    borderRadius: "10px",
-                    border: "1px solid #6A6CFF40",
-                    color: "#6A6CFF",
-                    fontSize: "16px",
-                    lineHeight: "1.5",
-                    marginTop: "15px"
-                  }}
-                >
-                  {(answer !== undefined && answer !== null) ? (
-                    <div>
-                      {formatBoldText(answer)}
-                    </div>
-                  ) : (
-                    <p style={{ color: "#FF6B6B" }}>No answer available</p>
-                  )}
-                </div>
-              )}
+                      <div
+                        style={{
+                          backgroundColor: "#6A6CFF10",
+                          padding: "15px",
+                          borderRadius: "15px",
+                          border: "1px solid #6A6CFF30",
+                          color: "#6A6CFF",
+                          fontSize: "16px",
+                          lineHeight: "1.5",
+                          marginTop: "15px",
+                          boxShadow: "0 4px 12px rgba(106, 108, 255, 0.1)",
+                          transition: "all 0.3s ease",
+                          animation: "fadeIn 0.4s ease-out",
+                          maxHeight: "60vh",
+                          overflowY: "auto"
+                        }}
+                      >
+                        {(answer !== undefined && answer !== null) ? (
+                          <div>
+                            {formatBoldText(answer)}
+                          </div>
+                        ) : (
+                          <p style={{ color: "#FF6B6B" }}>{t("noAnswerAvailable")}</p>
+                        )}
+                      </div>
+                    )}
 
               {/* For mode 3 - slide up/down container */}
               {localStorage.getItem("mode") == "3" && (reveal || isClosing) && (
@@ -618,7 +641,7 @@ const QuestionCard = ({
                         fontWeight: "500",
                       }}
                     >
-                      Answer Guideline:
+                      {t("answerGuideline")}
                     </h3>
                     <button
                       onClick={() => {
@@ -663,7 +686,7 @@ const QuestionCard = ({
                         {formatBoldText(answer)}
                       </div>
                       ) : (
-                        <p style={{ color: "#FF6B6B" }}>No answer available</p>
+                        <p style={{ color: "#FF6B6B" }}>{t("noAnswerAvailable")}</p>
                       )}       
                     
                   </div>
@@ -690,7 +713,7 @@ const QuestionCard = ({
                       marginRight: "auto",
                     }}
                   >
-                    Please submit your answer first
+                    {t("pleaseSubmitAnswerFirst")}
                   </p>
                 )}
                 <button
@@ -706,23 +729,41 @@ const QuestionCard = ({
                     background:
                       localStorage.getItem("mode") === "3" && !isSubmitted
                         ? "#6A6CFF80"
+                        : localStorage.getItem("mode") === "2"
+                        ? reveal ? "#FF6B6B" : "#6A6CFF"
                         : "#6A6CFF",
-                    boxShadow: "0px 2px 0px 0px #484AC3",
+                    boxShadow: localStorage.getItem("mode") === "2" && reveal 
+                      ? "0px 2px 0px 0px #C84B4B"
+                      : "0px 2px 0px 0px #484AC3",
                     border: "none",
                     marginBottom: "10px",
                     width: "60%",
                     padding: "10px 15px",
                     marginBottom: "20px",
                     fontSize: "18px",
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                   className="revealAnswerButton"
                   onClick={handleRevealAnswer}
                 >
                   {localStorage.getItem("mode") === "2"
                     ? reveal
-                      ? "Hide Answer"
-                      : "Reveal Answer"
-                    : "Reveal Answer"}
+                      ? t("hideAnswer")
+                      : t("revealAnswer")
+                    : t("revealAnswer")}
+                  {localStorage.getItem("mode") === "2" && (
+                    <span style={{
+                      position: "absolute",
+                      right: "15px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      opacity: 0.8
+                    }}>
+                      {reveal ? "↓" : "↑"}
+                    </span>
+                  )}
                 </button>
                 <div
                   style={{
@@ -742,11 +783,12 @@ const QuestionCard = ({
                       borderRadius: "100px",
                       display: "flex",
                       justifyContent: "center",
+                      alignItems: "center", 
                       marginRight: "10px",
                       flexShrink: 0,
                     }}
                   >
-                    {title.slice(0, 1)}
+                    {title.trim().slice(0, 1)}
                   </div>
                   <p
                     style={{
@@ -757,7 +799,7 @@ const QuestionCard = ({
                       outline: mobileDimension ? "none" : `1px solid ${color}`,
                       borderRadius: "100px",
                       width: "fit-content",
-                      maxWidth: "100%", 
+                      maxWidth: "70%",
                       whiteSpace: "nowrap", 
                       overflow: "hidden", 
                       textOverflow: "ellipsis", 
@@ -838,6 +880,7 @@ const QuestionCard = ({
                 fontSize: "12px",
                 padding: "5px",
                 color: "white",
+                transform: "translateY(5px)",
               }}
             >
               <svg
@@ -1221,53 +1264,5 @@ const QuestionCard = ({
     </div>
   );
 };
-{
-  /* <div style={{display: 'flex', flexDirection:"column", height:"82vh", backgroundColor:'', margin: "50px 0px", justifyContent:'center'}}>
-      <i
-              onClick={toggleLiked}
-              style={{
-                fontSize: "28px",
-                cursor: "pointer",
-                
-                  marginTop:'33vh',
-                  marginLeft:"10%",
-                  padding: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  position: "relative",
-                  color: liked ? "" : "black", // Darker outline for unfilled heart
-
-
-              }}
-              className={`${liked ? "fa-solid" : "fa-regular"} fa-heart`}
-              id={liked? "heart-clicked" : "heart-unclicked"}
-            ></i>
-
-
-
-      <ShareButtons title={question} body={choices} />
-      <i
-              onClick={handleHeartClick}
-              style={{
-                fontSize: "28px",
-                cursor: "pointer",
-                
-                  marginTop:'10%',
-                  marginLeft:"20%",
-                  padding: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  position: "relative",
-                  color: isFavorite ? "" : "black", // Darker outline for unfilled heart
-
-
-              }}
-              className={`${isFavorite ? "fa-solid" : "fa-regular"} fa-bookmark`}
-              id={isFavorite ? "bookmark-clicked" : "bookmark-unclicked"}
-            ></i>
-      </div> */
-}
 
 export default QuestionCard;

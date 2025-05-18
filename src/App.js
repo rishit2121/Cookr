@@ -1,5 +1,6 @@
-import React from 'react';
-import './i18n';
+import React, { useEffect } from 'react';
+import './i18n'; 
+import { useTranslation } from 'react-i18next';
 import Navbar from "./components/Navbar";
 import Scroller from "./components/Scroller";
 import { Routes, Route } from 'react-router-dom';
@@ -12,10 +13,10 @@ import SavedQuestions from "./components/Saved";
 import Explore from "./pages/Explore";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/results";
-import SubscribeForm from "./components/SubscribeForm"; // New subscription page
+import SubscribeForm from "./components/SubscribeForm";
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import CancelSubscription from "./components/CancelSubscription"; // New subscription page
+import CancelSubscription from "./components/CancelSubscription";
 import Reels from "./pages/VideoScroller";
 import Scrolls from "./pages/Scrolls";
 import FlashCard from "./pages/Flashcard";
@@ -30,6 +31,15 @@ const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 
 function App() {
+  const { i18n } = useTranslation();
+  
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage && i18n.language !== savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n]);
+
   return (
     <div className="App" style={{overflowY:"hidden"}}>
       {/* Wrap the app or specific routes with Elements to enable Stripe */}

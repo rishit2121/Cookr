@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const CustomDropdown = ({
   onSelect,
@@ -8,8 +9,8 @@ const CustomDropdown = ({
   mobileDimension,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(localStorage.getItem("currentSet") ? JSON.parse(localStorage.getItem("currentSet")).title : "Choose");
-
+  const [selectedOption, setSelectedOption] = useState(localStorage.getItem("currentSet") ? JSON.parse(localStorage.getItem("currentSet")).title : t("choose"));
+  const { t } = useTranslation();
   const dropdownRef = useRef(null);
   const toggleDropdown = () => setIsOpen((prevState) => !prevState);
 
@@ -55,13 +56,31 @@ const CustomDropdown = ({
           fontSize: mobileDimension ? "10px" : "14px",
           borderRadius: "100px",
           width: mobileDimension && "70px",
+          maxWidth: "calc(100vw - 63px)"
         }}
         onClick={toggleDropdown}
       >
-        {mobileDimension
-          ? selectedOption.slice(0, 12) ||
-            (sets && sets[0] && sets[0].title.slice(0, 12))
-          : selectedOption || (sets && sets[0] && sets[0].title.slice)}
+        <div
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            lineHeight: "1.2em",
+            maxHeight: "2.4em",
+            wordBreak: "break-word"
+          }}
+          title={mobileDimension
+            ? selectedOption.slice(0, 12) ||
+              (sets && sets[0] && sets[0].title.slice(0, 12))
+            : selectedOption || (sets && sets[0] && sets[0].title)}
+        >
+          {mobileDimension
+            ? selectedOption.slice(0, 12) ||
+              (sets && sets[0] && sets[0].title.slice(0, 12))
+            : selectedOption || (sets && sets[0] && sets[0].title.slice)}
+        </div>
       </div>
       {isOpen && (
         <div
@@ -75,6 +94,8 @@ const CustomDropdown = ({
             boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
             zIndex: "1000",
             width: "300px",
+            overflowY: "auto",
+            maxHeight: "500px"
           }}
         >
           {sets &&
@@ -87,6 +108,7 @@ const CustomDropdown = ({
                   fontSize: mobileDimension ? "10px" : "14px",
                   backgroundColor: "transparent",
                   display: "flex",
+                  borderBottom: index < sets.length - 1 ? "1px solid rgba(255, 255, 255, 0.3)" : "none"
                 }}
                 onClick={() => handleOptionClick(option)}
                 onMouseEnter={(e) =>

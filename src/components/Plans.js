@@ -7,6 +7,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { auth, db } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useTranslation } from 'react-i18next';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
@@ -29,6 +30,7 @@ const Plans = ({ planType }) => {
     monthly: { id: '', amount: '', interval: 'month' },
     yearly: { id: '', amount: '', interval: 'year' }
   });
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -208,7 +210,8 @@ const Plans = ({ planType }) => {
         transform: show ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.3s ease-out',
         maxHeight: '80vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        overflowX: isMobile ? 'hidden' : 'auto',
       }}>
         <div style={{ 
           display: 'flex', 
@@ -249,9 +252,9 @@ const Plans = ({ planType }) => {
         zIndex: 1000,
         width: '80dvw',
       }}>
-        <h2 style={{ marginBottom: '20px' }}>Confirm Switch to Free Plan</h2>
+        <h2 style={{ marginBottom: '20px' }}>{t('confirmSwitch')}</h2>
         <p style={{ marginBottom: '20px' }}>
-          Are you sure you want to switch to the Free plan? You will lose access to premium features.
+          {t("confirmSwitchMessage")}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
           <button
@@ -264,7 +267,7 @@ const Plans = ({ planType }) => {
               cursor: 'pointer'
             }}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -279,7 +282,7 @@ const Plans = ({ planType }) => {
               fontWeight: 'bold'
             }}
           >
-            {loading ? 'Processing...' : 'Confirm Switch'}
+            {loading ? t("processing") : t("buttonConfirm")}
           </button>
         </div>
       </div>
@@ -328,7 +331,7 @@ const Plans = ({ planType }) => {
         >
           $0
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>
-            /forever
+            {t("forever")}
           </span>
         </h1>
         <br></br>
@@ -340,18 +343,18 @@ const Plans = ({ planType }) => {
             listStyle: "none",
           }}
         >
-          <li> <div style={{display:'flex', }}><CheckMark></CheckMark> Unlimited Scrolling</div></li>
+          <li> <div style={{display:'flex', }}><CheckMark></CheckMark>{t("unlimitedScrolling")}</div></li>
           <li>
-          <div style={{display:'flex', }}><CheckMark></CheckMark>Unlimted Subjects</div>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark>Save Scrolls</div></li>
+          <div style={{display:'flex', }}><CheckMark></CheckMark>{t("unlimitedSubjects")}</div>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t("saveScrolls")}</div></li>
 
             {/* <span style={{ fontSize: "10px" }}> (Till September 5th)</span> */}
           </li>
           {/* <li><div style={{display:'flex', }}><CrossMark></CrossMark> Save Scrolls</li> */}
-          <li><div style={{display:'flex', }}><CrossMark></CrossMark> Infinite Note Uploads</div></li>
-          <li><div style={{display:'flex', }}><CrossMark></CrossMark> AI Tutor Bot</div></li>
+          <li><div style={{display:'flex', }}><CrossMark></CrossMark>{t("infiniteNoteUploads")}</div></li>
+          <li><div style={{display:'flex', }}><CrossMark></CrossMark>{t('aiTutorBot')}</div></li>
           {/* <li><div style={{display:'flex', }}><CrossMark></CrossMark> No Priority Customer Support</li> */}
-          <li><div style={{display:'flex', width:'200px'}}><CrossMark></CrossMark> New Feature Access</div></li>
+          <li><div style={{display:'flex', width:'200px'}}><CrossMark></CrossMark>{t("newFeatureAccess")}</div></li>
         </div>
         <button
           style={{
@@ -371,7 +374,7 @@ const Plans = ({ planType }) => {
           onClick={() => userPlan && userPlan.toLowerCase() !== 'free' && handleSwitchPlan(null, 'Free', '$0')}
           disabled={!userPlan || userPlan.toLowerCase() === 'free'}
         >
-          {!userPlan || userPlan.toLowerCase() === 'free' ? "Current" : "Switch Over"}
+          {!userPlan || userPlan.toLowerCase() === 'free' ? t("current") : t("switchOver")}
         </button>
         
       </div>
@@ -406,7 +409,7 @@ const Plans = ({ planType }) => {
           }}
         >
           $5
-          <span style={{ fontSize: "15px", fontWeight: "normal" }}>/month</span>
+          <span style={{ fontSize: "15px", fontWeight: "normal" }}>{t('monthly')}</span>
         </h1>
         <br></br>
         <div
@@ -417,19 +420,19 @@ const Plans = ({ planType }) => {
             listStyle: "none",
           }}
         >
-          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark> Everything in Standard</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Share Scrolls</div></li>
+          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark>{t("everythingInStandard")}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('shareScrolls')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Save Scrolls</li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Infinite Note Uploads </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t("infiniteNoteUploads")}</div></li>
           {/* <li>
             <div style={{display:'flex', }}><CheckMark></CheckMark> Access to Themes{" "}
             <span style={{ fontSize: "10px" }}>(Coming Soon)</span>
           </li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Answer Explanations</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('answerExplanations')}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> AI Tutor Bot </div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('aiTutorBot')}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t("newFeatureAccess")}</div></li>
         </div>
         <button
           style={{
@@ -448,7 +451,7 @@ const Plans = ({ planType }) => {
           onClick={() => userPlanId !== 'price_1R7njCF2kI0aSHJWLHIkZrpk' && handleSwitchPlan('price_1R7njCF2kI0aSHJWLHIkZrpk', 'Cookr+', '$5/month')}
           disabled={userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk'}
         >
-          {userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk' ? "Current" : "Switch Over"}
+          {userPlanId === 'price_1R7njCF2kI0aSHJWLHIkZrpk' ? t("current") : t("switchOver")}
         </button>
       </div>
       <div
@@ -483,7 +486,7 @@ const Plans = ({ planType }) => {
         >
           $45
           <span style={{ fontSize: "15px", fontWeight: "normal" }}>
-            /year
+            {t('yearly')}
           </span>
         </h1>
         <br></br>
@@ -495,19 +498,19 @@ const Plans = ({ planType }) => {
             listStyle: "none",
           }}
         >
-          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark> Everything in Standard</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Share Scrolls</div></li>
+          <li><div style={{display:'flex',width:'200px' }}><CheckMark></CheckMark>{t('everythingInStandard')}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('shareScrolls')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Save Scrolls</li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Infinite Note Uploads </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('infiniteNoteUploads')}</div></li>
           {/* <li>
             <div style={{display:'flex', }}><CheckMark></CheckMark> Access to Themes{" "}
             <span style={{ fontSize: "10px" }}>(Coming Soon)</span>
           </li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> Answer Explanations</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t("answerExplanations")}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> AI Tutor Bot </div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark> New Feature Access </div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('aiTutorBot')}</div></li>
+          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
           {/* <li>
             <div style={{display:'flex', }}><CheckMark></CheckMark> Exclusive Perks{" "}
             <span style={{ fontSize: "10px" }}>(more details coming soon)</span>
@@ -530,7 +533,7 @@ const Plans = ({ planType }) => {
           onClick={() => userPlanId !== 'price_1R7nl5F2kI0aSHJWLHIkZrpk' && handleSwitchPlan('price_1R7nl5F2kI0aSHJWLHIkZrpk', 'Cookr Elite (Yearly)', '$45.00 per year')}
           disabled={userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk'}
         >
-          {userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk' ? "Current" : "Switch Over"}
+          {userPlanId === 'price_1R7nl5F2kI0aSHJWLHIkZrpk' ? t('current') : t("switchOver")}
         </button>
       </div>
 

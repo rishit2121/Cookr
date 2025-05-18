@@ -19,6 +19,53 @@
   }
 }
 
+/* Add animation for flashcard reveal */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add styling for the reveal button in flashcard mode */
+.revealAnswerButton {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.revealAnswerButton:hover {
+  transform: translateY(-2px);
+}
+
+/* Add specific hover styles for different button states */
+.revealAnswerButton[data-state="reveal"]:hover {
+  background-color: #7B7DFF !important;
+  box-shadow: 0px 4px 0px 0px #484AC3 !important;
+}
+
+.revealAnswerButton[data-state="hide"]:hover {
+  background-color: #FF7C7C !important;
+  box-shadow: 0px 4px 0px 0px #C84B4B !important;
+}
+
+.revealAnswerButton:active {
+  transform: translateY(1px);
+}
+
+/* Add specific active styles for different button states */
+.revealAnswerButton[data-state="reveal"]:active {
+  background-color: #5658FF !important;
+  box-shadow: 0px 1px 0px 0px #484AC3 !important;
+}
+
+.revealAnswerButton[data-state="hide"]:active {
+  background-color: #E85555 !important;
+  box-shadow: 0px 1px 0px 0px #C84B4B !important;
+}
+
+/* Add a subtle gradient background for flashcards */
+.card[data-mode="2"] {
+  background: linear-gradient(145deg, #2a2a2a, #303030) !important;
+}
 
 *{
   font-family: "Nunito";
@@ -159,8 +206,8 @@ animation:
   l20-2 1.6s infinite linear;
 }
 @keyframes l20-1{
- 0%    {clip-path: polygon(50% 50%,0       0,  50%   0%,  50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0% )}
- 12.5% {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0% )}
+ 0%    {clip-path: polygon(50% 50%,0       0,  50%   0%,  50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0%, 50%    0% )}
+ 12.5% {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0%, 100%   0% )}
  25%   {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100% 100%, 100% 100%, 100% 100% )}
  50%   {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100% 100%, 50%  100%, 0%   100% )}
  62.5% {clip-path: polygon(50% 50%,100%    0, 100%   0%,  100%   0%, 100% 100%, 50%  100%, 0%   100% )}
@@ -172,6 +219,12 @@ animation:
 49.99%{transform:scaleY(1)  rotate(135deg)}
 50%   {transform:scaleY(-1) rotate(0deg)}
 100%  {transform:scaleY(-1) rotate(-135deg)}
+}
+
+@keyframes gentle-pulse {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.03); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 button{

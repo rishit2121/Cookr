@@ -5,10 +5,12 @@ import { db } from "./firebase/Firebase";
 import { auth } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { loadStripe } from '@stripe/stripe-js';
+import { useTranslation } from 'react-i18next';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 function PaymentConfirmation() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -148,7 +150,7 @@ function PaymentConfirmation() {
               cursor: 'pointer'
             }}
           >
-            Return to Profile
+            {t("returnToProfile")}
           </button>
         </div>
       )}
@@ -169,7 +171,7 @@ function PaymentConfirmation() {
               cursor: 'pointer'
             }}
           >
-            Return to Profile
+            {t('returnToProfile')}
           </button>
         </div>
       )}

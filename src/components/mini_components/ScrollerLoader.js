@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 function ScrollerLoader() {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -10,7 +12,7 @@ function ScrollerLoader() {
         flexDirection: "column",
       }}
     >
-      <p>Generating Content...</p>
+      <p>{t("generatingContent")}</p>
       <div className="loader"></div>
     </div>
   );

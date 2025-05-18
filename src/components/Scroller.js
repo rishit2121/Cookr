@@ -7,6 +7,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
 import { auth } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useTranslation } from 'react-i18next';
 
 const containerStyle = {
   display: "flex",
@@ -59,6 +60,7 @@ const loadingStyle = {
 // };
 
 const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
   const [userLanguage, setUserLanguage] = useState("English"); // default
@@ -218,29 +220,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       setStreak(1);
     }
   };
-  const translateText = async (text, targetLanguage) => {
-    try {
-      console.log(text);
-      // Check if the text is empty
-      const response = await fetch("https://libretranslate.com/translate", {
-        method: "POST",
-        body: JSON.stringify({
-          q: text,
-          source: "auto",
-          target: targetLanguage,
-          format: "text",
-          api_key: "",
-        }),
-        headers: { "Content-Type": "application/json" },
-      });
-  
-      const data = await response.json();
-      return data.translatedText || text; // Fallback to original text if translation fails
-    } catch (error) {
-      console.error("Error translating text:", error);
-      return text; // Fallback to original text
-    }
-  };
+ 
 
   // Add streak check on component mount
   useEffect(() => {
@@ -275,6 +255,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
         info: currentSet,
         lastQuestionSet: questions.slice(-10),
         mode: localStorage.getItem("mode"),
+        language: localStorage.getItem('language') || 'en',
       }),
     };
 
@@ -345,25 +326,37 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       }}
     >
       {isFetching && (
-        <p
+        <div
           style={{
-            position: "absolute",
-            top: "1%",
-            textAlign: "center",
-            backgroundColor: "white",
-            padding: "5px 10px",
-            borderRadius: "100px",
+            position: "fixed",
+            top: "10px",
+            left: mobileDimension ? "50%" : "calc(50% + 110px)",
+            transform: "translateX(-50%)",
+            backgroundColor: "#6A6CFF",
+            color: "white",
+            fontSize: "13px",
+            fontWeight: "500",
+            padding: "5px 12px",
+            borderRadius: "20px",
             display: "flex",
-            width: "300px",
-            justifyContent: "space-around",
-            boxShadow: "0px 0px 1px 1px gainsboro",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: "0 2px 8px rgba(106, 108, 255, 0.4)",
             zIndex: "999",
-            color:'black'
+            animation: "gentle-pulse 1.5s infinite ease-in-out",
+            width: "auto",
+            maxWidth: mobileDimension ? "calc(370px - 24px)" : "400px"
           }}
         >
-          Loading More Questions
-          <div className="loader_mini"></div>
-        </p>
+          <span>{t('loadingMoreQuestions')}</span>
+          <div className="loader_mini" style={{ 
+            margin: 0,
+            width: "6px", 
+            height: "6px",
+            border: "4px solid rgb(73, 73, 255)"
+          }}></div>
+        </div>
       )}
       {questions.length > 1 ? (
         <div ref={containerRef} style={containerStyle} onScroll={handleScroll}>

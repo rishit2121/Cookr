@@ -16,11 +16,13 @@ import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase"
 import { onAuthStateChanged } from "firebase/auth";
 import HomeScreenTutorial from "../components/mini_components/HomeScreenTutorial";
 import ScrollerLogInHomeScreen from "../components/mini_components/ScrollerLogInHomeScreen";
+import { useTranslation } from 'react-i18next';
 
 
 
 
 function Home() {
+  const { t } = useTranslation();
   const [streak, setStreak] = useState(
     localStorage.getItem("streak")
       ? parseInt(localStorage.getItem("streak"))
@@ -227,7 +229,7 @@ useEffect(() => {
                   alignItems: "center",
                 }}
               >
-                <p style={{}}>Pick a subject to get started with your session!</p>
+                <p style={{}}>{t("pickASubject")}</p>
               </div>
             ) : (
               <HomeScreenTutorial></HomeScreenTutorial>

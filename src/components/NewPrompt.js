@@ -14,6 +14,7 @@ import PDFJSWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
 import { YoutubeTranscript } from 'youtube-transcript';
 import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useTranslation } from 'react-i18next';
 
 // Set the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
@@ -21,6 +22,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
 var randomColor = require("randomcolor"); // import the script
 
 const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
+  const { t } = useTranslation();
   return (
     <>
       <div style={{
@@ -52,7 +54,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
           alignItems: 'center',
           marginBottom: '15px'
         }}>
-          <h3 style={{ margin: 0, color: 'white' }}>Delete Set</h3>
+          <h3 style={{ margin: 0, color: 'white' }}>{t("deleteSet")}</h3>
           <svg
             onClick={onClose}
             style={{
@@ -72,7 +74,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
           </svg>
         </div>
         <p style={{ color: 'white', marginBottom: '20px' }}>
-          Are you sure you want to delete this set?
+          {t("deleteSetConfirmation")}
         </p>
         <div style={{
           display: 'flex',
@@ -90,7 +92,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
               cursor: 'pointer'
             }}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -103,7 +105,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
               cursor: 'pointer'
             }}
           >
-            Yes, Delete
+            {t("yesDelete")}
           </button>
         </div>
       </div>
@@ -112,6 +114,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
 };
 
 function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
+  const { t } = useTranslation();
   const [promptMode, setPromptMode] = useState(1);
   const [
     subcolor,
@@ -140,6 +143,31 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [isClosing, setIsClosing] = useState(false);
   const [isOpening, setIsOpening] = useState(true);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [titleExplicitError, setTitleExplicitError] = useState(false);
+  const [contentExplicitError, setContentExplicitError] = useState(false);
+  const [subjectExplicitError, setSubjectExplicitError] = useState(false);
+
+  const explicitWords = [
+    "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat", 
+    "hell", "crap", "prick", "slut", "whore", "sex", "porn", "porno",
+    "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
+    "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
+    "rimjob", "milf", "bdsm", "fetish", "pegging", "stripper", "stripclub",
+    "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
+    "chink", "gook", "nigga", "nigger", "kike","wetback", "towelhead",
+    "rape",
+    "marijuana", "cocaine", "meth", "heroin", "lsd",
+    "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
+    "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
+    "p0rn", "n00d","phuck"
+  ];
+
+  const containsExplicitContent = (text) => {
+    if (!text) return false;
+    return explicitWords.some(word => 
+      text.toLowerCase().includes(word.toLowerCase())
+    );
+  };
 
   // Define canEdit based on author
   const canEdit = !subauthor || subauthor === user;
@@ -411,9 +439,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         zIndex: 1000,
         width: '400px',
       }}>
-        <h2 style={{ marginBottom: '20px', color: 'black' }}>Set Limit Reached</h2>
+        <h2 style={{ marginBottom: '20px', color: 'black' }}>{t("setLimitReached")}</h2>
         <p style={{ marginBottom: '20px', color: 'black' }}>
-          You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!
+          {t("setLimitError")}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
           <button
@@ -427,7 +455,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               color: 'black'
             }}
           >
-            Close
+            {t("close")}
           </button>
         </div>
       </div>
@@ -463,6 +491,21 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
       if (promptMode === 2 && subject.trim() === "") {
         setSubjectError(true);
+        return;
+      }
+
+      if (containsExplicitContent(title)) {
+        setTitleExplicitError(true);
+        return;
+      }
+
+      if (promptMode === 1 && containsExplicitContent(content)) {
+        setContentExplicitError(true);
+        return;
+      }
+
+      if (promptMode === 2 && containsExplicitContent(subject)) {
+        setSubjectExplicitError(true);
         return;
       }
 
@@ -643,18 +686,24 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   };
 
   const handleTitleChange = (e) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
     setTitleError(false);
+    setTitleExplicitError(containsExplicitContent(newTitle));
   };
 
   const handleContentChange = (e) => {
-    setContent(e.target.value);
+    const newContent = e.target.value;
+    setContent(newContent);
     setContentError(false);
+    setContentExplicitError(containsExplicitContent(newContent));
   };
 
   const handleSubjectChange = (e) => {
-    setSubject(e.target.value);
+    const newSubject = e.target.value;
+    setSubject(newSubject);
     setSubjectError(false);
+    setSubjectExplicitError(containsExplicitContent(newSubject));
   };
 
   const handleModeClick = (mode) => {
@@ -741,7 +790,20 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
       >
         <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
       </svg>
-      <div style={{ display: "flex", marginBottom: "15px" }}>
+      
+      {/* Fixed header with tabs */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          marginBottom: "20px",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          backgroundColor: "black",
+          width: "100%",
+        }}
+      >
         <div
           onClick={() => setPromptMode(1)}
           style={{
@@ -752,7 +814,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             cursor: "pointer",
           }}
         >
-          <p style={{ margin: "0px" }}>Upload Notes</p>
+          <p style={{ margin: "0px" }}>{t("uploadNotes")}</p>
         </div>
         <div
           onClick={() => setPromptMode(2)}
@@ -764,60 +826,82 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             cursor: "pointer",
           }}
         >
-          <p style={{ margin: "0px" }}>General</p>
+          <p style={{ margin: "0px" }}>{t("general")}</p>
         </div>
       </div>
-      <div>
-        <div style={{ width: "100%", marginBottom: "20px" }}>
-          <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>Title</p>
+      
+      {/* Scrollable content area - everything including buttons */}
+      <div 
+        style={{ 
+          flex: 1,
+          overflowY: "auto",
+          width: "100%",
+          paddingRight: "10px", // Add padding to prevent content from touching the edge
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
+          <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("title")}</p>
           <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-            Set a title for your AI generated Cookr questions, so it's easy to access
-            later.
+            {t('setTitleMessage')}
           </p>
-          <input
-            value={title}
-            onChange={handleTitleChange}
-            style={{
-              background: "#28282B",
-              outline: titleError ? "1px solid #ff4444" : "1px solid #353935",
-              border: "none",
-              borderRadius: "10px",
-              padding: "12px 10px",
-              width: "100%",
-              boxSizing: "border-box",
-              color: "white",
-              fontSize: "16px",
-              cursor: style === 1 && !canEdit ? "not-allowed" : "text",
-              opacity: style === 1 && !canEdit ? 0.5 : 1
-            }}
-            placeholder={"Chef Shark"}
-            disabled={style === 1 && !canEdit}
-          />
+          <div style={{ width: "100%" }}>
+            <input
+              value={title}
+              onChange={handleTitleChange}
+              style={{
+                background: "#28282B",
+                outline: (titleError || titleExplicitError) ? "1px solid #ff4444" : "1px solid #353935",
+                border: "none",
+                borderRadius: "10px",
+                padding: "12px 10px",
+                width: "100%",
+                boxSizing: "border-box",
+                color: "white",
+                fontSize: "16px",
+                cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                opacity: style === 1 && !canEdit ? 0.5 : 1
+              }}
+              placeholder={"Chef Shark"}
+              disabled={style === 1 && !canEdit}
+            />
+          </div>
           {titleError && (
             <p style={{ 
               color: "#ff4444", 
               fontSize: "12px", 
-              margin: "4px 0px 0px 0px",
+              margin: "4px 0px 0px 1.5px",
               opacity: 0.8
             }}>
-              Title cannot be blank
+              {t("titleError1")}
+            </p>
+          )}
+          {titleExplicitError && (
+            <p style={{ 
+              color: "#ff4444", 
+              fontSize: "12px", 
+              margin: "4px 0px 0px 1.5px",
+              opacity: 0.8
+            }}>
+              {t("titleError2")}
             </p>
           )}
         </div>
+        
         {promptMode === 1 ? (
-          <div style={{ width: "100%", marginBottom: "20px" }}>
-            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>Content</p>
+          <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
+            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t('content')}</p>
             <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-              Copy and paste your notes, lectures or any other textual content.
+              {t("setContentMessage")}
             </p>
             <div
               style={{
-                outline: contentError ? "1px solid #ff4444" : "1px solid #353935",
+                outline: contentError || contentExplicitError ? "1px solid #ff4444" : "1px solid #353935",
                 border: "none",
                 borderRadius: "10px",
                 width: "100%",
                 boxSizing: "border-box",
-                height: "45dvh",
+                height: "350px",
                 position: "relative",
                 background: "#28282B",
               }}
@@ -833,7 +917,8 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   boxSizing: "border-box",
                   resize: "none",
                   padding: "12px",
-                  height: "90%",
+                  paddingBottom: "30px",
+                  height: "100%",
                   background: "#28282B",
                   color: "white",
                   fontSize: "16px",
@@ -843,6 +928,18 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 maxLength={hasSubscription ? 15000 : 8000}
                 disabled={style === 1 && !canEdit}
               />
+              <p
+                style={{
+                  position: "absolute",
+                  bottom: "5px",
+                  right: "10px",
+                  margin: "0",
+                  fontSize: "12px",
+                  color: "gray",
+                }}
+              >
+                {content.length}/{hasSubscription ? 15000 : 8000}
+              </p>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {contentError && (
                   <p style={{ 
@@ -854,19 +951,22 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                     bottom: "34px",
                     left: "-6px",
                   }}>
-                    Content cannot be blank
+                    {t("contentError1")}
                   </p>
                 )}
-                <p
-                  style={{
-                    textAlign: "end",
-                    fontSize: "12px",
-                    color: "gray",
-                    padding: "0px 10px",
-                  }}
-                >
-                  {content.length}/{hasSubscription ? 15000 : 8000}
-                </p>
+                {contentExplicitError && (
+                  <p style={{ 
+                    color: "#ff4444", 
+                    fontSize: "12px", 
+                    margin: "4px 0px 0px 12px",
+                    opacity: 0.8,
+                    position: "absolute",
+                    bottom: "34px",
+                    left: "-6px",
+                  }}>
+                    {t("contentError2")}
+                  </p>
+                )}
                 {canEdit && (
                   <form
                     style={{ position: "absolute", bottom: "5px", left: "5px" }}
@@ -887,7 +987,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                         boxShadow: "0px 2px 0px 0px #484AC3",
                       }}
                     >
-                      Upload Notes
+                      {t("uploadNotes")}
                       <input
                         id="fileUpload"
                         type="file"
@@ -907,19 +1007,19 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             </div>
           </div>
         ) : (
-          <div style={{ width: "100%", marginBottom: "20px" }}>
-            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>Subject</p>
+          <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "2px" }}>
+            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("subject")}</p>
             <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-              What subject or topic is this content about?
+              {t("setSubjectMessage")}
             </p>
             <div
               style={{
-                outline: subjectError ? "1px solid #ff4444" : "1px solid #353935",
+                outline: subjectError || subjectExplicitError ? "1px solid #ff4444" : "1px solid #353935",
                 border: "none",
                 borderRadius: "10px",
                 width: "100%",
                 boxSizing: "border-box",
-                height: "45dvh",
+                height: "350px",
                 position: "relative",
                 background: "#28282B",
               }}
@@ -935,7 +1035,8 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   boxSizing: "border-box",
                   resize: "none",
                   padding: "12px",
-                  height: "90%",
+                  paddingBottom: "30px",
+                  height: "100%",
                   background: "#28282B",
                   color: "white",
                   fontSize: "16px",
@@ -946,6 +1047,18 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 maxLength={1000}
                 disabled={style === 1 && !canEdit}
               />
+              <p
+                style={{
+                  position: "absolute",
+                  bottom: "5px",
+                  right: "10px",
+                  margin: "0",
+                  fontSize: "12px",
+                  color: "gray",
+                }}
+              >
+                {subject.length}/1000
+              </p>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {subjectError && (
                   <p style={{ 
@@ -954,70 +1067,59 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                     margin: "4px 0px 0px 12px",
                     opacity: 0.8,
                     position: "absolute",
-                    bottom: "4px",
+                    bottom: "34px",
                     left: "-6px"
                   }}>
-                    Subject cannot be blank
+                    {t('subjectError1')}
                   </p>
                 )}
-                <p
-                  style={{
-                    textAlign: "end",
-                    fontSize: "12px",
-                    color: "gray",
-                    padding: "0px 10px",
-                  }}
-                >
-                  {subject.length}/1000
-                </p>
+                {subjectExplicitError && (
+                  <p style={{ 
+                    color: "#ff4444", 
+                    fontSize: "12px", 
+                    margin: "4px 0px 0px 12px",
+                    opacity: 0.8,
+                    position: "absolute",
+                    bottom: "34px",
+                    left: "-6px"
+                  }}>
+                    {t('subjectError2')}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
-
-        {/*<div style={{ width: "100%", marginBottom: "10px" }}>
-          <p style={{ fontSize: "20px", margin: "0px" }}>Mode</p>
-          <p style={{ margin: "4px 0px", fontSize: "12px", color: "gray" }}>
-            Choose how you want to study!
-          </p>
-          <div style={{ display: "flex", flexDirection: "row", width: "100%" }}>
-            <div style={getModeStyle(1)} onClick={() => handleModeClick(1)}>
-              📖 Questions
-            </div>
-            <div style={getModeStyle(2)} onClick={() => handleModeClick(2)}>
-              📹 Videos
-            </div>
-          </div>
-              </div>*/}
-      </div>
-
-      <div>
-        {style === 0 && (
-          <button
-            onClick={() => saveToFirestore(false)}
-            style={{
-              width: "100%",
-              background: "transparent",
-              border: "none",
-              padding: "10px",
-              borderRadius: "10px",
-              cursor: "pointer",
-              color: "white",
-              background: "#6A6CFF",
-              boxShadow: "0px 2px 0px 0px #484AC3", 
-              fontSize:'15px'
-            }}
-          >
-            Save
-          </button>
-        )}
-        {style === 1 && (
-          <div style={{ 
-            display: "flex", 
-            flexDirection: "row",
-            marginTop: "20px",
-            marginBottom: "10px"
-          }}>
+        
+        {/* Buttons now inside the scrollable area */}
+        <div style={{ width: "100%", marginBottom: "20px" }}>
+          {style === 0 && (
+            <button
+              onClick={() => saveToFirestore(false)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                padding: "10px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                color: "white",
+                background: "#6A6CFF",
+                boxShadow: "0px 2px 0px 0px #484AC3", 
+                fontSize:'15px'
+              }}
+            >
+              {t("save")}
+            </button>
+          )}
+          {style === 1 && (
+            <div style={{ 
+              display: "flex", 
+              flexDirection: "row",
+              marginTop: "0px", 
+              marginBottom: "10px",
+              width: "100%"
+            }}>
               <button
                 onClick={() => saveToFirestore(false)}
                 disabled={!canEdit}
@@ -1031,34 +1133,36 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   cursor: !canEdit ? "not-allowed" : "pointer",
                   color: "white",
                   fontSize: "16px",
-                  fontWeight: "500",
+                  fontWeight: "bold",
                   opacity: !canEdit ? 0.7 : 1
                 }}
               >
-                Save
+                {t('save')}
               </button>
 
-            <div style={{ width: !canEdit ? "6%" : "6%" }}></div>
-            <button
-              onClick={handleDeleteClick}
-              style={{
-                width: !canEdit ? "47%" : "47%",
-                background: "#ff4444",
-                boxShadow: "0px 5px 0px 0px #cc0000",
-                border: "none",
-                padding: "15px",
-                borderRadius: "10px",
-                cursor: "pointer",
-                color: "white",
-                fontSize: "16px",
-                fontWeight: "500"
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        )}
+              <div style={{ width: !canEdit ? "6%" : "6%" }}></div>
+              <button
+                onClick={handleDeleteClick}
+                style={{
+                  width: !canEdit ? "47%" : "47%",
+                  background: "#ff4444",
+                  boxShadow: "0px 5px 0px 0px #cc0000",
+                  border: "none",
+                  padding: "15px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  color: "white",
+                  fontSize: "16px",
+                  fontWeight: "bold"
+                }}
+              >
+                {t('delete')}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+      
       {
         <div
           onClick={() => setOpenNewTopic(false)}
@@ -1083,9 +1187,3 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 }
 
 export default NewPrompt;
-
-        
-
-
-
-       

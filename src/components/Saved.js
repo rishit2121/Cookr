@@ -8,7 +8,7 @@ import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Bottom from "../components/BottomNav";
 import Comments from "./mini_components/Comments";
-
+import { useTranslation } from 'react-i18next';
 
 const SavedQuestions = () => {
   const navigate = useNavigate();
@@ -28,6 +28,7 @@ const SavedQuestions = () => {
     // Get the initial dark mode state from localStorage, default to false
     return localStorage.getItem("darkMode") === "true";
   });
+  const { t } = useTranslation();
   const [streak, setStreak] = useState(
     localStorage.getItem("streak")
       ? parseInt(localStorage.getItem("streak"))
@@ -145,7 +146,7 @@ const SavedQuestions = () => {
               whiteSpace: "nowrap",
               marginLeft:'5%'
             }}>
-              Favorites
+              {t("favorites")}
             </h2>
 
             {/* Search bar wrapper aligned right */}
@@ -161,7 +162,7 @@ const SavedQuestions = () => {
               }}>
                 <input
                   type="text"
-                  placeholder="Search questions..."
+                  placeholder={t('searchQuestions')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -268,7 +269,17 @@ const SavedQuestions = () => {
                 />
               ))
             ) : (
-              <p>No saved questions yet.</p>
+              <div style={{ 
+                width: "100%", 
+                height: "80vh", // Add height to create vertical space
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontSize: "18px",
+              }}>
+                <p>{t('noSavedQuestions')}</p>
+              </div>
             )}
           </div>
           {mobileDimension && (

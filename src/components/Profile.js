@@ -17,6 +17,8 @@ import squirrel from "../assets/squirrel.jpeg"
 import dog from "../assets/dog.jpeg"
 import { initializeApp } from "firebase/app";
 import { uploadBytes, getDownloadURL,getStorage, ref, deleteObject } from "firebase/storage";
+import i18n from "../i18n";
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -49,6 +51,7 @@ const profilePictures = {
 
 
 const MyProfile = ({ mobileDimension }) => {
+  const { t } = useTranslation();
   const [showPlans, setShowPlans] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [name, setName] = useState();
@@ -376,56 +379,54 @@ const MyProfile = ({ mobileDimension }) => {
     if (isEditingUsername) {
       // Save the changes
       if (editedUsername.trim() === '') {
-        setErrorMessage('Username cannot be empty');
+        setErrorMessage(t("usernameError1"));
         return;
       }
 
       // Check if username is the same as current
       if (editedUsername === name) {
-        setErrorMessage('Please enter a different or new username');
+        setErrorMessage(t("usernameError2"));
         return;
       }
 
       // Check for spaces
       if (editedUsername.includes(' ')) {
-        setErrorMessage('Username cannot contain spaces');
+        setErrorMessage(t("usernameError3"));
         return;
       }
 
       // Check for capital letters
       if (editedUsername !== editedUsername.toLowerCase()) {
-        setErrorMessage('Username cannot contain capital letters');
+        setErrorMessage(t("usernameError4"));
         return;
       }
 
       // Check for special characters
       const specialChars = "!\"#$%&'()*+,-/:;<=>?@[]^_`{|}~";
       if (editedUsername.split('').some(char => specialChars.includes(char))) {
-        setErrorMessage('Username cannot contain special characters');
+        setErrorMessage(t("usernameError5"));
         return;
       }
       // Check username length
       if (editedUsername.length < 4 || editedUsername.length > 18) {
-        setErrorMessage('Username must be between 4 and 18 characters');
+        setErrorMessage(t("usernameError6"));
         return;
       }
 
       // Check for explicit words
       const explicitWords = [
-        "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat",
-        "damn", "hell", "crap", "prick", "slut", "whore", "sex", "sexy", "porn", "porno",
+        "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat", 
+        "hell", "crap", "prick", "slut", "whore", "sex", "porn", "porno",
         "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
         "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
-        "rimjob", "milf", "bdsm", "fetish", "pegging", "squirting", "stripper", "stripclub",
+        "rimjob", "milf", "bdsm", "fetish", "pegging", "stripper", "stripclub",
         "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
-        "chink", "gook", "nigga", "nigger", "kike", "spic", "wetback", "towelhead", "kill",
-        "murder", "rape", "shoot", "bomb", "terrorist", "suicide", "die", "hang", "slit",
-        "stab", "abuse", "abuser", "weed", "marijuana", "cocaine", "meth", "heroin", "lsd",
-        "ecstasy", "crack", "adderall", "xanax", "opioid", "ketamine", "shrooms", "stoner",
-        "druggie", "dope", "highaf", "420", "casino", "betting", "bet", "poker", "slots",
-        "lotto", "jackpot", "crypto", "scam", "fraud", "hustler", "onlyfans", "fuk", "fck",
-        "sht", "bi7ch", "b1tch", "ass", "a55", "c0ck", "d1ck", "pu55y", "cumslut", "s3x",
-        "p0rn", "n00d", "l0ser", "phuck"
+        "chink", "gook", "nigga", "nigger", "kike","wetback", "towelhead",
+        "rape", "sex", "sexy",
+        "marijuana", "cocaine", "meth", "heroin", "lsd",
+        "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
+        "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
+        "p0rn", "n00d","phuck"
       ];
        
 
@@ -434,7 +435,7 @@ const MyProfile = ({ mobileDimension }) => {
       );
 
       if (containsExplicitWord) {
-        setErrorMessage('Username contains inappropriate content');
+        setErrorMessage(t("usernameError7"));
         return;
       }
       // Check for duplicate username
@@ -442,7 +443,7 @@ const MyProfile = ({ mobileDimension }) => {
       if (usernamesDoc.exists()) {
         const usernames = usernamesDoc.data().usernames;
         if (usernames.includes(editedUsername) && editedUsername !== name) {
-          setErrorMessage('This username is already taken');
+          setErrorMessage(t("usernameError8"));
           return;
         }
       }
@@ -482,7 +483,6 @@ const MyProfile = ({ mobileDimension }) => {
           const leaderboardData = leaderboardDoc.data();
           const updatedRankings = leaderboardData.ranking.map(entry => {
             if (entry.email === user) {
-              console.log('hey')
               console.log(entry)
               return { ...entry, name: editedUsername };
             }
@@ -509,13 +509,13 @@ const MyProfile = ({ mobileDimension }) => {
     }
   };
   const validateUsername = (value) => {
-    if (value.trim() === '') return 'Username cannot be empty';
-    if (value === name) return 'Please enter a different or new username';
-    if (value.includes(' ')) return 'Username cannot contain spaces';
-    if (value !== value.toLowerCase()) return 'Username cannot contain capital letters';
+    if (value.trim() === '') return t("usernameError1");
+    if (value === name) return t("usernameError2");
+    if (value.includes(' ')) return t("usernameError3");
+    if (value !== value.toLowerCase()) return t("usernameError4");
     const specialChars = "!\"#$%&'()*+,-/:;<=>?@[]^_`{|}~";
-    if (value.split('').some(char => specialChars.includes(char))) return 'Username cannot contain special characters';
-    if (value.length < 4 || value.length > 18) return 'Username must be between 4 and 18 characters';
+    if (value.split('').some(char => specialChars.includes(char))) return t("usernameError5");
+    if (value.length < 4 || value.length > 18) return t("usernameError6");
   
     const explicitWords = [
       "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat",
@@ -534,7 +534,7 @@ const MyProfile = ({ mobileDimension }) => {
       "p0rn", "n00d", "l0ser", "phuck"
     ];
     const containsExplicitWord = explicitWords.some(word => value.toLowerCase().includes(word));
-    if (containsExplicitWord) return 'Username contains inappropriate content';
+    if (containsExplicitWord) return t("usernameError7");
   
     return ''; // no error
   };
@@ -549,6 +549,11 @@ const MyProfile = ({ mobileDimension }) => {
       await updateDoc(doc(db, "users", user), {
         language: selectedLanguage
       });
+      
+      // Update i18n language
+      i18n.changeLanguage(selectedLanguage);
+      // Update localStorage
+      localStorage.setItem('language', selectedLanguage);
       
       setShowLanguageDropdown(false);
     } catch (error) {
@@ -614,7 +619,7 @@ const MyProfile = ({ mobileDimension }) => {
               </svg>
 
               <p style={{}}>
-              Settings
+              {t("settings")}
               </p>
             </button>
     <div
@@ -702,11 +707,11 @@ const MyProfile = ({ mobileDimension }) => {
               width: "50%",
               height: "50%",
               opacity: 0, // Make input invisible but still clickable
-              cursor: "pointer", // Make the cursor indicate clickability
+              cursor: "pointer",
             }}
            />
            <label htmlFor="upload-input" style={{ color: "white", fontWeight: "bold", cursor: "pointer", width:'90%' }}>
-             Click or Drag & Drop to Upload
+             {t("clickOrDragAndDrop")}
            </label>
          </div>
        ) : (
@@ -717,7 +722,7 @@ const MyProfile = ({ mobileDimension }) => {
              style={{
                width: "50dvw",
                height: "50dvw",
-              //  objectFit: "cover",
+              
                borderRadius: "10px",
                border: "2px solid white",
              }}
@@ -735,7 +740,7 @@ const MyProfile = ({ mobileDimension }) => {
                  boxShadow: "2px 4px 10px rgba(0, 0, 0, 0.3)", // Soft shadow
                }}
              >
-               Confirm
+               {t("confirm")}
              </button>
              <button
                onClick={handleRetake}
@@ -750,7 +755,7 @@ const MyProfile = ({ mobileDimension }) => {
 
                }}
              >
-               Retake
+               {t("retake")}
              </button>
            </div>
          </div>
@@ -880,7 +885,7 @@ const MyProfile = ({ mobileDimension }) => {
               }}
             >
               {/* {user.charAt(0).toUpperCase() + user.slice(1)} */}
-              Member since {joinDate}
+              {t("memberSince") + " " + joinDate}
             </span>
           </label>
             {/* <button
@@ -968,7 +973,7 @@ const MyProfile = ({ mobileDimension }) => {
               <span style={{ fontSize: "40px", fontWeight: "bold", color: 'white' }}>
                 {streak || 0}
               </span>              
-              <span style={{ fontSize: "16px", color:'white'}}>Streak</span>
+              <span style={{ fontSize: "16px", color:'white'}}>{t("streak")}</span>
               </div>
             </div>
 
@@ -1035,8 +1040,8 @@ const MyProfile = ({ mobileDimension }) => {
               // marginRight:'12%',
               height:'16%'
             }}>
-              <span style={{ fontSize: "19px", fontWeight: "bold", color:'white', marginTop:'5px'}}>Recent Activity</span>
-              <span style={{ fontSize: "20px", color:'white', marginTop:'5%'}}>  {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || "No Sets Yet :("}
+              <span style={{ fontSize: "19px", fontWeight: "bold", color:'white', marginTop:'5px'}}>{t("recentActivity")}</span>
+              <span style={{ fontSize: "20px", color:'white', marginTop:'5%'}}>  {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || t("noSetsYet")}
               </span>
             </div>
             <div style={{ 
@@ -1053,7 +1058,7 @@ const MyProfile = ({ mobileDimension }) => {
               bottom:'7%',
               height:'16%',
             }}>
-              <span style={{ fontSize: "18px", fontWeight: "bold", color:'#e1af32', marginTop:'1%'}}>Upgrade to Pro</span>
+              <span style={{ fontSize: "18px", fontWeight: "bold", color:'#e1af32', marginTop:'1%'}}>{t("upgradeToPro")}</span>
               <div style={{
                 backgroundColor: "#e1af32",
                 width:'90%',
@@ -1340,7 +1345,7 @@ const MyProfile = ({ mobileDimension }) => {
                           fill="white"
                           style={{ animation: "spin 1s linear infinite" }}
                         >
-                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3l4-4-4-4v3z"/>
                         </svg>
                         Saving...
                       </>
@@ -1353,7 +1358,7 @@ const MyProfile = ({ mobileDimension }) => {
                           height="1em"
                           fill="white"
                         >
-                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4-4-4v3l4-4-4-4v3z"/>
                         </svg>
                         Save
                       </>
@@ -1365,7 +1370,7 @@ const MyProfile = ({ mobileDimension }) => {
 
 
           {/* Title */}
-          <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>Settings</h3>  {/* Title centered */}
+          <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>{t("settings")}</h3>  {/* Title centered */}
 
           {/* Divider */}
           <div
@@ -1393,7 +1398,7 @@ const MyProfile = ({ mobileDimension }) => {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
               {isEditingUsername ? (
                 <div style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: "3%" }}>
-                  <h7 style={{ fontWeight: "bold", marginLeft: "1%",marginBottom:'2%'}}>Edit Username:</h7>
+                  <h7 style={{ fontWeight: "bold", marginLeft: "1%",marginBottom:'2%'}}>{t('editUsername')}</h7>
                   <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
                   <input
   type="text"
@@ -1473,7 +1478,13 @@ const MyProfile = ({ mobileDimension }) => {
                     </button>
                   </div>
                   {errorMessage && (
-                    <p style={{ color: "red", fontSize: "12px", marginLeft: "4%", marginTop: "5px" }}>
+                    <p style={{ 
+                      color: "red", 
+                      fontSize: "12px", 
+                      marginLeft: "2%", // Match the input's marginLeft
+                      marginTop: "5px",
+                      marginBottom: "0px"
+                    }}>
                       {errorMessage}
                     </p>
                   )}
@@ -1550,7 +1561,7 @@ const MyProfile = ({ mobileDimension }) => {
                       ></path>
                     </svg>
                   {/* Title */}
-                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Share With a Friend</p>
+                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("shareWithAFriend")}</p>
                 </div>
 
                 {/* Arrow */}
@@ -1596,7 +1607,7 @@ const MyProfile = ({ mobileDimension }) => {
 
 
                   {/* Title */}
-                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Contact The Team</p>
+                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("contactTheTeam")}</p>
                 </div>
 
                 {/* Arrow */}
@@ -1642,6 +1653,7 @@ const MyProfile = ({ mobileDimension }) => {
                         d="M416 221.25V416a48 48 0 0 1-48 48H144a48 48 0 0 1-48-48V96a48 48 0 0 1 48-48h98.75a32 32 0 0 1 22.62 9.37l141.26 141.26a32 32 0 0 1 9.37 22.62Z"
                       ></path>
                       <path
+
                         fill="none"
                         stroke="currentColor"
                         strokeLinecap="round"
@@ -1655,7 +1667,7 @@ const MyProfile = ({ mobileDimension }) => {
 
 
                   {/* Title */}
-                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Terms and Conditions</p>
+                  <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("termsAndConditions")}</p>
                 </div>
 
                 {/* Arrow */}
@@ -1727,7 +1739,7 @@ const MyProfile = ({ mobileDimension }) => {
               }}
               onClick={async () => logout()}
             >
-              Log Out
+              {t("logOut")}
             </button>
 
             {/* Spacer */}
@@ -2078,7 +2090,7 @@ const MyProfile = ({ mobileDimension }) => {
             )}
 
             {/* Title */}
-            <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>Settings</h3>
+            <h3 style={{ fontWeight: "bold", marginTop: "4%" }}>{t("settings")}</h3>
               
             {/* Divider */}
             <div
@@ -2106,7 +2118,7 @@ const MyProfile = ({ mobileDimension }) => {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px", height:'50%' }}>
                 {isEditingUsername ? (
                   <div style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: "3%" }}>
-                    <h7 style={{ fontWeight: "bold", marginLeft: "1%", marginBottom:'2%', marginTop:'2%'}}>Edit Username:</h7>
+                    <h7 style={{ fontWeight: "bold", marginLeft: "1%", marginBottom:'2%', marginTop:'2%'}}>{t('editUsername')}</h7>
                     <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
                     <input
   type="text"
@@ -2184,7 +2196,13 @@ const MyProfile = ({ mobileDimension }) => {
                       </button>
                     </div>
                     {errorMessage && (
-                      <p style={{ color: "red", fontSize: "12px", marginLeft: "4%", marginTop: "5px" }}>
+                      <p style={{ 
+                        color: "red", 
+                        fontSize: "12px", 
+                        marginLeft: "2%", // Match the input's marginLeft
+                        marginTop: "5px",
+                        marginBottom: "0px"
+                      }}>
                         {errorMessage}
                       </p>
                     )}
@@ -2259,7 +2277,7 @@ const MyProfile = ({ mobileDimension }) => {
                         d="m26 4l18 18l-18 17V28C12 28 6 43 6 43c0-17 5-28 20-28z"
                       ></path>
                     </svg>
-                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Share With a Friend</p>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("shareWithAFriend")}</p>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2297,7 +2315,7 @@ const MyProfile = ({ mobileDimension }) => {
                         d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4l-8 5l-8-5V6l8 5l8-5z"
                       ></path>
                     </svg>
-                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Contact The Team</p>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("contactTheTeam")}</p>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2347,7 +2365,7 @@ const MyProfile = ({ mobileDimension }) => {
                         d="M256 56v120a32 32 0 0 0 32 32h120m-232 80h160m-160 80h160"
                       ></path>
                     </svg>
-                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Terms and Conditions</p>
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>{t("termsAndConditions")}</p>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2400,7 +2418,7 @@ const MyProfile = ({ mobileDimension }) => {
               }}
               onClick={async () => logout()}
             >
-                Log Out
+                {t("logOut")}
             </button>
           </div>
         </div>
@@ -2418,7 +2436,7 @@ const MyProfile = ({ mobileDimension }) => {
             gap: "3%",
           }}
         >
-          {/* Profile Image */}
+          {/* Profile Picture */}
           <div
             style={{
               width: "15%",
@@ -2437,6 +2455,159 @@ const MyProfile = ({ mobileDimension }) => {
               <p style={{ fontSize: "60px", color: "white", textAlign: "center", marginTop: "25%" }}>+</p>
             )}
           </div>
+
+          {showPopup && !isMobile && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: "220px", // Width of the sidebar (adjust if needed)
+                width: "calc(100vw - 220px)", // Full width minus sidebar width
+                height: "100vh",
+                background: "rgba(0,0,0,0.7)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 99999
+              }}
+            >
+              <div
+                style={{
+                  background: "#232323",
+                  borderRadius: "20px",
+                  padding: "32px",
+                  width: "450px", // Increased width
+                  height: "450px", // Increased height
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center", // Center content vertically
+                  position: "relative"
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "18px",
+                    color: "white",
+                    fontSize: "32px",
+                    cursor: "pointer",
+                    zIndex: 100000
+                  }}
+                  onClick={() => setShowPopup(false)}
+                >
+                  ×
+                </span>
+                {!imageSrc ? (
+                  <div
+                    style={{
+                      width: "300px", // Increased size
+                      height: "300px", // Increased size
+                      border: "2px dashed white",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "column",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      margin: "0 auto" // Center horizontally
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleImageUpload}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      id="upload-input-desktop"
+                      style={{
+                        position: "absolute",
+                        width: "300px", // Match parent
+                        height: "300px", // Match parent
+                        opacity: 0,
+                        cursor: "pointer",
+                      }}
+                    />
+                    <label 
+                      htmlFor="upload-input-desktop" 
+                      style={{ 
+                        color: "white", 
+                        fontWeight: "bold", 
+                        cursor: "pointer", 
+                        width: '80%',
+                        textAlign: "center", // Center text
+                        fontSize: "18px" // Larger text
+                      }}
+                    >
+                      {t("clickOrDragAndDrop")}
+                    </label>
+                  </div>
+                ) : (
+                  <div style={{ 
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%"
+                  }}>
+                    <img
+                      src={imageSrc}
+                      alt="Uploaded"
+                      style={{
+                        width: "300px", // Increased size
+                        height: "300px", // Increased size
+                        borderRadius: "10px",
+                        border: "2px solid white",
+                        objectFit: "cover" // Maintain aspect ratio
+                      }}
+                    />
+                    <div style={{ 
+                      marginTop: "30px", 
+                      display: "flex", 
+                      gap: "30px", 
+                      justifyContent: "center" 
+                    }}>
+                      <button
+                        onClick={handleConfirm}
+                        style={{
+                          padding: "12px 30px", // Larger button
+                          background: "black",
+                          color: "white",
+                          borderRadius: "10px",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "2px 4px 10px rgba(0, 0, 0, 0.3)",
+                          fontSize: "16px" // Larger text
+                        }}
+                      >
+                        {t("confirm")}
+                      </button>
+                      <button
+                        onClick={handleRetake}
+                        style={{
+                          padding: "12px 30px", // Larger button
+                          background: "#d4543f",
+                          color: "white",
+                          borderRadius: "10px",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "2px 4px 10px rgba(255, 0, 0, 0.3)",
+                          fontSize: "16px" // Larger text
+                        }}
+                      >
+                        {t("retake")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* User Info */}
           <div style={{ width: "35%" }}>
@@ -2459,7 +2630,7 @@ const MyProfile = ({ mobileDimension }) => {
               )}
             </h1>
             <p style={{ color: "white", fontSize: "1vw", fontSize:'13px' }}>
-              Member since {joinDate}
+              {t("memberSince") + " " + joinDate}
             </p>
           </div>
         </div>
@@ -2501,7 +2672,7 @@ const MyProfile = ({ mobileDimension }) => {
               <span style={{ fontSize: "35px", fontWeight: "bold", color: 'white' }}>
                 {streak || 0}
               </span>              
-              <span style={{ fontSize: "14px", color:'white'}}>Streak</span>
+              <span style={{ fontSize: "14px", color:'white'}}>{t('streak')}</span>
             </div>
           </div>
 
@@ -2553,9 +2724,9 @@ const MyProfile = ({ mobileDimension }) => {
           width: "90%",
           marginBottom: "3%"
         }}>
-          <span style={{ fontSize: "1.2vw", fontWeight: "bold", color:'white', marginBottom: "2%", fontSize:'18px'}}>Recent Activity</span>
+          <span style={{ fontSize: "1.2vw", fontWeight: "bold", color:'white', marginBottom: "2%", fontSize:'18px'}}>{t("recentActivity")}</span>
           <span style={{ fontSize: "1vw", color:'white', fontSize:'18px'}}>
-            {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || "No Sets Yet :("}
+            {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || t("noSetsYet")}
           </span>
         </div>
 

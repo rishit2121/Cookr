@@ -109,6 +109,7 @@ const FlashCard = () => {
           info: JSON.parse(localStorage.getItem("flashcardSet")),
           lastFlashcards: flashcards.slice(-10), // Using flashcards instead of questions
           mode: localStorage.getItem("mode"),
+          language: localStorage.getItem('language') || 'en',
         }),
       };
   

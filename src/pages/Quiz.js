@@ -18,6 +18,9 @@ const Quiz = () => {
   // Fetch questions from the server
   const fetchQuestions = async () => {
     setIsFetching(true);
+
+    const currentLanguage = localStorage.getItem('language') || 'en';
+    
     const options = {
       method: "POST",
       headers: {
@@ -28,6 +31,7 @@ const Quiz = () => {
       body: JSON.stringify({
         info: location.state,
         lastQuestionSet: [],
+        language: currentLanguage,
       }),
     };
 
@@ -54,7 +58,7 @@ const Quiz = () => {
       // Store correct answers
       const answerMap = {};
       modifiedQuestions.forEach(q => {
-        answerMap[q.id] = q.correctAnswer; // Assuming 'id' and 'correctAnswer' fields exist
+        answerMap[q.id] = q.correctAnswer;
       });
       setCorrectAnswers(answerMap);
 

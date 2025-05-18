@@ -9,9 +9,11 @@ import { onAuthStateChanged } from "firebase/auth";
 import myImage from "../assets/cookr_logo.png";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
+import { useTranslation } from 'react-i18next';
 
 
 const Navbar = ({ setMobileDimension }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [darkMode, setDarkMode] = useState(true); // State for theme
@@ -100,6 +102,28 @@ const Navbar = ({ setMobileDimension }) => {
   //   return <p>Loading...</p>; // Show loading indicator while resolving auth state
   // }
 
+  // Define consistent styles at the top of your component
+  const navLinkStyle = {
+    display: "flex",
+    alignItems: "center",
+    padding: "20px",
+    color: "#fff",
+    textDecoration: "none",
+    width: "100%",
+  };
+
+  const iconContainerStyle = {
+    display: "flex", 
+    alignItems: "center",
+    width: "100%",
+  };
+
+  const iconStyle = {
+    minWidth: "20px", 
+    marginRight: "15px", // Fixed margin between icon and text
+    height: "20px",
+  };
+
   return (
     // user ? (
     <>
@@ -140,26 +164,19 @@ const Navbar = ({ setMobileDimension }) => {
       )} */}
         <Link
           to={"/"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "20px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "80px",
-            justifyContent: "space-between",
-          }}
+          style={navLinkStyle}
         >
-          <svg
-            fill={"#ffffff"}
-            xmlns="https://www.w3.org/2000/svg"
-            viewBox="0 0 576 512"
-            height={20}
-          >
-            <path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .7 160.2c0 2.7-.2 5.4-.5 8.1l0 16.2c0 22.1-17.9 40-40 40l-16 0c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1L416 512l-24 0c-22.1 0-40-17.9-40-40l0-24 0-64c0-17.7-14.3-32-32-32l-64 0c-17.7 0-32 14.3-32 32l0 64 0 24c0 22.1-17.9 40-40 40l-24 0-31.9 0c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2l-16 0c-22.1 0-40-17.9-40-40l0-112c0-.9 0-1.9 .1-2.8l0-69.7-32 0c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" />
-          </svg>
-          <span>Home</span>
+          <div style={iconContainerStyle}>
+            <svg
+              fill={"#ffffff"}
+              xmlns="https://www.w3.org/2000/svg"
+              viewBox="0 0 576 512"
+              style={iconStyle}
+            >
+              <path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .7 160.2c0 2.7-.2 5.4-.5 8.1l0 16.2c0 22.1-17.9 40-40 40l-16 0c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1L416 512l-24 0c-22.1 0-40-17.9-40-40l0-24 0-64c0-17.7-14.3-32-32-32l-64 0c-17.7 0-32 14.3-32 32l0 64 0 24c0 22.1-17.9 40-40 40l-24 0-31.9 0c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2l-16 0c-22.1 0-40-17.9-40-40l0-112c0-.9 0-1.9 .1-2.8l0-69.7-32 0c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" />
+            </svg>
+            <span>{t("home")}</span>
+          </div>
         </Link>
         {/* {user  && (
         <Link
@@ -201,63 +218,43 @@ const Navbar = ({ setMobileDimension }) => {
           </span>
         </Link>
         )} */}
-        {user  && (
-        <Link
-          to={"/library"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "20px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "113px",
-            justifyContent: "space-between",
-          }}
-        >
-          <svg
-            fill={"#ffffff"}
-            width="20px"
-            height="20px"
-            viewBox="0 0 32 32"
-            version="1.1"
-            xmlns="https://www.w3.org/2000/svg"
-          >
-            <title>books</title>
-            <path d="M30.156 26.492l-6.211-23.184c-0.327-1.183-1.393-2.037-2.659-2.037-0.252 0-0.495 0.034-0.727 0.097l0.019-0.004-2.897 0.776c-0.325 0.094-0.609 0.236-0.86 0.42l0.008-0.005c-0.49-0.787-1.349-1.303-2.33-1.306h-2.998c-0.789 0.001-1.5 0.337-1.998 0.873l-0.002 0.002c-0.5-0.537-1.211-0.873-2-0.874h-3c-1.518 0.002-2.748 1.232-2.75 2.75v24c0.002 1.518 1.232 2.748 2.75 2.75h3c0.789-0.002 1.5-0.337 1.998-0.873l0.002-0.002c0.5 0.538 1.211 0.873 2 0.875h2.998c1.518-0.002 2.748-1.232 2.75-2.75v-16.848l4.699 17.54c0.327 1.182 1.392 2.035 2.656 2.037h0c0.001 0 0.003 0 0.005 0 0.251 0 0.494-0.034 0.725-0.098l-0.019 0.005 2.898-0.775c1.182-0.326 2.036-1.392 2.036-2.657 0-0.252-0.034-0.497-0.098-0.729l0.005 0.019zM18.415 9.708l5.31-1.423 3.753 14.007-5.311 1.422zM18.068 3.59l2.896-0.776c0.097-0.027 0.209-0.043 0.325-0.043 0.575 0 1.059 0.389 1.204 0.918l0.002 0.009 0.841 3.139-5.311 1.423-0.778-2.905v-1.055c0.153-0.347 0.449-0.607 0.812-0.708l0.009-0.002zM11.5 2.75h2.998c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.498 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM8.75 23.25h-5.5v-14.5l5.5-0.001zM10.25 8.75l5.498-0.001v14.501h-5.498zM4.5 2.75h3c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.5 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM7.5 29.25h-3c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.5v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM14.498 29.25h-2.998c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.498v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM28.58 27.826c-0.164 0.285-0.43 0.495-0.747 0.582l-0.009 0.002-2.898 0.775c-0.096 0.026-0.206 0.041-0.319 0.041-0.575 0-1.060-0.387-1.208-0.915l-0.002-0.009-0.841-3.14 5.311-1.422 0.841 3.14c0.027 0.096 0.042 0.207 0.042 0.321 0 0.23-0.063 0.446-0.173 0.63l0.003-0.006z"></path>
-          </svg>
-          <span>My Library</span>
+        {user && (
+        <Link to={"/library"} style={navLinkStyle}>
+          <div style={iconContainerStyle}>
+            <svg
+              fill={"#ffffff"}
+              width="20px"
+              height="20px"
+              viewBox="0 0 32 32"
+              version="1.1"
+              xmlns="https://www.w3.org/2000/svg"
+              style={iconStyle}
+            >
+              <title>books</title>
+              <path d="M30.156 26.492l-6.211-23.184c-0.327-1.183-1.393-2.037-2.659-2.037-0.252 0-0.495 0.034-0.727 0.097l0.019-0.004-2.897 0.776c-0.325 0.094-0.609 0.236-0.86 0.42l0.008-0.005c-0.49-0.787-1.349-1.303-2.33-1.306h-2.998c-0.789 0.001-1.5 0.337-1.998 0.873l-0.002 0.002c-0.5-0.537-1.211-0.873-2-0.874h-3c-1.518 0.002-2.748 1.232-2.75 2.75v24c0.002 1.518 1.232 2.748 2.75 2.75h3c0.789-0.002 1.5-0.337 1.998-0.873l0.002-0.002c0.5 0.538 1.211 0.873 2 0.875h2.998c1.518-0.002 2.748-1.232 2.75-2.75v-16.848l4.699 17.54c0.327 1.182 1.392 2.035 2.656 2.037h0c0.001 0 0.003 0 0.005 0 0.251 0 0.494-0.034 0.725-0.098l-0.019 0.005 2.898-0.775c1.182-0.326 2.036-1.392 2.036-2.657 0-0.252-0.034-0.497-0.098-0.729l0.005 0.019zM18.415 9.708l5.31-1.423 3.753 14.007-5.311 1.422zM18.068 3.59l2.896-0.776c0.097-0.027 0.209-0.043 0.325-0.043 0.575 0 1.059 0.389 1.204 0.918l0.002 0.009 0.841 3.139-5.311 1.423-0.778-2.905v-1.055c0.153-0.347 0.449-0.607 0.812-0.708l0.009-0.002zM11.5 2.75h2.998c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.498 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM8.75 23.25h-5.5v-14.5l5.5-0.001zM10.25 8.75l5.498-0.001v14.501h-5.498zM4.5 2.75h3c0.69 0.001 1.249 0.56 1.25 1.25v3.249l-5.5 0.001v-3.25c0.001-0.69 0.56-1.249 1.25-1.25h0zM7.5 29.25h-3c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.5v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM14.498 29.25h-2.998c-0.69-0.001-1.249-0.56-1.25-1.25v-3.25h5.498v3.25c-0.001 0.69-0.56 1.249-1.25 1.25h-0zM28.58 27.826c-0.164 0.285-0.43 0.495-0.747 0.582l-0.009 0.002-2.898 0.775c-0.096 0.026-0.206 0.041-0.319 0.041-0.575 0-1.060-0.387-1.208-0.915l-0.002-0.009-0.841-3.14 5.311-1.422 0.841 3.14c0.027 0.096 0.042 0.207 0.042 0.321 0 0.23-0.063 0.446-0.173 0.63l0.003-0.006z"></path>
+            </svg>
+            <span>{t("myLibrary")}</span>
+          </div>
         </Link>
         )}
-        {user  && (
-        <Link
-          to={"/leaderboard"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "19px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "123px",
-            justifyContent: "space-between",
-          }}
-        >
-           <svg
-          xmlns="https://www.w3.org/2000/svg"
-          viewBox="0 0 16 22"
-          height={20}
-          style={{ transform: "scale(1.3)", overflow: "visible" }}
-        >
-          <path
-            fill="#ffffff"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-            d="M15 21H9v-8.4a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6zm5.4 0H15v-2.9a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v2.3a.6.6 0 0 1-.6.6M9 21v-4.9a.6.6 0 0 0-.6-.6H3.6a.6.6 0 0 0-.6.6v4.3a.6.6 0 0 0 .6.6zm1.806-15.887l.909-1.927a.312.312 0 0 1 .57 0l.91 1.927l2.032.311c.261.04.365.376.176.568l-1.47 1.5l.347 2.118c.044.272-.228.48-.462.351l-1.818-1l-1.818 1c-.233.128-.506-.079-.462-.351l.347-2.118l-1.47-1.5c-.19-.192-.085-.528.175-.568z"
-          ></path>
-        </svg>
-          <span style={{marginTop:'6%', marginLeft:'18%'}}>Leaderboard</span>
+        {user && (
+        <Link to={"/leaderboard"} style={navLinkStyle}>
+          <div style={iconContainerStyle}>
+            <svg
+              xmlns="https://www.w3.org/2000/svg"
+              viewBox="0 0 16 22"
+              style={iconStyle}
+            >
+              <path
+                fill="#ffffff"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M15 21H9v-8.4a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6zm5.4 0H15v-2.9a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v2.3a.6.6 0 0 1-.6.6M9 21v-4.9a.6.6 0 0 0-.6-.6H3.6a.6.6 0 0 0-.6.6v4.3a.6.6 0 0 0 .6.6zm1.806-15.887l.909-1.927a.312.312 0 0 1 .57 0l.91 1.927l2.032.311c.261.04.365.376.176.568l-1.47 1.5l.347 2.118c.044.272-.228.48-.462.351l-1.818-1l-1.818 1c-.233.128-.506-.079-.462-.351l.347-2.118l-1.47-1.5c-.19-.192-.085-.528.175-.568z"
+              ></path>
+            </svg>
+            <span>{t("leaderboard")}</span>
+          </div>
         </Link>
         )}
         {/* {user  && (
@@ -290,29 +287,19 @@ const Navbar = ({ setMobileDimension }) => {
           <span style={{fontSize:13}}>Featured Sets</span>
         </Link>
         )} */}
-        {user  && (
-        <Link
-          to="/saved"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "20px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "105px",
-            justifyContent: "space-between",
-          }}
-        >
-          <svg
-            fill={"#ffffff"}
-            xmlns="https://www.w3.org/2000/svg"
-            viewBox="0 0 384 512"
-            height={20}
-          >
-            <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" />
-          </svg>
-          <span>Favorites</span>
+        {user && (
+        <Link to="/saved" style={navLinkStyle}>
+          <div style={iconContainerStyle}>
+            <svg
+              fill={"#ffffff"}
+              xmlns="https://www.w3.org/2000/svg"
+              viewBox="0 0 384 512"
+              style={iconStyle}
+            >
+              <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" />
+            </svg>
+            <span>{t("favorites")}</span>
+          </div>
         </Link>
         )}
         {/* {localStorage.getItem("email")  && (
@@ -357,29 +344,19 @@ const Navbar = ({ setMobileDimension }) => {
           <span>Explore</span>
         </Link>
         )} */}
-        {user  && (
-        <Link
-          to="/profile"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "20px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "80px",
-            justifyContent: "space-between",
-          }}
-        >
-          <svg
-            fill={"#ffffff"}
-            xmlns="https://www.w3.org/2000/svg"
-            height={20}
-            viewBox="0 0 448 512"
-          >
-            <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z" />
-          </svg>
-          <span>Profile</span>
+        {user && (
+        <Link to="/profile" style={navLinkStyle}>
+          <div style={iconContainerStyle}>
+            <svg
+              fill={"#ffffff"}
+              xmlns="https://www.w3.org/2000/svg"
+              viewBox="0 0 448 512"
+              style={iconStyle}
+            >
+              <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z" />
+            </svg>
+            <span>{t("profile")}</span>
+          </div>
         </Link>
         )}
         {/* {user  && (
@@ -409,28 +386,21 @@ const Navbar = ({ setMobileDimension }) => {
         )} */}
         <Link
           to="https://forms.gle/aWnQhHmELkT1Mvhw6"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "20px",
-            color: "#fff",
-            textDecoration: "none",
-            display: "flex",
-            width: "127px",
-            justifyContent: "space-between",
-          }}
+          style={navLinkStyle}
         >
-          <svg
-            fill={"#ffffff"}
-            xmlns="https://www.w3.org/2000/svg"
-            viewBox="0 0 512 512"
-            height={20}
-          >
-            <path d="M256 0c53 0 96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6c0-53 43-96 96-96zM41.4 105.4c12.5-12.5 32.8-12.5 45.3 0l64 64c.7 .7 1.3 1.4 1.9 2.1c14.2-7.3 30.4-11.4 47.5-11.4l112 0c17.1 0 33.2 4.1 47.5 11.4c.6-.7 1.2-1.4 1.9-2.1l64-64c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-64 64c-.7 .7-1.4 1.3-2.1 1.9c6.2 12 10.1 25.3 11.1 39.5l64.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c0 24.6-5.5 47.8-15.4 68.6c2.2 1.3 4.2 2.9 6 4.8l64 64c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-63.1-63.1c-24.5 21.8-55.8 36.2-90.3 39.6L272 240c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 239.2c-34.5-3.4-65.8-17.8-90.3-39.6L86.6 502.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l64-64c1.9-1.9 3.9-3.4 6-4.8C101.5 367.8 96 344.6 96 320l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64.3 0c1.1-14.1 5-27.5 11.1-39.5c-.7-.6-1.4-1.2-2.1-1.9l-64-64c-12.5-12.5-12.5-32.8 0-45.3z" />
-          </svg>{" "}
-          <span>Report Bugs</span>
+          <div style={iconContainerStyle}>
+            <svg
+              fill={"#ffffff"}
+              xmlns="https://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              style={iconStyle}
+            >
+              <path d="M256 0c53 0 96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6c0-53 43-96 96-96zM41.4 105.4c12.5-12.5 32.8-12.5 45.3 0l64 64c.7 .7 1.3 1.4 1.9 2.1c14.2-7.3 30.4-11.4 47.5-11.4l112 0c17.1 0 33.2 4.1 47.5 11.4c.6-.7 1.2-1.4 1.9-2.1l64-64c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-64 64c-.7 .7-1.4 1.3-2.1 1.9c6.2 12 10.1 25.3 11.1 39.5l64.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c0 24.6-5.5 47.8-15.4 68.6c2.2 1.3 4.2 2.9 6 4.8l64 64c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-63.1-63.1c-24.5 21.8-55.8 36.2-90.3 39.6L272 240c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 239.2c-34.5-3.4-65.8-17.8-90.3-39.6L86.6 502.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l64-64c1.9-1.9 3.9-3.4 6-4.8C101.5 367.8 96 344.6 96 320l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64.3 0c1.1-14.1 5-27.5 11.1-39.5c-.7-.6-1.4-1.2-2.1-1.9l-64-64c-12.5-12.5-12.5-32.8 0-45.3z" />
+            </svg>{" "}
+            <span>{t("reportBugs")}</span>
+          </div>
         </Link>
-        <div style={{ position: "absolute", bottom: "50px" }}>
+        <div style={{ position: "absolute", bottom: "50px", width: "100%" }}>
           {user ? (
             <div
               style={{
@@ -439,22 +409,21 @@ const Navbar = ({ setMobileDimension }) => {
                 padding: "20px",
                 color: "#fff",
                 textDecoration: "none",
-                display: "flex",
-                justifyContent: "space-between",
-                width: "90px",
                 cursor: "pointer",
               }}
               onClick={async () => logout()}
             >
-              <svg
-                fill={"#ffffff"}
-                xmlns="https://www.w3.org/2000/svg"
-                height={20}
-                viewBox="0 0 512 512"
-              >
-                <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
-              </svg>
-              <span>Log Out</span>
+              <div style={{ width: "20px", display: "flex", justifyContent: "center" }}>
+                <svg
+                  fill={"#ffffff"}
+                  xmlns="https://www.w3.org/2000/svg"
+                  height={20}
+                  viewBox="0 0 512 512"
+                >
+                  <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
+                </svg>
+              </div>
+              <span style={{ marginLeft: "15px" }}>{t("logOut")}</span>
             </div>
           ) : (
             <div
@@ -464,22 +433,21 @@ const Navbar = ({ setMobileDimension }) => {
                 padding: "20px",
                 color: "#fff",
                 textDecoration: "none",
-                display: "flex",
-                justifyContent: "space-between",
-                width: "90px",
                 cursor: "pointer",
               }}
               onClick={async () => navigate("/auth")}
             >
-              <svg
-                fill={"#ffffff"}
-                xmlns="https://www.w3.org/2000/svg"
-                height={20}
-                viewBox="0 0 512 512"
-              >
-                <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
-              </svg>
-              <span>Sign In</span>
+              <div style={{ width: "20px", display: "flex", justifyContent: "center" }}>
+                <svg
+                  fill={"#ffffff"}
+                  xmlns="https://www.w3.org/2000/svg"
+                  height={20}
+                  viewBox="0 0 512 512"
+                >
+                  <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
+                </svg>
+              </div>
+              <span style={{ marginLeft: "15px" }}>{t("signIn")}</span>
             </div>
           )}
         </div>

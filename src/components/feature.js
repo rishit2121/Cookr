@@ -7,11 +7,18 @@ import {
     updateDoc,
     arrayUnion,
     arrayRemove,
-  } from "firebase/firestore";
-  import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
-  import { onAuthStateChanged } from "firebase/auth";
-  import { useNavigate } from 'react-router-dom';
-  import Bottom from "./BottomNav";
+    collection,
+    query,
+    limit,
+    orderBy,
+    startAfter,
+    getDocs,
+} from "firebase/firestore";
+import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import Bottom from "./BottomNav";
+import { useTranslation } from 'react-i18next';
 
 var randomColor = require("randomcolor"); // import the script
 
@@ -30,6 +37,7 @@ const generateUniqueNumber = (email) => {
 };
 
 const Features= ({ mobileDimension }) => {
+  const { t } = useTranslation();
   const [streak, setStreak] = useState(
     localStorage.getItem("streak") ? parseInt(localStorage.getItem("streak")) : 0
   );
@@ -65,8 +73,16 @@ const Features= ({ mobileDimension }) => {
   const [recentlyAdded, setRecentlyAdded] = useState(new Set());
   const [duplicateSet, setDuplicateSet] = useState(new Set());
   const [showAlreadyFeaturedWarning, setShowAlreadyFeaturedWarning] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [displayedSets, setDisplayedSets] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreSets, setHasMoreSets] = useState(false);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const SETS_PER_PAGE = 24;
+
   useEffect(() => {
     const handleResize = () => {
       setIsVisible(window.innerWidth > 1100);
@@ -81,19 +97,39 @@ const Features= ({ mobileDimension }) => {
     };
   }, []);
   useEffect(() => {
-    try {
-      const fetchFeaturedSets = async () => {
-        const featuredDoc = await getDoc(doc(db, "sets", "featured"));
-        const data = featuredDoc.data();
-        const sets = data?.sets || [];
+    const fetchInitialSets = async () => {
+      try {
+        setIsLoadingMore(true);
         
-        const sortedSets = [...sets].sort((a, b) => {
+        const featuredDocRef = doc(db, "sets", "featured");
+        const featuredDoc = await getDoc(featuredDocRef);
+        
+        if (!featuredDoc.exists()) {
+          setIsLoadingMore(false);
+          return;
+        }
+        
+        const data = featuredDoc.data();
+        const allSets = data?.sets || [];
+        
+        const sortedSets = [...allSets].sort((a, b) => {
           const timesAddedA = a.timesAdded || 0;
           const timesAddedB = b.timesAdded || 0;
           return timesAddedB - timesAddedA;
         });
         
-        // Check for already added sets immediately
+        const firstBatch = sortedSets.slice(0, SETS_PER_PAGE);
+        setDisplayedSets(firstBatch);
+        
+        if (sortedSets.length > SETS_PER_PAGE) {
+          setLastVisible(sortedSets[SETS_PER_PAGE - 1]);
+          setHasMoreSets(true);
+        } else {
+          setHasMoreSets(false);
+        }
+        
+        setFeaturedSets(sortedSets);
+        
         if (user) {
           const userRef = doc(db, "users", user);
           const userDoc = await getDoc(userRef);
@@ -107,15 +143,15 @@ const Features= ({ mobileDimension }) => {
           }
         }
         
-        setFeaturedSets(sortedSets);
-        setSets(sortedSets);
-      };
+        setIsLoadingMore(false);
+      } catch (error) {
+        console.error("Error fetching featured sets:", error);
+        setIsLoadingMore(false);
+      }
+    };
 
-      fetchFeaturedSets();
-    } catch (error) {
-      console.error("Error fetching featured sets:", error);
-    }
-  }, [user]); 
+    fetchInitialSets();
+  }, [user]);
   useEffect(() => {
     if (user) {
       const userRef = doc(db, "users", user);
@@ -174,20 +210,66 @@ const Features= ({ mobileDimension }) => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    if (query.length > 0) {
+    const trimmedQuery = query.trim();
+    
+    if (trimmedQuery.length > 0) {
+
+      if (!searchActive) {
+
+        localStorage.setItem('previouslyLoadedSets', JSON.stringify(displayedSets));
+        setSearchActive(true);
+      }
+      
+
       const searchResults = selected === "Community Sets" ? 
         featuredSets.filter(item => 
-          item.title?.toLowerCase().includes(query.toLowerCase()) ||
-          item.content?.toLowerCase().includes(query.toLowerCase())
+          item.title?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+          item.content?.toLowerCase().includes(trimmedQuery.toLowerCase())
         ) :
         mySets.filter(item => 
-          item.title?.toLowerCase().includes(query.toLowerCase()) ||
-          item.content?.toLowerCase().includes(query.toLowerCase())
+          item.title?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+          item.content?.toLowerCase().includes(trimmedQuery.toLowerCase())
         );
+      
+
+      if (selected === "Community Sets") {
+        const firstBatchOfSearchResults = searchResults.slice(0, SETS_PER_PAGE);
+        setDisplayedSets(firstBatchOfSearchResults);
+        setHasMoreSets(searchResults.length > SETS_PER_PAGE);
+        
+
+        localStorage.setItem('allSearchResults', JSON.stringify(searchResults));
+      }
       
       setRecommendations(searchResults.slice(0, 5));
       setShowRecommendations(true);
     } else {
+ 
+      if (searchActive && selected === "Community Sets") {
+ 
+        const previousSets = localStorage.getItem('previouslyLoadedSets');
+        if (previousSets) {
+          try {
+            const parsedSets = JSON.parse(previousSets);
+            setDisplayedSets(parsedSets);
+            setHasMoreSets(featuredSets.length > parsedSets.length);
+          } catch (error) {
+            console.error("Error parsing previously loaded sets:", error);
+            const firstBatch = featuredSets.slice(0, SETS_PER_PAGE);
+            setDisplayedSets(firstBatch);
+            setHasMoreSets(featuredSets.length > SETS_PER_PAGE);
+          }
+        }
+        
+
+        localStorage.removeItem('allSearchResults');
+        
+
+        if (query === '') {
+          localStorage.removeItem('previouslyLoadedSets');
+          setSearchActive(false);
+        }
+      }
       setShowRecommendations(false);
     }
   };
@@ -199,14 +281,15 @@ const Features= ({ mobileDimension }) => {
 
   const handleClick = async (text) => {
     setSelected(text);
-
     
     if (text === "Community Sets") {
       try {
+        setCurrentPage(1);
+        
+
         const featuredDoc = await getDoc(doc(db, "sets", "featured"));
         const data = featuredDoc.data();
         const sets = data?.sets || [];
-        
         
         const sortedSets = [...sets].sort((a, b) => {
           const timesAddedA = a.timesAdded || 0;
@@ -214,24 +297,71 @@ const Features= ({ mobileDimension }) => {
           return timesAddedB - timesAddedA;
         });
         
+        const firstBatch = sortedSets.slice(0, SETS_PER_PAGE);
+        setDisplayedSets(firstBatch);
+        
+        if (sortedSets.length > SETS_PER_PAGE) {
+          setLastVisible(sortedSets[SETS_PER_PAGE - 1]);
+          setHasMoreSets(true);
+        } else {
+          setHasMoreSets(false);
+        }
+        
         setFeaturedSets(sortedSets);
-        setSets(sortedSets);
       } catch (error) {
         console.error("Error fetching featured sets:", error);
       }
     }
   };
 
+  const loadMoreSets = async () => {
+    if (isLoadingMore) return;
+    
+    try {
+      setIsLoadingMore(true);
+      
+
+      const trimmedQuery = searchQuery.trim();
+      if (searchActive && trimmedQuery.length > 0) {
+
+        const allSearchResults = JSON.parse(localStorage.getItem('allSearchResults') || '[]');
+        
+
+        const nextBatch = allSearchResults.slice(displayedSets.length, displayedSets.length + SETS_PER_PAGE);
+        
+
+        setDisplayedSets(prev => [...prev, ...nextBatch]);
+        
+
+        setHasMoreSets(displayedSets.length + nextBatch.length < allSearchResults.length);
+      } else {
+        const nextBatch = featuredSets
+          .slice(displayedSets.length, displayedSets.length + SETS_PER_PAGE);
+        
+        setDisplayedSets(prev => [...prev, ...nextBatch]);
+        
+        const remainingSets = featuredSets.length - (displayedSets.length + nextBatch.length);
+        setHasMoreSets(remainingSets > 0);
+      }
+      
+      setCurrentPage(prev => prev + 1);
+      setIsLoadingMore(false);
+    } catch (error) {
+      console.error("Error loading more sets:", error);
+      setIsLoadingMore(false);
+    }
+  };
 
   const getStyle = (text) => ({
     display: "flex",
     width: text === "Community Sets" ? "140px" : "100px",
-    justifyContent: text === "My Sets" ? "center" : "flex-start",
+    justifyContent: "center", // Center all tab text
     alignItems: "center",
     fontWeight: selected === text ? "bold" : "normal",
     position: "relative",
     cursor: "pointer",
-    color: "white"
+    color: "white",
+    textAlign: "center" // Additional centering property
   });
   
 
@@ -493,7 +623,7 @@ const Features= ({ mobileDimension }) => {
         }
       }
 
-      // Only increment timesAdded if this is a new set or if the user hasn't added it before
+    
       if (!originalSet || !originalSet.addedByUsers?.includes(userEmail)) {
         newSet.timesAdded = (originalSet?.timesAdded || 0) + 1;
       }
@@ -552,67 +682,53 @@ const Features= ({ mobileDimension }) => {
   };
 
   const Toggle = ({ isChecked, handleChange, id }) => {
-    const toggleStyles = {
-      container: {
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",  // Reduced from 8px to 4px
-      },
-      input: {
-        visibility: "hidden",
-        width: 0,
-        height: 0,
-      },
-      switch: {
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer",
-        width: "60px",
-        height: "30px",
-        borderRadius: "30px",
-        transition: "background-color 0.3s ease",
-      },
-      button: {
-        position: "absolute",
-        top: "2px",
-        left: "2px",
-        width: "26px",
-        height: "26px",
-        borderRadius: "50%",
-        background: "white",
-        transition: "transform 0.3s ease",
-        transform: isChecked ? "translateX(30px)" : "translateX(0)",
-      },
-      text: {
-        color: "white",
-        fontSize: "14px",
-        marginLeft: "4px",  // Reduced from 8px to 4px
-      }
+    // Create a local state to track animation
+    const [position, setPosition] = React.useState(isChecked ? "32px" : "2px");
+    
+    // Update position when isChecked changes
+    React.useEffect(() => {
+      setPosition(isChecked ? "32px" : "2px");
+    }, [isChecked]);
+    
+    const toggleClick = () => {
+      // Update the position first for immediate visual feedback
+      setPosition(isChecked ? "2px" : "32px");
+      // Then call the parent's handler
+      handleChange(!isChecked);
     };
-
+    
     return (
-      <div style={toggleStyles.container}>
-        <input
-          type="checkbox"
-          id={`toggle-${id}`}
-          style={toggleStyles.input}
-          checked={isChecked}
-          onChange={(e) => handleChange(e.target.checked)}
-        />
-        <label 
-          htmlFor={`toggle-${id}`} 
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px"
+      }}>
+        <div 
+          onClick={toggleClick}
           style={{
-            ...toggleStyles.switch,
-            backgroundColor: isChecked ? "#4CAF50" : "#f44336"
+            width: "60px",
+            height: "30px",
+            backgroundColor: isChecked ? "#4CAF50" : "#333333",
+            borderRadius: "15px",
+            position: "relative",
+            cursor: "pointer",
+            
           }}
         >
-          <span 
-            style={toggleStyles.button}
-            id={`toggle-button-${id}`}
+          <div 
+            style={{
+              position: "absolute",
+              width: "26px",
+              height: "26px",
+              backgroundColor: "white",
+              borderRadius: "50%",
+              top: "2px",
+              left: position,
+              transition: "left 0.2s ease-in-out"
+            }}
           />
-        </label>
-        <span style={toggleStyles.text}>Make Public</span>
+        </div>
+        <span style={{ color: "white", fontSize: "14px" }}>{t("makePublic")}</span>
       </div>
     );
   };
@@ -689,7 +805,7 @@ const Features= ({ mobileDimension }) => {
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'translate(-25.5%, -50%)',
+          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
           backgroundColor: '#28282B',
           padding: '20px',
           borderRadius: '10px',
@@ -704,7 +820,7 @@ const Features= ({ mobileDimension }) => {
             alignItems: 'center',
             marginBottom: '15px'
           }}>
-            <h3 style={{ margin: 0, color: 'white' }}>Subscription Required</h3>
+            <h3 style={{ margin: 0, color: 'white' }}>{t('subscriptionRequired')}</h3>
             <button
               onClick={onClose}
               style={{
@@ -720,7 +836,7 @@ const Features= ({ mobileDimension }) => {
             </button>
           </div>
           <p style={{ color: 'white', marginBottom: '20px' }}>
-            You can only have 10 sets at once in the library. Upgrade to premium for unlimited sets!
+            {t('subscriptionRequiredMessage')}
           </p>
         </div>
       </>
@@ -765,7 +881,7 @@ const Features= ({ mobileDimension }) => {
 
     return (
       <p style={{ margin: 0, color: "#999", fontSize: "14px", marginBottom: "12px" }}>
-        By {username}
+        {t('by')} {username}
       </p>
     );
   };
@@ -967,16 +1083,16 @@ const Features= ({ mobileDimension }) => {
               >
                 <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
               </svg>
-              Back to Library
+              {t("backToLibrary")}
           </button>
           )}
           <h1 style={{ 
             color: "white",
             minWidth: "200px",
             textAlign: "center",
-            margin: 0
+            marginLeft: window.innerWidth <= 768 ? "-5px" : "20px"
           }}>
-            Explore Sets
+            {t("exploreSets")}
           </h1>
         </div>
         <div style={{
@@ -995,13 +1111,13 @@ const Features= ({ mobileDimension }) => {
             minWidth: "300px",
             maxWidth: "500px",
             justifyContent: "center",
-            width: window.innerWidth <= 768 ? "100%" : "auto",
+            width: window.innerWidth <= 768 ? "auto" : "auto",
             position: "relative"
           }}>
             <div style={{ position: "relative", flex: 1 }}>
         <input
         type="text"
-        placeholder="Search..."
+        placeholder={t("search")}
         style={{
                   width: "100%",
             borderRadius: "20px",
@@ -1011,10 +1127,12 @@ const Features= ({ mobileDimension }) => {
                   color: "#333",
                   outline: "none",
             fontSize: "16px",
-                  height: "50px",
+            fontWeight: "bold",
+                  height: window.innerWidth <= 768 ? "45px" : "50px",
             paddingLeft: "20px",
                   minWidth: "200px",
-                  maxWidth: window.innerWidth <= 768 ? "100%" : "none"
+                  maxWidth: window.innerWidth <= 768 ? "100%" : "none",
+                  marginLeft: window.innerWidth <= 768 ? "-15px" : "0",
         }}
         value={searchQuery}
         onChange={handleSearchChange}
@@ -1090,19 +1208,20 @@ const Features= ({ mobileDimension }) => {
           display: 'flex', 
           flexDirection: 'row', 
           width: '300px',
-          justifyContent: "center"
+          justifyContent: "center",
+          marginLeft: window.innerWidth <= 768 ? "0" : "35px" 
         }}>
     <p
         style={getStyle("Community Sets")}
         onClick={() => handleClick("Community Sets")}
       >
-        Community Sets
+        {t("communitySets")}
         {selected === "Community Sets" && (
           <span
             style={{
               position: "absolute",
                   bottom: "-4px",
-                  left: "-11%",
+                  left: "-4%",
                   width: "110%",
                   height: "3px",
                   backgroundColor: "white",
@@ -1116,7 +1235,7 @@ const Features= ({ mobileDimension }) => {
         style={getStyle("My Sets")}
         onClick={() => handleClick("My Sets")}
       >
-        My Sets
+        {t("mySets")}
         {selected === "My Sets" && (
           <span
             style={{
@@ -1154,39 +1273,40 @@ const Features= ({ mobileDimension }) => {
         {selected === "Community Sets" ? (
           <div style={{
             display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: "20px",
-            justifyContent: "center",
+            flexDirection: "column",
+            alignItems: "center",
             width: window.innerWidth <= 768 ? "100%" : "calc(100% - 10px)",
             overflow: "visible",
-            alignItems: "flex-start",
             padding: window.innerWidth <= 768 ? "0 20px" : "0",
             marginRight: window.innerWidth <= 768 ? "0" : "10px"
           }}>
-            {featuredSets
-              .filter(item => 
-                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.content?.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-      .map((item, index) => (
-              <div
-                key={index}
+            <div style={{
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: "20px",
+              justifyContent: "center",
+              width: "100%",
+              alignItems: "flex-start",
+            }}>
+              {displayedSets.map((item, index) => (
+                <div
+                  key={index}
                   className="libCard"
-                style={{
-                  borderRadius: "10px",
-                  display: "flex",
+                  style={{
+                    borderRadius: "10px",
+                    display: "flex",
                     border: "1px solid #353935",
                     backgroundColor: "#28282B",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
                     position: "relative",
                     width: window.innerWidth <= 768 ? "100%" : "300px",
                     maxWidth: "300px",
                     margin: "0",
                     padding: "20px",
                     flexShrink: 0,
-                    height: "200px" // Fixed height for the card
+                    height: "200px"
                   }}
                 >
                   <div style={{ 
@@ -1282,11 +1402,32 @@ const Features= ({ mobileDimension }) => {
                     disabled={isSetDuplicate(item.title, item.content) || 
                               isSetAddedOrRecent(item.title, item.content)}
                   >
-                    {isSetDuplicate(item.title, item.content) ? "Already Added" :
-                     isSetAddedOrRecent(item.title, item.content) ? "Already Added" : "Add to Library"}
+                    {isSetDuplicate(item.title, item.content) ? t("alreadyAdded") :
+                     isSetAddedOrRecent(item.title, item.content) ? t("alreadyAdded") : t("addToLibrary")}
                 </button>
                 </div>
               ))}
+            </div>
+            
+            {hasMoreSets && (
+              <button
+                onClick={loadMoreSets}
+                disabled={isLoadingMore}
+                style={{
+                  width: "100%",
+                  maxWidth: "300px",
+                  margin: "20px auto",
+                  padding: "10px",
+                  backgroundColor: isLoadingMore ? "#666" : "#333",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: isLoadingMore ? "not-allowed" : "pointer"
+                }}
+              >
+                {isLoadingMore ? t("loading") : t("loadMoreSets")}
+              </button>
+            )}
           </div>
         ) : (
           <div style={{
