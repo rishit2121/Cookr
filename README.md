@@ -1,6 +1,8 @@
-## About Scroller
+## About Cookr
 
-Scroller is an ed-tech startup revolutionizing education by delivering learning in an engaging, TikTok-like format. With nearly 30,000 users worldwide, Scroller leverages advanced Large Language Models (LLMs) to provide personalized, interactive, and fun educational experiences. Our mission is to make learning accessible, effective, and enjoyable for everyone, everywhere.
+Cookr is an ed-tech startup revolutionizing education by delivering learning in an engaging, TikTok-like format. With nearly 30,000 users worldwide, Cookr leverages advanced Large Language Models (LLMs) to provide personalized, interactive, and fun educational experiences. Our mission is to make learning accessible, effective, and enjoyable for everyone, everywhere.
+
+Cookr empowers students and lifelong learners to master concepts quickly and enjoyably, making high-quality education accessible to all.
 
 # Getting Started with Create React App
 
