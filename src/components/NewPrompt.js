@@ -216,7 +216,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     }
     
     const videoId = extractVideoId(videoUrl);
-    const apiKey = 'AIzaSyAX8pq_aqGJIOe36SGciWVu9_0Z9ra1PrE'; // Replace with your actual API key
+    const apiKey = process.env.REACT_APP_YOUTUBE_API_KEY;
     const url = `https://www.googleapis.com/youtube/v3/captions?videoId=${videoId}&key=${apiKey}`;
   
     try {
