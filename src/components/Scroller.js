@@ -21,15 +21,21 @@ const containerStyle = {
   padding: "0px",
   margin: "0px",
   alignItems: "center",
+  overflowX: 'hidden',
+  maxWidth: '100dvw',
 };
 
-const cardContainerStyle = {
-  display: "flex",
-  flexDirection: "column",
-  height: "100dvh", // Each card takes up full viewport height
-  scrollSnapAlign: "start", // Snap to the start of each card
-  scrollSnapStop: "always", // Stop scrolling at each snap point
-};
+const getCardContainerStyle = (mobileDimension) => ({
+  display: 'flex',
+  flexDirection: mobileDimension ? 'column' : 'row',
+  height: '100dvh',
+  scrollSnapAlign: 'start',
+  scrollSnapStop: 'always',
+  overflowX: 'hidden',
+  maxWidth: '100dvw',
+  justifyContent: mobileDimension ? 'flex-start' : 'center',
+  alignItems: mobileDimension ? 'stretch' : 'center',
+});
 
 const loadingStyle = {
   display: "flex",
@@ -248,7 +254,6 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       method: "POST",
       headers: {
         Accept: "*/*",
-        "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -261,7 +266,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
 
     try {
       const response = await fetch(
-        "https://hfob3eouy6.execute-api.us-west-2.amazonaws.com/production/",
+        "http://localhost:5001/genAI/generate-questions",
         options
       );
       console.log(response)
@@ -319,12 +324,38 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
     <div
       style={{
         width: "100%",
-        justifyContent: "center",
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        minHeight: '100dvh',
+        overflowX: 'hidden',
+        maxWidth: '100dvw',
+        zIndex: 1,
+        ...(mobileDimension ? {
+          justifyContent: 'flex-start',
+          alignItems: 'stretch',
+        } : {
+          justifyContent: 'center',
+          alignItems: 'center',
+        }),
       }}
     >
+      {/* Purple semicircle gradient overlay for the whole page background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '180vw',
+        height: '100vw',
+        background: 'radial-gradient(ellipse at 50% 0%,rgb(2, 3, 60) 0%, rgba(2, 3, 70, 0.45) 40%, rgba(0,0,0,0.85) 80%, #000 100%)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        borderBottomLeftRadius: '90vw',
+        borderBottomRightRadius: '90vw',
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+      }} />
       {isFetching && (
         <div
           style={{
@@ -363,7 +394,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
           {questions.map((item, index) => (
             <div key={index} ref={(el) => (cardsRef.current[index] = el)}>
               {/* {index > 0 && index % 3 === 0 && <AdCard />} Insert ad every 3 cards */}
-              <div style={cardContainerStyle}>
+              <div style={getCardContainerStyle(mobileDimension)}>
                 {!isLoading && (
                   <QuestionCard
                   question={item.question || ""}

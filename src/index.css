@@ -316,10 +316,10 @@ overflow: scroll;
 }
 
 .card {
-width: 370px;
-height: 80dvh;
-margin: 50px 0px;
-transition: 0.1s;
+  width: 440px;
+  max-height: 80dvh;
+  box-sizing: border-box;
+  transition: 0.1s;
 }
 
 .videoCard {
@@ -371,18 +371,18 @@ transform: scale(1.1); /* Zoom in effect */
 }
 
 @media (max-width:568px) {
-.card{
-width: 84vw;
-height: 85dvh;
-margin: 10px 0px;
-}
-.videoCard{
-width: 84vw;
-height: 87dvh;
-margin: 10px 0px;
-}
-.libCard{
-  width: 90vw;
-  height: 150px;
-}
+  .card{
+  width: 84vw;
+  height: 85dvh;
+  margin: 10px 0px;
+  }
+  .videoCard{
+  width: 84vw;
+  height: 87dvh;
+  margin: 10px 0px;
+  }
+  .libCard{
+    width: 90vw;
+    height: 150px;
+  }
 }

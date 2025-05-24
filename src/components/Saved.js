@@ -127,9 +127,19 @@ const SavedQuestions = () => {
       <Navbar setMobileDimension={setMobileDimension} />
       {user ? (
         <div
-          style={{ flex: 1, height:mobileDimension? "90%":"100%",flexDirection:'column', justifyContent:'center', overflow: "auto", backgroundColor: "black", marginTop:'10px'
+          style={{
+            flex: 1,
+            height: mobileDimension ? "90%" : "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            overflow: "auto",
+            backgroundColor: "black",
+            marginTop: '10px'
           }}
         >
+          {/* Sticky Top Bar */}
           <div style={{
             display: "flex",
             alignItems: "center",
@@ -137,8 +147,13 @@ const SavedQuestions = () => {
             marginBottom: "20px",
             marginTop: "10px",
             width: "calc(99% - 20px)",
-
             boxSizing: "border-box",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            background: "black",
+            paddingTop: "10px",
+            paddingBottom: "10px",
           }}>
             <h2 style={{
               color: "white",
@@ -233,8 +248,13 @@ const SavedQuestions = () => {
             </div>
           </div>
 
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0% 20%", justifyContent:'center' }}>
+          {/* Centered Question Cards */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start"
+          }}>
             {selectedQuestion ? (
               <QuestionCard
                 question={selectedQuestion.question}

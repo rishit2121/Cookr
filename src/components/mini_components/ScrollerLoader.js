@@ -7,13 +7,19 @@ function ScrollerLoader() {
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        flexDirection: "column",
+        height: "100vh",
+        width: "100vw",
+        background: "black",
+        zIndex: 9999,
       }}
     >
-      <p>{t("generatingContent")}</p>
       <div className="loader"></div>
+      <div style={{ marginTop: 24, fontSize: 22, color: "#fff", fontWeight: 600, letterSpacing: 1, textAlign: "center" }}>
+        {t("generatingContent")}
+      </div>
     </div>
   );
 }

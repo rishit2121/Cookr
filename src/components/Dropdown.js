@@ -8,9 +8,9 @@ const CustomDropdown = ({
   setCurrentSet,
   mobileDimension,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(localStorage.getItem("currentSet") ? JSON.parse(localStorage.getItem("currentSet")).title : t("choose"));
-  const { t } = useTranslation();
   const dropdownRef = useRef(null);
   const toggleDropdown = () => setIsOpen((prevState) => !prevState);
 
