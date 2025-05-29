@@ -126,6 +126,10 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
           const scrollHeight = containerRef.current.clientHeight;
           containerRef.current.scrollTop = scrollHeight * adjustedIndex;
           setCurrentIndex(adjustedIndex);
+          // Scroll to the correct card for both MCQ and FRQ
+          if (cardsRef.current[adjustedIndex]) {
+            cardsRef.current[adjustedIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
+          }
         } else {
           setCurrentIndex(0);
         }
@@ -266,7 +270,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
 
     try {
       const response = await fetch(
-        "http://localhost:5001/genAI/generate-questions",
+        'http://localhost:5001/genAI/generate-questions',
         options
       );
       console.log(response)

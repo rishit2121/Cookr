@@ -4,7 +4,8 @@ import CustomDropdown from "./Dropdown";
 import { useTranslation } from 'react-i18next';
 
 const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, location, currentPage }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language;
   return (
     <div
       style={{
@@ -146,7 +147,11 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
               ></path>
             </svg>
           </NavIconWrapper>
-          <span style={{ fontSize: currentPage === "leaderboard" ? "8px" : "8px",  marginLeft:'30%'}}>{t("rankings")}</span>
+          <span style={{
+              fontSize: currentPage === "leaderboard" ? "8px" : "8px",
+              marginLeft: currentLanguage === "es" ? "16%" : currentLanguage === "fr" ? "17%" : currentLanguage === "en" ? "30%" : currentLanguage === "de" ? "23%" : currentLanguage === "it" ? "23%" : currentLanguage === "pt" ? "17%" : currentLanguage === "ru" ? "26%" : currentLanguage === "zh-Hans" ? "42%" : currentLanguage === "ko" ? "73%" : "40%",
+              minWidth: "24px",
+            }}>{t("rankings")}</span>
 
         </Link>
         <Link

@@ -47,8 +47,9 @@ const QuestionCard = ({
   );
   const savedState = questionStates[questionKey] || {};
 
+  // Always restore state from localStorage for FRQ (mode 3)
   const [selectedChoice, setSelectedChoice] = useState(
-    savedState.selectedChoice || selectedAnswer
+    savedState.selectedChoice !== undefined ? savedState.selectedChoice : selectedAnswer
   );
   const [isAnswered, setIsAnswered] = useState(savedState.isAnswered || false);
   const [showPlus10, setShowPlus10] = useState(false);
@@ -56,12 +57,12 @@ const QuestionCard = ({
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reveal, setReveal] = useState(
-    localStorage.getItem("mode") === "3" ? false : savedState.reveal || false
+    localStorage.getItem("mode") === "3" ? (savedState.reveal || false) : (savedState.reveal || false)
   );
   const [user, setUser] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [userAnswer, setUserAnswer] = useState(savedState.userAnswer || "");
+  const [isSubmitted, setIsSubmitted] = useState(savedState.isSubmitted || false);
   const [showWarning, setShowWarning] = useState(false); // for free response mode (reveal answer)
   const [showWarning2, setShowWarning2] = useState(false); // for free response mode (submit answer)
   const [textAreaMaxHeight, setTextAreaMaxHeight] = useState(0); // for free response mode text area
@@ -79,6 +80,40 @@ const QuestionCard = ({
   // Detect if choices container is overflowing
   const choicesContainerRef = React.useRef(null);
   const [areChoicesOverflowing, setAreChoicesOverflowing] = React.useState(false);
+
+  const [activeTab, setActiveTab] = useState('answer');
+  const [gradingResult, setGradingResult] = useState(savedState.gradingResult || null);
+  const [gradingLoading, setGradingLoading] = useState(false);
+  const [gradingError, setGradingError] = useState(null);
+
+  // Add drag-to-close state and handlers at the top of the component
+  const [dragStartY, setDragStartY] = useState(null);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const dragThreshold = 60;
+
+  const handleDragStart = (e) => {
+    setDragStartY(e.touches ? e.touches[0].clientY : e.clientY);
+  };
+  const handleDragMove = (e) => {
+    if (dragStartY !== null) {
+      const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+      setDragOffsetY(Math.max(0, currentY - dragStartY));
+    }
+  };
+  const handleDragEnd = () => {
+    if (dragOffsetY > dragThreshold) {
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsClosing(false);
+        setReveal(false);
+        setDragOffsetY(0);
+        setDragStartY(null);
+      }, 300);
+    } else {
+      setDragOffsetY(0);
+      setDragStartY(null);
+    }
+  };
 
   React.useEffect(() => {
     const checkOverflow = () => {
@@ -137,9 +172,12 @@ const QuestionCard = ({
       selectedChoice,
       isAnswered,
       reveal,
+      userAnswer,
+      isSubmitted,
+      gradingResult,
     };
     localStorage.setItem("questionStates", JSON.stringify(questionStates));
-  }, [selectedChoice, isAnswered, reveal, questionKey]);
+  }, [selectedChoice, isAnswered, reveal, userAnswer, isSubmitted, gradingResult, questionKey, question]);
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -343,10 +381,16 @@ const QuestionCard = ({
     }, 1500);
   };
   const handleRevealAnswer = () => {
-    // for free response mode:
-
-    console.log(answer);
-
+    if (isSavedMCQ) {
+      setReveal(true);
+      setIsAnswered(true);
+      return;
+    }
+    if (isFavorites && isFRQ) {
+      setReveal((prev) => !prev);
+      setIsAnswered(true);
+      return;
+    }
     if (localStorage.getItem("mode") === "3" && !isSubmitted) {
       setShowWarning(true);
       setTimeout(() => {
@@ -354,13 +398,11 @@ const QuestionCard = ({
       }, 3000);
       return;
     }
-
     if (localStorage.getItem("mode") === "2") {
       setReveal(!reveal);
     } else {
       setReveal(true);
     }
-    
     setIsAnswered(true);
   };
 
@@ -395,6 +437,11 @@ const QuestionCard = ({
           cards: arrayRemove(fullJSON),
         });
       } else {
+        // Add type: 'frq' if this is a free response question
+        let isFRQSave = false;
+        if (localStorage.getItem('mode') === '3' || (typeof answer === 'object' && answer !== null && Array.isArray(answer.targetAreas))) {
+          isFRQSave = true;
+        }
         const newJSON = {
           question,
           choices,
@@ -405,6 +452,7 @@ const QuestionCard = ({
           title,
           color,
           fullJSON,
+          ...(isFRQSave ? { type: 'frq' } : {}),
         };
 
         // Add to favorites in local storage
@@ -440,25 +488,79 @@ const QuestionCard = ({
   };
 
   const isFlashcardDesktop = !mobileDimension && localStorage.getItem("mode") == "2";
+
+  // Defensive defaults for choices and comment arrays
+  const safeChoices = Array.isArray(choices) ? choices : [];
+  const safeComments = Array.isArray(comment) ? comment : [];
+
+  // Determine if this is a true FRQ question (robust for both home and saved page)
+  const isFRQ = (
+    (localStorage.getItem('mode') === '3') ||
+    (typeof fullJSON === 'object' && (fullJSON.type === 'frq' || fullJSON.isFRQ === true))
+  );
+
+  // Helper to detect card type for saved page
+  const isSavedFRQ = isFavorites && (
+    (answer && typeof answer === 'object' && Array.isArray(answer.targetAreas)) ||
+    (fullJSON && Array.isArray(fullJSON.targetAreas))
+  );
+  const isSavedFlashcard = isFavorites && (!choices || choices.length === 0) && typeof answer === 'string' && !isSavedFRQ;
+  const isSavedMCQ = isFavorites && Array.isArray(choices) && choices.length > 0 && !isSavedFRQ;
+
+  useEffect(() => {
+    if (isFavorites) {
+      const saved = savedQuestions ?? JSON.parse(localStorage.getItem("favorites")) ?? [];
+      console.log("All saved cards:");
+      saved.forEach((card, idx) => {
+        console.log(`Card #${idx + 1}:`, card);
+      });
+    }
+  }, [isFavorites, savedQuestions]);
+
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div
+      style={
+        mobileDimension
+          ? { position: 'relative', width: '100%' }
+          : {
+              position: 'relative',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '120vw',
+              minHeight: 'calc(100vh - 200px)',
+              padding: '0px 0',
+              marginBottom: '60px',
+              overflow: 'visible',
+            }
+      }
+    >
       <div
         className="card"
         style={{
-          backgroundColor: 'transparent',
-          padding: mobileDimension ? '0px 12px' : '10px 20px',
+          paddingLeft: mobileDimension ? 12 : 20,
+          paddingRight: mobileDimension ? 12 : 20,
+          paddingTop: mobileDimension ? 0 : 10,
+          paddingBottom: mobileDimension ? 0 : 10,
           display: 'flex',
           flexDirection: 'column',
           position: "relative",
           animation: shake ? "shake 0.5s ease-out" : "none",
-          border: !mobileDimension ? '1.5px solid white' : 'none',
+          border: isFavorites ? '2px solid white' : (!mobileDimension ? '1.5px solid white' : 'none'),
           transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-          minHeight: mobileDimension ? 'calc(100dvh - 75px)' : undefined,
-          height: mobileDimension ? 'calc(100dvh - 75px)' : '90dvh',
-          marginBottom:'5dvh',
-          width: mobileDimension ? '100dvw' : undefined,
-          maxWidth: mobileDimension ? '100dvw' : undefined,
+          height: mobileDimension ? (isFavorites ? '80dvh' : 'calc(100dvh - 75px)') : '80dvh',
+          width: mobileDimension
+            ? (isFavorites ? '85dvw' : '98vw')
+            : (isFavorites ? '32vw' : '40dvw'),
+          maxWidth: mobileDimension
+            ? '100vw'
+            : (isFavorites ? '400px' : '450px'),
+          minWidth: mobileDimension
+            ? undefined
+            : '400px',
           zIndex: 2,
+          overflow: 'hidden',
         }}
         onDoubleClick={
           localStorage.getItem("mode") == 1 || isFavorites
@@ -490,7 +592,7 @@ const QuestionCard = ({
               letterSpacing: 0.2,
               maxWidth: '60%',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              textOverflow: 'ellipsis...',
             }}
           >
             {title}
@@ -634,7 +736,7 @@ const QuestionCard = ({
           <div className="plus10-animation">{t("correctMessage")}</div>
         )}
         {/* Flashcard mode: only render one wide answer box for desktop/laptop, and fix mobile scroll logic */}
-        {localStorage.getItem("mode") == "2" ? (
+        {localStorage.getItem("mode") == "2" && (!choices || choices.length === 0) ? (
           <>
             <div
               style={{
@@ -646,36 +748,41 @@ const QuestionCard = ({
                     : (mobileDimension ? '15px' : '15px'),
                 marginTop: mobileDimension ? '24px' : '32px',
                 marginBottom: mobileDimension ? '0px' : '0px',
-                paddingLeft: '18px',
-                paddingRight: mobileDimension ? '18px' : '32px',
                 color: 'white',
                 whiteSpace: 'pre-line',
                 wordBreak: 'break-word',
                 textAlign: 'left',
                 lineHeight: '1.2',
                 width: '100%',
+                marginBottom:'0px',
                 overflowWrap: 'break-word',
               }}
             >
               {formatBoldText(question)}
             </div>
-            {reveal && (
+            {/* Only render the static answer box if not saved FRQ or saved flashcard */}
+            
+            {!(isSavedFRQ) && reveal && (
               <div
                 style={{
                   backgroundColor: '#6A6CFF10',
-                  padding: '15px',
+                  padding: isFavorites ? '10px' : '15px',
                   borderRadius: '15px',
                   border: '1px solid #6A6CFF30',
                   color: '#6A6CFF',
-                  fontSize: '16px',
+                  fontSize: isFavorites ? '15px' : '16px',
                   lineHeight: '1.5',
                   boxShadow: '0 4px 12px rgba(106, 108, 255, 0.1)',
                   transition: 'all 0.3s ease',
-                  animation: 'fadeIn 0.4s ease-out',
-                  maxWidth: mobileDimension ? '95%' : '80%',
-                  width: mobileDimension ? '85%' : '95%',
+                  width: '100%',
+                  maxWidth: '100%',
+                  marginTop: '20px',
+                  boxSizing: 'border-box',
+                  minHeight: '120px',   // <-- add this
+                  maxHeight: '40dvh',   // <-- keep this
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
                   textAlign: 'center',
-                  margin: mobileDimension ? '16px auto 0 auto' : '24px auto 0 auto',
                 }}
               >
                 {(answer !== undefined && answer !== null) ? (
@@ -698,7 +805,6 @@ const QuestionCard = ({
               overflowY: isQuestionOverflowing ? 'auto' : 'visible',
               marginTop: mobileDimension ? '20px' : '12px',
               marginBottom: mobileDimension ? '0px' : '2px',
-              paddingLeft: '18px',
               paddingRight: '8px',
               color: 'white',
               borderRadius: isQuestionOverflowing ? '18px' : '8px',
@@ -787,13 +893,13 @@ const QuestionCard = ({
                   style={{
                     marginTop: 2,
                     height: '50vh',
-                    overflowY: 'auto',
+                    overflowY: 'visible',
                     marginBottom: 10,
                     width: '100%',
                     padding: 4,
                   }}
                 >
-                  {choices.map((choice, index) => {
+                  {safeChoices.map((choice, index) => {
                     // Determine main and shadow color
                     let mainColor = "white";
                     let shadowColor = "#ededed";
@@ -814,9 +920,8 @@ const QuestionCard = ({
                     }
                     return (
                       <div key={index} style={{
-                        width: '92%',
-                        height: areChoicesOverflowing ? '44px' : '64px',
-                        margin: '0 auto 12px auto',
+                        width: !mobileDimension ? '92%' : '95%',
+                        margin: '0 0 12px 0',
                         borderRadius: '12px',
                         background: shadowColor,
                         display: 'flex',
@@ -829,30 +934,32 @@ const QuestionCard = ({
                           className="cardButton"
                           style={{
                             width: '100%',
-                            height: areChoicesOverflowing ? '36px' : '56px',
                             margin: 0,
                             border: 'none',
                             borderRadius: '12px',
                             background: mainColor,
                             color: cardStyle.textColor,
                             fontSize:
-                              choice.length < 40
-                                ? (areChoicesOverflowing ? "13px" : "15px")
-                                : choice.length < 100
-                                ? (areChoicesOverflowing ? "12px" : "14px")
-                                : (areChoicesOverflowing ? "11px" : "12px"),
+                              isFavorites
+                                ? (mobileDimension ? '13px' : '14px')
+                                : (choice.length < 40
+                                    ? (areChoicesOverflowing ? '11px' : '13px')
+                                    : choice.length < 100
+                                    ? (areChoicesOverflowing ? '10px' : '12px')
+                                    : (areChoicesOverflowing ? '9px' : '10px')),
                             fontWeight: 500,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-start',
-                            padding: '0 14px',
+                            textAlign: 'left',
+                            padding: '10px 14px', // vertical padding for multiline
                             boxSizing: 'border-box',
-                            cursor: isAnswered ? "not-allowed" : "pointer",
+                            cursor: isAnswered ? 'not-allowed' : 'pointer',
                             opacity: isAnswered && selectedChoice !== index ? 0.6 : 1,
                             outline: 'none',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
+                            minHeight: '32px', // ensure a minimum height
+                            height: 'auto', // let it grow for multiline
+                            wordBreak: 'break-word',
                           }}
                           onClick={() => {
                             handleChoiceClick(index, isFavorites);
@@ -866,7 +973,7 @@ const QuestionCard = ({
                 </div>
               ) : (
                 <>
-                  {choices.map((choice, index) => {
+                  {safeChoices.map((choice, index) => {
                     // Determine main and shadow color
                     let mainColor = "white";
                     let shadowColor = "#ededed";
@@ -889,7 +996,7 @@ const QuestionCard = ({
                       <div key={index} style={{
                         width: '95%',
                         height: areChoicesOverflowing ? '44px' : '8dvh',
-                        margin: '0 auto 12px auto',
+                        margin: '0 0 12px 0',
                         borderRadius: '12px',
                         background: shadowColor,
                         display: 'flex',
@@ -910,17 +1017,18 @@ const QuestionCard = ({
                             color: cardStyle.textColor,
                             fontSize:
                               choice.length < 40
-                                ? (areChoicesOverflowing ? "13px" : "15px")
+                                ? (areChoicesOverflowing ? '13px' : '15px')
                                 : choice.length < 100
-                                ? (areChoicesOverflowing ? "12px" : "14px")
-                                : (areChoicesOverflowing ? "11px" : "12px"),
+                                ? (areChoicesOverflowing ? '12px' : '14px')
+                                : (areChoicesOverflowing ? '11px' : '12px'),
                             fontWeight: 500,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-start',
+                            textAlign: 'left',
                             padding: '0 14px',
                             boxSizing: 'border-box',
-                            cursor: isAnswered ? "not-allowed" : "pointer",
+                            cursor: isAnswered ? 'not-allowed' : 'pointer',
                             opacity: isAnswered && selectedChoice !== index ? 0.6 : 1,
                             outline: 'none',
                             position: 'absolute',
@@ -940,18 +1048,12 @@ const QuestionCard = ({
               )
             )}
 
-                {/* free response mode */}
-                
-                {localStorage.getItem("mode") == "3" && (
-                  <div style={{ 
-                    width: "100%", 
-                    marginBottom: "20px",
-                    padding: "0 20px", 
-                    boxSizing: "border-box"
-                  }}>
+                {/* free response mode - only show for true FRQ, and always inside the card */}
+                {isFRQ && !isFavorites && (
+                  <div style={{ width: "100%", marginBottom: "20px", padding: "0 0px", boxSizing: "border-box" }}>
                     <textarea
                       style={{
-                        width: "100%", 
+                        width: "100%",
                         minHeight: `${textAreaMinHeight}px`,
                         maxHeight: window.innerHeight >= 708? `${textAreaMaxHeight}px` : "50px",
                         resize: "vertical",
@@ -961,10 +1063,10 @@ const QuestionCard = ({
                         borderRadius: "10px",
                         border: "1px solid white",
                         backgroundColor: "gainsboro",
-                        fontSize: mobileDimension ? "16px" : "18px", // font size is responsive
+                        fontSize: mobileDimension ? "16px" : "18px",
                         marginBottom: "10px",
                         color: "black",
-                        boxSizing: "border-box" 
+                        boxSizing: "border-box"
                       }}
                       placeholder={t("typeYourAnswer")}
                       value={userAnswer}
@@ -981,12 +1083,12 @@ const QuestionCard = ({
                         background: "#6A6CFF",
                         boxShadow: "0px 2px 0px 0px #484AC3",
                         border: "none",
-                        padding: mobileDimension ? "8px 12px" : "10px 15px", // padding changes
-                        fontSize: mobileDimension ? "16px" : "18px", // font size changes
+                        padding: mobileDimension ? "8px 12px" : "10px 15px",
+                        fontSize: mobileDimension ? "16px" : "18px",
                         marginBottom: "10px",
                         opacity: isSubmitted ? 0.6 : 1,
-                        transition: "background-color 0.2s ease", 
-                        boxSizing: "border-box" 
+                        transition: "background-color 0.2s ease",
+                        boxSizing: "border-box"
                       }}
                       onClick={() => {
                         if (userAnswer.trim() === "") {
@@ -998,27 +1100,48 @@ const QuestionCard = ({
                         }
                         setIsSubmitted(true);
                         setIsAnswered(true);
+                        if (!isSubmitted) {
+                          setActiveTab('grading');
+                          setGradingLoading(true);
+                          setGradingError(null);
+                          fetch('http://localhost:5001/grade/grade-free-response', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              userAnswer,
+                              question,
+                              context: title,
+                              targetAreas: answer && answer.targetAreas ? answer.targetAreas : [],
+                              language: localStorage.getItem('language') || 'en',
+                            }),
+                          })
+                            .then(res => res.json())
+                            .then(data => {
+                              let parsed = data;
+                              if (typeof data === 'string') {
+                                try { parsed = JSON.parse(data); } catch {}
+                              }
+                              setGradingResult(parsed);
+                              setGradingLoading(false);
+                            })
+                            .catch(e => {
+                              setGradingError('Error grading answer.');
+                              setGradingLoading(false);
+                            });
+                        }
                       }}
                       disabled={isSubmitted}
                     >
                       {t("submitAnswer")}
                     </button>
-                    {showWarning2 === true ? (
-                      userAnswer.trim() === "" ? (
-                        <p
-                          style={{
-                            color: "#FF6B6B",
-                            fontSize: "14px",
-                            margin: "0",
-                            textAlign: "center",
-                          }}
-                        >
-                          {t("responseCannotBeBlank")}
-                        </p>
-                      ) : null
-                    ) : null}
+                    {showWarning2 === true && userAnswer.trim() === "" && (
+                      <p style={{ color: "#FF6B6B", fontSize: "14px", margin: "0", textAlign: "center" }}>
+                        {t("responseCannotBeBlank")}
+                      </p>
+                    )}
                   </div>
                 )}
+                
                 <div style={{ width: "90%" }}>
                   <p
                     style={{
@@ -1058,7 +1181,7 @@ const QuestionCard = ({
                     )} */}
 
               {/* For mode 3 - slide up/down container */}
-              {localStorage.getItem("mode") == "3" && (reveal || isClosing) && (
+              {fullJSON.targetAreas && (reveal || isClosing) && (
                 <div
                   style={{
                     position: "absolute",
@@ -1068,109 +1191,226 @@ const QuestionCard = ({
                     backgroundColor: "#1B1B1B",
                     borderTopLeftRadius: "15px",
                     borderTopRightRadius: "15px",
-                    padding: "20px",
+                    padding: "32px 20px 20px 20px", // lower top padding for X
                     boxShadow: "0px -2px 10px rgba(0, 0, 0, 0.2)",
                     animation: `${isClosing ? 'slideDown' : 'slideUp'} 0.3s ease-out forwards`,
                     zIndex: 99999,
-                    maxHeight: "60vh",
-                    overflowY: "auto",
+                    maxHeight: "75vh",
+                    overflow: "hidden",
                     willChange: "transform",
                     backfaceVisibility: "hidden",
-                    boxSizing: "border-box", 
+                    boxSizing: "border-box",
+                    transform: dragOffsetY ? `translateY(${dragOffsetY}px)` : undefined,
+                    transition: dragOffsetY ? 'none' : 'transform 0.2s',
+                    touchAction: 'none',
                   }}
+                  onTouchStart={handleDragStart}
+                  onTouchMove={handleDragMove}
+                  onTouchEnd={handleDragEnd}
+                  onMouseDown={e => { if (e.button === 0) handleDragStart(e); }}
+                  onMouseMove={e => { if (dragStartY !== null) handleDragMove(e); }}
+                  onMouseUp={handleDragEnd}
+                  onMouseLeave={handleDragEnd}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "15px",
+                  {/* Close (X) button, floating above tab bar */}
+                  <button
+                    onClick={() => {
+                      setIsClosing(true);
+                      setTimeout(() => {
+                        setIsClosing(false);
+                        setReveal(false);
+                      }, 300);
                     }}
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 10,
+                      background: 'rgba(30,30,30,0.85)',
+                      border: 'none',
+                      color: '#fff',
+                      fontSize: 22,
+                      cursor: 'pointer',
+                      padding: 0,
+                      zIndex: 1100,
+                      borderRadius: '50%',
+                      width: 32,
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px #0004',
+                      transition: 'background 0.2s',
+                    }}
+                    aria-label="Close"
                   >
-                    <h3
-                      style={{
-                        color: "#6A6CFF",
-                        margin: 0,
-                        fontSize: "20px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {t("answerGuideline")}
-                    </h3>
+                    ×
+                  </button>
+                  {/* Tab bar */}
+                  <div style={{ display: 'flex', borderBottom: '1px solid #444', marginBottom: 12 }}>
                     <button
-                      onClick={() => {
-                        setIsClosing(true);
-                        setTimeout(() => {
-                          setIsClosing(false);
-                          setReveal(false);
-                        }, 300);
-                      }}
                       style={{
-                        background: "none",
-                        border: "none",
-                        color: "white",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                        padding: "5px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "50%",
-                        transition: "background-color 0.2s",
+                        flex: 1,
+                        background: 'transparent',
+                        color: activeTab === 'answer' ? '#6A6CFF' : '#aaa',
+                        border: 'none',
+                        borderBottom: activeTab === 'answer' ? '2px solid #6A6CFF' : 'none',
+                        fontWeight: 600,
+                        fontSize: 16,
+                        padding: '8px 0',
+                        cursor: 'pointer',
+                        borderRadius: '10px 10px 0 0',
+                        transition: 'color 0.2s, border-bottom 0.2s',
+                      }}
+                      onClick={() => setActiveTab('answer')}
+                    >
+                      {t('Answer Guideline')}
+                    </button>
+                    {isSubmitted && (
+                      <button
+                        style={{
+                          flex: 1,
+                          background: 'transparent',
+                          color: activeTab === 'grading' ? '#6A6CFF' : '#aaa',
+                          border: 'none',
+                          borderBottom: activeTab === 'grading' ? '2px solid #6A6CFF' : 'none',
+                          fontWeight: 600,
+                          fontSize: 16,
+                          padding: '8px 0',
+                          cursor: 'pointer',
+                          borderRadius: '10px 10px 0 0',
+                          transition: 'color 0.2s, border-bottom 0.2s',
+                        }}
+                        onClick={() => setActiveTab('grading')}
+                      >
+                        {t('Grading') || 'Grading'}
+                      </button>
+                    )}
+                  </div>
+                  {/* Tab content */}
+                  {activeTab === 'answer' && (
+                    <div
+                      style={{
+                        backgroundColor: "#6A6CFF20",
+                        padding: "15px",
+                        borderRadius: "10px",
+                        border: "1px solid #6A6CFF40",
+                        color: "#6A6CFF",
+                        fontSize: "16px",
+                        lineHeight: "1.5",
+                        maxHeight: '40vh',
+                        overflowY: 'auto',
                       }}
                     >
-                      ×
-                    </button>
-                  </div>
-                  <div
-                    style={{
-                      backgroundColor: "#6A6CFF20",
-                      padding: "15px",
-                      borderRadius: "10px",
-                      border: "1px solid #6A6CFF40",
-                      color: "#6A6CFF",
-                      fontSize: "16px",
-                      lineHeight: "1.5",
-                    }}
-                  >                   
-                    {answer !== undefined && answer !== null ? (
-                      <div>
-                        {formatBoldText(answer)}
-                      </div>
+                      {answer !== undefined && answer !== null ? (
+                        <div>{formatBoldText(answer)}</div>
                       ) : (
-                        <p style={{ color: "#FF6B6B" }}>{t("noAnswerAvailable")}</p>
-                      )}       
-                    
-                  </div>
+                        <p style={{ color: "#FF6B6B" }}>{t('noAnswerAvailable')}</p>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === 'grading' && isSubmitted && (
+                    <div style={{ background: 'none', padding: 0, borderRadius: 10, color: '#fff', minHeight: 80, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      {gradingLoading && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          minHeight: 120,
+                          fontSize: 18,
+                          fontWeight: 600,
+                          color: '#6A6CFF',
+                          textAlign: 'center',
+                          width: '100%'
+                        }}>
+                          Grading In Progress...
+                        </div>
+                      )}
+                      {gradingError && <div style={{ color: '#FF6B6B' }}>{gradingError}</div>}
+                      {gradingResult && gradingResult.grading && (
+                        <>
+                          <div style={{ marginBottom: 18, fontWeight: 700, color: '#6A6CFF', fontSize: 19, flex: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+                            Final Score:
+                            {(() => {
+                              const scoreStr = gradingResult.finalScore || '';
+                              const match = scoreStr.match(/(\d+)\s*\/\s*(\d+)/);
+                              let score = 0, total = 0;
+                              if (match) {
+                                score = parseInt(match[1], 10);
+                                total = parseInt(match[2], 10);
+                              }
+                              let gradient = 'linear-gradient(90deg, #FF6B6B, #FF6B6B)';
+                              if (score >= 4) gradient = 'linear-gradient(90deg, #7ed957, #4be36a)';
+                              else if (score >= 2) gradient = 'linear-gradient(90deg, #ffe066, #ffd700)';
+                              else gradient = 'linear-gradient(90deg, #FF6B6B, #ffb3b3)';
+                              return (
+                                <span
+                                  style={{
+                                    background: gradient,
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 800,
+                                    fontSize: 16,
+                                    marginLeft: 4,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  {scoreStr}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <div style={{ maxHeight: '32vh', overflowY: 'auto', paddingRight: 4, flex: 1 }}>
+                            {gradingResult.grading.map((g, i) => (
+                              <div
+                                key={i}
+                                style={{
+                                  background: g.pointGiven === 'yes' ? 'rgba(126,217,87,0.10)' : 'rgba(255,107,107,0.10)',
+                                  border: g.pointGiven === 'yes' ? '2px solid #2e7d32' : '2px solid #c62828',
+                                  borderRadius: 16,
+                                  padding: '16px 18px 14px 18px',
+                                  marginBottom: 16,
+                                  color: '#fff',
+                                  position: 'relative',
+                                  boxShadow: 'none',
+                                  minHeight: 60,
+                                  fontWeight: 500,
+                                  fontSize: 16,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'flex-start',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                                  <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{g.area}</span>
+                                  <span
+                                    style={{
+                                      fontWeight: 700,
+                                      fontSize: 18,
+                                      color: g.pointGiven === 'yes' ? '#eaffea' : '#ffeaea',
+                                      background: g.pointGiven === 'yes' ? '#2e7d32' : '#c62828',
+                                      borderRadius: 12,
+                                      padding: '2px 12px',
+                                      marginLeft: 8,
+                                      position: 'relative',
+                                      top: -2,
+                                      boxShadow: 'none',
+                                    }}
+                                  >
+                                    {g.pointGiven === 'yes' ? '1' : '0'}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: 14, marginTop: 8, color: '#fff', fontWeight: 400 }}>{g.explanation}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               </p>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "25px",
-                  width: "90%",
-                  alignItems: "flex-end",
-                  justifyContent: "flex-end",
-                }}
-              >
-                {showWarning && localStorage.getItem("mode") === "3" && (
-                  <p
-                    style={{
-                      color: "#FF6B6B",
-                      fontSize: "14px",
-                      margin: "0 0 10px 0",
-                      textAlign: "center",
-                      width: "60%",
-                      marginRight: "auto",
-                    }}
-                  >
-                    {t("pleaseSubmitAnswerFirst")}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
         }
@@ -1186,9 +1426,9 @@ const QuestionCard = ({
             zIndex: 3,
             position: 'absolute',
             left: 0,
-            bottom: 25,
-            paddingLeft: 20,
-            paddingBottom: mobileDimension ? 10 : 27,
+            bottom: mobileDimension ? 30 : 0,
+            paddingLeft: mobileDimension ? 12 : 20,
+            paddingBottom: mobileDimension ? 0 : 27,
             background: 'transparent',
           }}
         >
@@ -1196,75 +1436,112 @@ const QuestionCard = ({
           <button
             style={{
               borderRadius: "10px",
-              cursor:
+              cursor: isFavorites ? 'pointer' : (
                 localStorage.getItem("mode") === "3" && !isSubmitted
                   ? "not-allowed"
                   : localStorage.getItem("mode") === "1" && reveal
                   ? "not-allowed"
-                  : "pointer",
+                  : "pointer"
+              ),
               color: "white",
-              background:
-                localStorage.getItem("mode") === "3" && !isSubmitted
+              background: isFavorites
+                ? (reveal ? "#FF6B6B" : "#6A6CFF")
+                : (localStorage.getItem("mode") === "3" && !isSubmitted
                   ? "#6A6CFF80"
                   : localStorage.getItem("mode") === "2"
                   ? reveal ? "#FF6B6B" : "#6A6CFF"
-                  : "#6A6CFF",
-              boxShadow: localStorage.getItem("mode") === "2" && reveal 
-                ? "0px 2px 0px 0px #C84B4B"
-                : "0px 2px 0px 0px #484AC3",
+                  : "#6A6CFF"),
+              boxShadow: isFavorites
+                ? (reveal ? "0px 2px 0px 0px #C84B4B" : "0px 2px 0px 0px #484AC3")
+                : (localStorage.getItem("mode") === "2" && reveal 
+                  ? "0px 2px 0px 0px #C84B4B"
+                  : "0px 2px 0px 0px #484AC3"),
               border: "none",
-              width: '60%',
-              minWidth: 120,
-              height: 48,
-              padding: '10px 15px',
-              fontSize: "18px",
+              width: mobileDimension
+                ? (isFavorites ? '40dvw' : '60dvw')
+                : (isFavorites ? '16vw' : '21dvw'),
+              height: mobileDimension
+                ? (isFavorites ? '48px' : '12dvw')
+                : (isFavorites ? '4vw' : '6dvw'),
+              minWidth: mobileDimension
+                ? undefined
+                : (isFavorites ? '200px' : '220px'),
+              maxWidth: mobileDimension
+                ? undefined
+                : (isFavorites ? '200px' : '270px'),
+              maxHeight: mobileDimension
+                ? '60px'
+                : '60px',
+              minHeight: mobileDimension
+                ? undefined
+                : (isFavorites ? '60px' : '48px'),
+              padding: isFavorites && mobileDimension ? '0 8px' : '0 15px',
+              fontSize: isFavorites && mobileDimension ? '13px' : isFavorites ? '14px' : '18px',
               position: "relative",
               overflow: "hidden",
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'center', // Vertically center text
               justifyContent: 'center',
             }}
             className="revealAnswerButton"
             onClick={handleRevealAnswer}
+            disabled={isFavorites ? false : (localStorage.getItem("mode") === "3" && !isSubmitted) || (localStorage.getItem("mode") === "1" && reveal)}
           >
-            {localStorage.getItem("mode") === "2"
-              ? reveal
-                ? t("hideAnswer")
-                : t("revealAnswer")
-              : t("revealAnswer")}
-            {localStorage.getItem("mode") === "2" && (
+            {isSavedMCQ
+              ? t("revealAnswer")
+              : (localStorage.getItem("mode") === "2"
+                  ? (reveal ? t("hideAnswer") : t("revealAnswer"))
+                  : t("revealAnswer"))}
+            {!isSavedMCQ && localStorage.getItem("mode") === "2" && (
               <span style={{
                 position: "absolute",
-                right: "15px",
+                right: isFavorites ? "8px" : "15px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                fontSize: "14px",
+                fontSize: isFavorites ? "11px" : "14px",
                 opacity: 0.8
               }}>
                 {reveal ? "↓" : "↑"}
               </span>
             )}
           </button>
-          {/* Like (Heart) Button */}
-          {(localStorage.getItem("mode") == 1 || isFavorites) && (
+          {/* Like (Heart) Button - now shown for all modes including isFavorites context */}
+          {(localStorage.getItem("mode") == 1 || localStorage.getItem("mode") == 2 || localStorage.getItem("mode") == 3 || isFavorites) && (
             <div
               style={{
                 background: '#23232a',
                 borderRadius: 10,
-                height: 48,
-                width: 48,
+                height: mobileDimension
+                  ? (isFavorites ? '48px' : '12dvw')
+                  : (isFavorites ? '4vw' : '6dvw'),
+                width: mobileDimension
+                  ? (isFavorites ? '12dvw' : '12dvw')
+                  : (isFavorites ? '4vw' : '6dvw'),
+                minWidth: mobileDimension
+                  ? undefined
+                  : (isFavorites ? '60px' : '48px'),
+                maxWidth: mobileDimension
+                  ? undefined
+                  : (isFavorites ? undefined : '60px'),
+                maxHeight: mobileDimension
+                  ? (isFavorites ? '48px' : '60px')
+                  : '60px',
+                minHeight: mobileDimension
+                  ? undefined
+                  : (isFavorites ? '60px' : '48px'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
+                marginLeft: !hasSubscription ? (mobileDimension ? '18dvw' : '6vw') : 0, // move further right if no comment
               }}
               onClick={handleHeartClick}
             >
               <i
                 style={{
                   color: iconGrey,
-                  fontSize: 17,
+                  fontSize: isFavorites ? 22 : 17,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1276,8 +1553,8 @@ const QuestionCard = ({
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 64 64"
-                  width="1.7em"
-                  height="1.7em"
+                  width={isFavorites ? "1.2em" : "1.7em"}
+                  height={isFavorites ? "1.2em" : "1.7em"}
                   style={{ display: 'block', margin: 'auto' }}
                 >
                   <path
@@ -1288,14 +1565,30 @@ const QuestionCard = ({
               </i>
             </div>
           )}
-          {/* Comment Button */}
-          {(localStorage.getItem("mode") == 1 || isFavorites) && hasSubscription && (
+          {/* Comment Button (only if hasSubscription) */}
+          {(fullJSON.choices) && hasSubscription && (
             <div
               style={{
                 background: '#23232a',
                 borderRadius: 10,
-                height: 48,
-                width: 48,
+                height: mobileDimension
+                  ? (isFavorites ? '48px' : '12dvw')
+                  : (isFavorites ? '4vw' : '6dvw'),
+                width: mobileDimension
+                  ? (isFavorites ? '12dvw' : '12dvw')
+                  : (isFavorites ? '4vw' : '6dvw'),
+                minWidth: mobileDimension
+                  ? undefined
+                  : (isFavorites ? '60px' : '48px'),
+                maxWidth: mobileDimension
+                  ? undefined
+                  : (isFavorites ? undefined : '60px'),
+                maxHeight: mobileDimension
+                  ? (isFavorites ? '48px' : '60px')
+                  : '60px',
+                minHeight: mobileDimension
+                  ? undefined
+                  : (isFavorites ? '60px' : '48px'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1306,8 +1599,8 @@ const QuestionCard = ({
             >
               <svg
                 fill={iconGrey}
-                width="1.7em"
-                height="1.7em"
+                width={isFavorites ? "1.7em" : "1.7em"}
+                height={isFavorites ? "1.7em" : "1.7em"}
                 viewBox="0 0 24 24"
                 id="Layer_1"
                 data-name="Layer 1"

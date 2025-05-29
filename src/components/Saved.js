@@ -34,7 +34,7 @@ const SavedQuestions = () => {
       ? parseInt(localStorage.getItem("streak"))
       : 0
   );
-  const [mobileDimension, setMobileDimension] = useState(false);
+  const [mobileDimension, setMobileDimension] = useState(window.innerWidth <= 768);
   const [xp, setXP] = useState(
     localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0
   );
@@ -119,24 +119,36 @@ const SavedQuestions = () => {
     }
   };
 
+  useEffect(() => {
+    const handleResize = () => setMobileDimension(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Ensure correct value on mount
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100dvh", overflow: "hidden", backgroundColor: "black"}}
+      style={{
+        display: "flex",
+        height: mobileDimension ? "calc(100dvh - 75px)" : "100%",
+        overflow: "hidden",
+        backgroundColor: "black"
+      }}
     >
       <Navbar setMobileDimension={setMobileDimension} />
       {user ? (
         <div
           style={{
             flex: 1,
-            height: mobileDimension ? "90%" : "100%",
+            height: mobileDimension ? "100%" : "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-start",
             overflow: "auto",
             backgroundColor: "black",
-            marginTop: '10px'
+            marginTop: '0px',
           }}
         >
           {/* Sticky Top Bar */}
@@ -168,10 +180,12 @@ const SavedQuestions = () => {
             <div style={{
               flexGrow: 1,
               display: "flex",
-              justifyContent: "flex-end"
+              justifyContent: "flex-end",
+              marginRight: 16,
             }}>
               <div style={{
                 width: "60%",
+                maxWidth: 400,
                 position: "relative",
                
               }}>
@@ -189,6 +203,7 @@ const SavedQuestions = () => {
                   style={{
                     
                     width: "100%",
+                    maxWidth: 400,
                     padding: "10px 7px",
                     borderRadius: "8px",
                     border: "1px solid white",
@@ -249,12 +264,20 @@ const SavedQuestions = () => {
           </div>
 
           {/* Centered Question Cards */}
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: mobileDimension ? "center" : "center",
+              justifyContent: "flex-start",
+              gap: 8,
+              width: '100%',
+              paddingTop: 0,
+              paddingBottom: 0,
+              overflowY: 'auto',
+              maxHeight: mobileDimension ? 'calc(100dvh - 140px)' : 'calc(100vh - 140px)', // keep only vertical scroll for cards
+            }}
+          >
             {selectedQuestion ? (
               <QuestionCard
                 question={selectedQuestion.question}
@@ -269,24 +292,27 @@ const SavedQuestions = () => {
                 fullJSON={selectedQuestion}
                 isFavorites={true}
                 savedQuestions={savedQuestions}
+                mobileDimension={mobileDimension}
               />
             ) : filteredQuestions.length > 0 ? (
               filteredQuestions.map((questionData, index) => (
-                <QuestionCard
-                  key={index}
-                  question={questionData.question}
-                  choices={questionData.choices}
-                  answer={questionData.answer}
-                  comment={questionData.comments}
-                  selectedAnswer={questionData.selectedAnswer}
-                  setStreak={setStreak}
-                  setXP={setXP}
-                  title={questionData.title && questionData.title}
-                  color={questionData.color && questionData.color}
-                  fullJSON={questionData}
-                  isFavorites={true}
-                  savedQuestions={savedQuestions}
-                />
+                <div key={index} style={{ width: mobileDimension ? 'auto' : '100%', display: 'flex', justifyContent: 'center' }}>
+                  <QuestionCard
+                    question={questionData.question}
+                    choices={questionData.choices}
+                    answer={questionData.answer}
+                    comment={questionData.comments}
+                    selectedAnswer={questionData.selectedAnswer}
+                    setStreak={setStreak}
+                    setXP={setXP}
+                    title={questionData.title && questionData.title}
+                    color={questionData.color && questionData.color}
+                    fullJSON={questionData}
+                    isFavorites={true}
+                    savedQuestions={savedQuestions}
+                    mobileDimension={mobileDimension}
+                  />
+                </div>
               ))
             ) : (
               <div style={{ 

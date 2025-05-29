@@ -432,7 +432,7 @@ const Plans = ({ planType }) => {
           <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
           <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('aiTutorBot')}</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t("newFeatureAccess")}</div></li>
+          
         </div>
         <button
           style={{
@@ -510,7 +510,7 @@ const Plans = ({ planType }) => {
           <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
           {/* <li><div style={{display:'flex', }}><CheckMark></CheckMark> Priority Customer Support</li> */}
           <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('aiTutorBot')}</div></li>
-          <li><div style={{display:'flex', }}><CheckMark></CheckMark>{t('newFeatureAccess')}</div></li>
+          
           {/* <li>
             <div style={{display:'flex', }}><CheckMark></CheckMark> Exclusive Perks{" "}
             <span style={{ fontSize: "10px" }}>(more details coming soon)</span>

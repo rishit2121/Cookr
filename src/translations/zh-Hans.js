@@ -34,7 +34,7 @@ export default {
   pro: "专业版",
   free: "免费版",
   recentActivity: "最近活动",
-  noSetsYet: "暂无集合 :(",
+  noSetsYet: "暂无题库 :(",
   upgradeToPro: "升级到专业版",
   shareWithAFriend: "与朋友分享",
   copy: "复制",
@@ -73,28 +73,28 @@ export default {
 
   // Feature
   backToLibrary: "返回题库",
-  exploreSets: "探索集合",
-  communitySets: "社区集合",
-  mySets: "我的集合",
+  exploreSets: "探索题库",
+  communitySets: "社区题库",
+  mySets: "我的题库",
   alreadyAdded: "已添加",
   addToLibrary: "添加到题库",
   loading: "加载中...",
-  loadMoreSets: "加载更多集合",
+  loadMoreSets: "加载更多题库",
   by: "作者",
   makePublic: "设为公开",
   subscriptionRequired: "需要订阅",
-  subscriptionRequiredMessage: "您一次只能在题库中拥有10个集合。升级到专业版以获得无限集合！",
+  subscriptionRequiredMessage: "您一次只能在题库中拥有10个题库。升级到专业版以获得无限题库！",
 
   // My Library
-  deleteSet: "删除集合",
-  deleteSetConfirmation: "您确定要删除此集合吗？",
+  deleteSet: "删除题库",
+  deleteSetConfirmation: "您确定要删除此题库吗？",
   yesDelete: "是的，删除",
-  collections: "公开集合",
+  collections: "公开题库",
   myLibrary: "我的题库",
-  outOf10Sets: "已添加10个集合中的",
+  outOf10Sets: "已添加10个题库中的",
   switchBackToPro: "切换回专业版",
   upgradeToPro: "升级到专业版",
-  outOf10OnFree: "已添加10个集合中的免费集合",
+  outOf10OnFree: "已添加10个题库中的免费题库",
   letMeCook: "让我来烹饪",
   selectMode: "选择模式",
   multipleChoice: "多项选择",
@@ -126,12 +126,12 @@ export default {
   loadingMoreQuestions: "加载更多问题",
 
   // New Prompt
-  deleteSet: "删除集合",
-  deleteSetConfirmation: "您确定要删除此集合吗？",
+  deleteSet: "删除题库",
+  deleteSetConfirmation: "您确定要删除此题库吗？",
   yesDelete: "是的，删除",
   cancel: "取消",
-  setLimitReached: "集合数量已达到上限",
-  setLimitError: "您只能在题库中同时拥有10个集合。升级到专业版以获得无限集合！",
+  setLimitReached: "题库数量已达到上限",
+  setLimitError: "您只能在题库中同时拥有10个题库。升级到专业版以获得无限题库！",
   close: "关闭",
   uploadNotes: "上传笔记",
   general: "通用",
@@ -182,6 +182,8 @@ export default {
 
   // Dropdown
   choose: "选择",
+
+  titleTooLong: "标题不能超过100个字符",
 }
 
 

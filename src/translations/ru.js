@@ -213,6 +213,7 @@ export default {
 
   // Dropdown
   choose: "Выбрать",
+  titleTooLong: "Заголовок не может содержать более 100 символов",
 
 
 }

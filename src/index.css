@@ -317,7 +317,7 @@ overflow: scroll;
 
 .card {
   width: 440px;
-  max-height: 80dvh;
+  /* max-height: 80dvh; */
   box-sizing: border-box;
   transition: 0.1s;
 }

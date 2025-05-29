@@ -746,7 +746,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 localStorage.setItem("currentSet", JSON.stringify(selectedItem));
                 localStorage.removeItem("lastSet");
                 localStorage.removeItem("lastFlashSet");
-                localStorage.setItem("mode", 2);
+                localStorage.setItem("mode", 3);
                 navigate("/");
               }}
             >

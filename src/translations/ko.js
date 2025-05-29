@@ -213,5 +213,6 @@ export default {
 
   // Dropdown
   choose: "선택",
+  titleTooLong: "제목은 100자를 초과할 수 없습니다",
 }
 

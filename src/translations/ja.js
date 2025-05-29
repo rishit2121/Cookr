@@ -213,5 +213,6 @@ export default {
 
   // Dropdown
   choose: "選択",
+  titleTooLong: "タイトルは100文字以内で入力してください",
 }
 

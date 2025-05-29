@@ -172,5 +172,6 @@ export default {
 
   // Dropdown
   choose: "Choisir",
+  titleTooLong: "Le titre ne peut pas contenir plus de 100 caractères",
 }
 

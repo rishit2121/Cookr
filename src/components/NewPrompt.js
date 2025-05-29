@@ -148,16 +148,15 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [subjectExplicitError, setSubjectExplicitError] = useState(false);
 
   const explicitWords = [
-    "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat", 
-    "hell", "crap", "prick", "slut", "whore", "sex", "porn", "porno",
-    "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
+    "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "cunt", "twat", 
+    "slut", "whore", "porn", "porno",
+    "pornhub", "xxx", "dildo", "anal", "oral", "boob", "boobs", "tits", "vagina",
     "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
-    "rimjob", "milf", "bdsm", "fetish", "pegging", "stripper", "stripclub",
+    "rimjob", "milf", "bdsm", "fetish", "pegging", "stripclub",
     "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
     "chink", "gook", "nigga", "nigger", "kike","wetback", "towelhead",
     "rape",
-    "marijuana", "cocaine", "meth", "heroin", "lsd",
-    "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
+    "onlyfans", "fuk", "fck",
     "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
     "p0rn", "n00d","phuck"
   ];
@@ -851,7 +850,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               onChange={handleTitleChange}
               style={{
                 background: "#28282B",
-                outline: (titleError || titleExplicitError) ? "1px solid #ff4444" : "1px solid #353935",
+                outline: (titleError || titleExplicitError || title.length > 100) ? "1px solid #ff4444" : "1px solid #353935",
                 border: "none",
                 borderRadius: "10px",
                 padding: "12px 10px",
@@ -884,6 +883,16 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               opacity: 0.8
             }}>
               {t("titleError2")}
+            </p>
+          )}
+          {title.length > 100 && (
+            <p style={{
+              color: "#ff4444",
+              fontSize: "12px",
+              margin: "4px 0px 0px 1.5px",
+              opacity: 0.8
+            }}>
+              {t("titleTooLong")}
             </p>
           )}
         </div>
@@ -1096,17 +1105,44 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           {style === 0 && (
             <button
               onClick={() => saveToFirestore(false)}
+              disabled={
+                title.length > 100 ||
+                titleError || titleExplicitError ||
+                contentError || contentExplicitError ||
+                subjectError || subjectExplicitError
+              }
               style={{
                 width: "100%",
                 background: "transparent",
                 border: "none",
                 padding: "10px",
                 borderRadius: "10px",
-                cursor: "pointer",
+                cursor: (
+                  title.length > 100 ||
+                  titleError || titleExplicitError ||
+                  contentError || contentExplicitError ||
+                  subjectError || subjectExplicitError
+                ) ? "not-allowed" : "pointer",
                 color: "white",
-                background: "#6A6CFF",
-                boxShadow: "0px 2px 0px 0px #484AC3", 
-                fontSize:'15px'
+                background: (
+                  title.length > 100 ||
+                  titleError || titleExplicitError ||
+                  contentError || contentExplicitError ||
+                  subjectError || subjectExplicitError
+                ) ? "#999" : "#6A6CFF",
+                boxShadow: (
+                  title.length > 100 ||
+                  titleError || titleExplicitError ||
+                  contentError || contentExplicitError ||
+                  subjectError || subjectExplicitError
+                ) ? "none" : "0px 2px 0px 0px #484AC3",
+                fontSize:'15px',
+                opacity: (
+                  title.length > 100 ||
+                  titleError || titleExplicitError ||
+                  contentError || contentExplicitError ||
+                  subjectError || subjectExplicitError
+                ) ? 0.7 : 1
               }}
             >
               {t("save")}
@@ -1122,19 +1158,49 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
             }}>
               <button
                 onClick={() => saveToFirestore(false)}
-                disabled={!canEdit}
+                disabled={
+                  !canEdit ||
+                  title.length > 100 ||
+                  titleError || titleExplicitError ||
+                  contentError || contentExplicitError ||
+                  subjectError || subjectExplicitError
+                }
                 style={{
                   width: "47%",
-                  background: !canEdit ? "#999" : "#6A6CFF",
-                  boxShadow: !canEdit ? "none" : "0px 5px 0px 0px #484AC3",
+                  background: (
+                    !canEdit ||
+                    title.length > 100 ||
+                    titleError || titleExplicitError ||
+                    contentError || contentExplicitError ||
+                    subjectError || subjectExplicitError
+                  ) ? "#999" : "#6A6CFF",
+                  boxShadow: (
+                    !canEdit ||
+                    title.length > 100 ||
+                    titleError || titleExplicitError ||
+                    contentError || contentExplicitError ||
+                    subjectError || subjectExplicitError
+                  ) ? "none" : "0px 5px 0px 0px #484AC3",
                   border: "none",
                   padding: "15px",
                   borderRadius: "10px",
-                  cursor: !canEdit ? "not-allowed" : "pointer",
+                  cursor: (
+                    !canEdit ||
+                    title.length > 100 ||
+                    titleError || titleExplicitError ||
+                    contentError || contentExplicitError ||
+                    subjectError || subjectExplicitError
+                  ) ? "not-allowed" : "pointer",
                   color: "white",
                   fontSize: "16px",
                   fontWeight: "bold",
-                  opacity: !canEdit ? 0.7 : 1
+                  opacity: (
+                    !canEdit ||
+                    title.length > 100 ||
+                    titleError || titleExplicitError ||
+                    contentError || contentExplicitError ||
+                    subjectError || subjectExplicitError
+                  ) ? 0.7 : 1
                 }}
               >
                 {t('save')}

@@ -618,7 +618,7 @@ const MyProfile = ({ mobileDimension }) => {
                 ></path>
               </svg>
 
-              <p style={{}}>
+              <p style={{minWidth: "fit-content"}}>
               {t("settings")}
               </p>
             </button>
@@ -973,8 +973,7 @@ const MyProfile = ({ mobileDimension }) => {
               <span style={{ fontSize: "40px", fontWeight: "bold", color: 'white' }}>
                 {streak || 0}
               </span>              
-              <span style={{ fontSize: "16px", color:'white'}}>{t("streak")}</span>
-              </div>
+              <span style={{ fontSize: 'clamp(10px, 3vw, 16px)', color:'white', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', lineHeight: 1.1 }}>{t("streak")}</span>              </div>
             </div>
 
             {/* XP Container */}
@@ -1041,7 +1040,13 @@ const MyProfile = ({ mobileDimension }) => {
               height:'16%'
             }}>
               <span style={{ fontSize: "19px", fontWeight: "bold", color:'white', marginTop:'5px'}}>{t("recentActivity")}</span>
-              <span style={{ fontSize: "20px", color:'white', marginTop:'5%'}}>  {JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || t("noSetsYet")}
+              <span style={{ fontSize: "20px", color:'white', marginTop:'5%', textAlign: "center"}}>  {
+                (() => {
+                  const activity = JSON.parse(localStorage.getItem("currentSet") || "{}")?.title || t("noSetsYet");
+                  const maxLength = 60;
+                  return activity.length > maxLength ? activity.slice(0, maxLength).trim() + "..." : activity;
+                })()
+              }
               </span>
             </div>
             <div style={{ 
@@ -1358,7 +1363,7 @@ const MyProfile = ({ mobileDimension }) => {
                           height="1em"
                           fill="white"
                         >
-                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4-4-4v3l4-4-4-4v3z"/>
+                          <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
                         </svg>
                         Save
                       </>
@@ -2066,7 +2071,7 @@ const MyProfile = ({ mobileDimension }) => {
                           fill="white"
                           style={{ animation: "spin 1s linear infinite" }}
                         >
-                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3l4-4-4-4v3z"/>
                         </svg>
                         Saving...
                       </>
