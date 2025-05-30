@@ -549,7 +549,8 @@ const QuestionCard = ({
           animation: shake ? "shake 0.5s ease-out" : "none",
           border: isFavorites ? '2px solid white' : (!mobileDimension ? '1.5px solid white' : 'none'),
           transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-          height: mobileDimension ? (isFavorites ? '80dvh' : 'calc(100dvh - 75px)') : '80dvh',
+          height: mobileDimension ? (isFavorites ? '80dvh' : 'calc(100dvh - 75px)') : '85dvh', 
+          minHeight: mobileDimension && isFavorites ? '500px' : undefined,
           width: mobileDimension
             ? (isFavorites ? '85dvw' : '98vw')
             : (isFavorites ? '32vw' : '40dvw'),
@@ -574,7 +575,7 @@ const QuestionCard = ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          gap: 14,
+          gap: mobileDimension ? 10 : 14, // Reduced gap on mobile
           marginBottom: mobileDimension ? 18 : 2,
           marginTop: mobileDimension ? 20 : 2,
         }}>
@@ -583,16 +584,16 @@ const QuestionCard = ({
             style={{
               border: `1px solid grey`,
               borderRadius: 999,
-              padding: '6px 22px',
+              padding: mobileDimension ? '4px 16px' : '6px 22px', 
               color: color,
               fontWeight: 500,
-              fontSize: 13,
+              fontSize: mobileDimension ? 11 : 13, 
               whiteSpace: 'nowrap',
               boxShadow: '0 2px 8px 0 rgba(106,108,255,0.05)',
               letterSpacing: 0.2,
-              maxWidth: '60%',
+              flexShrink: 1,
               overflow: 'hidden',
-              textOverflow: 'ellipsis...',
+              textOverflow: 'ellipsis',
             }}
           >
             {title}
@@ -778,8 +779,7 @@ const QuestionCard = ({
                   maxWidth: '100%',
                   marginTop: '20px',
                   boxSizing: 'border-box',
-                  minHeight: '120px',   // <-- add this
-                  maxHeight: '40dvh',   // <-- keep this
+                  maxHeight: '40dvh',
                   overflowY: 'auto',
                   overflowX: 'hidden',
                   textAlign: 'center',
@@ -805,9 +805,9 @@ const QuestionCard = ({
               overflowY: isQuestionOverflowing ? 'auto' : 'visible',
               marginTop: mobileDimension ? '20px' : '12px',
               marginBottom: mobileDimension ? '0px' : '2px',
-              paddingRight: '8px',
+              padding: isQuestionOverflowing ? '9px 8px 10px 0px' : '0 8px 0 0', 
               color: 'white',
-              borderRadius: isQuestionOverflowing ? '18px' : '8px',
+              borderRadius: isQuestionOverflowing ? '6px' : '8px', 
               background: isQuestionOverflowing ? 'rgba(10,10,20,0.92)' : 'transparent',
               fontSize: isQuestionOverflowing
                 ? (mobileDimension ? '18px' : '14px')
@@ -819,6 +819,7 @@ const QuestionCard = ({
                      : (mobileDimension ? '14px' : '12px')
                  ),
               transition: 'background 0.2s, font-size 0.2s, border-radius 0.2s',
+              boxSizing: isQuestionOverflowing ? 'border-box' : undefined,
             }}
           >
             <div
@@ -837,7 +838,7 @@ const QuestionCard = ({
             {isQuestionOverflowing && (
               <style>{`
                 .question-scrollbox-overflowing::-webkit-scrollbar {
-                  width: 5px;
+                  width: 7px;
                   background: transparent;
                   border-radius: 8px;
                   display: block;
@@ -849,9 +850,12 @@ const QuestionCard = ({
                   min-height: 20px;
                   visibility: visible !important;
                   opacity: 1 !important;
+                  margin: 2px;
+                  border: 2px solid rgba(10,10,20,0.92);
                 }
                 .question-scrollbox-overflowing::-webkit-scrollbar-track {
                   background: transparent;
+                  margin: 2px;
                 }
                 .question-scrollbox-overflowing {
                   scrollbar-gutter: stable both-edges;
@@ -955,7 +959,7 @@ const QuestionCard = ({
                             padding: '10px 14px', // vertical padding for multiline
                             boxSizing: 'border-box',
                             cursor: isAnswered ? 'not-allowed' : 'pointer',
-                            opacity: isAnswered && selectedChoice !== index ? 0.6 : 1,
+                            opacity: 1,
                             outline: 'none',
                             minHeight: '32px', // ensure a minimum height
                             height: 'auto', // let it grow for multiline
@@ -1029,7 +1033,7 @@ const QuestionCard = ({
                             padding: '0 14px',
                             boxSizing: 'border-box',
                             cursor: isAnswered ? 'not-allowed' : 'pointer',
-                            opacity: isAnswered && selectedChoice !== index ? 0.6 : 1,
+                            opacity: 1,
                             outline: 'none',
                             position: 'absolute',
                             top: 0,
@@ -1420,7 +1424,7 @@ const QuestionCard = ({
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'space-between', // ensure buttons are at ends
             gap: 12,
             width: '100%',
             zIndex: 3,
@@ -1428,6 +1432,7 @@ const QuestionCard = ({
             left: 0,
             bottom: mobileDimension ? 30 : 0,
             paddingLeft: mobileDimension ? 12 : 20,
+            paddingRight: mobileDimension ? 12 : 20,
             paddingBottom: mobileDimension ? 0 : 27,
             background: 'transparent',
           }}
@@ -1505,7 +1510,7 @@ const QuestionCard = ({
               </span>
             )}
           </button>
-          {/* Like (Heart) Button - now shown for all modes including isFavorites context */}
+          {/* Like (Heart) Button - responsive size, always inside card */}
           {(localStorage.getItem("mode") == 1 || localStorage.getItem("mode") == 2 || localStorage.getItem("mode") == 3 || isFavorites) && (
             <div
               style={{
@@ -1534,7 +1539,7 @@ const QuestionCard = ({
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
-                marginLeft: !hasSubscription ? (mobileDimension ? '18dvw' : '6vw') : 0, // move further right if no comment
+                marginRight: "30px"
               }}
               onClick={handleHeartClick}
             >

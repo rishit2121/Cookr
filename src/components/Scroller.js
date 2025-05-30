@@ -364,14 +364,14 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
         <div
           style={{
             position: "fixed",
-            top: "10px",
+            top: mobileDimension? "5px" : "10px",
             left: mobileDimension ? "50%" : "calc(50% + 110px)",
             transform: "translateX(-50%)",
             backgroundColor: "#6A6CFF",
             color: "white",
             fontSize: "13px",
             fontWeight: "500",
-            padding: "5px 12px",
+            padding: mobileDimension ? "3px 10px" : "5px 12px",
             borderRadius: "20px",
             display: "flex",
             alignItems: "center",
@@ -381,7 +381,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
             zIndex: "999",
             animation: "gentle-pulse 1.5s infinite ease-in-out",
             width: "auto",
-            maxWidth: mobileDimension ? "calc(370px - 24px)" : "400px"
+            maxWidth: mobileDimension ? "calc(350px - 20px)" : "400px"
           }}
         >
           <span>{t('loadingMoreQuestions')}</span>
