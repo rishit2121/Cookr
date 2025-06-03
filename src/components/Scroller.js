@@ -245,9 +245,10 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
 
     const newIndex = Math.floor(container.scrollTop / container.clientHeight);
     setCurrentIndex(newIndex);
-    const threeBeforeEnd = questions.length - 3;
+    const currentMode = localStorage.getItem("mode");
+    const cardsBeforeEnd = (currentMode === "3" ? questions.length - 3 : questions.length - 4);
 
-    if (currentIndex >= threeBeforeEnd && !isFetching) {
+    if (currentIndex >= cardsBeforeEnd && !isFetching) {
       setIsFetching(true);
       fetchQuestions();
     }

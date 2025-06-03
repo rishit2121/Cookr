@@ -1561,7 +1561,7 @@ const QuestionCard = ({
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
-                marginRight: isFRQ ? "30px" : hasSubscription ? "0px" : "30px",
+                marginRight: isFRQ || localStorage.getItem("mode") == 2 ? "30px" : hasSubscription ? "0px" : "30px",
               }}
               onClick={handleHeartClick}
             >
