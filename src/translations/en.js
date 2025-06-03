@@ -153,10 +153,17 @@ export default {
   submitAnswer: "Submit Answer",
   responseCannotBeBlank: "Response cannot be blank",
   noAnswerAvailable: "No answer available",
-  answerGuideline: "Answer Guideline:",
+  answerGuideline: "Answer Guideline",
   pleaseSubmitAnswerFirst: "Please submit your answer first",
   revealAnswer: "Reveal Answer",
   hideAnswer: "Hide Answer",
+  gradingInProgress: "Grading In Progress...",
+  grading: "Grading",
+  answerGuidelines: "Answer Guidelines",
+  finalScore: "Final Score:",
+  evaluateAnswer: "Evaluate Answer",
+  
+
 
   // Saved
   favorites: "Favorites",

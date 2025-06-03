@@ -147,6 +147,11 @@ export default {
   pleaseSubmitAnswerFirst: "Пожалуйста, отправьте свой ответ первым",
   revealAnswer: "Показать Ответ",
   hideAnswer: "Скрыть Ответ",
+  gradingInProgress: "Оценка в процессе...",
+  grading: "Оценка",
+  answerGuidelines: "Правила ответа",
+  finalScore: "Итоговый балл:",
+  evaluateAnswer: "Оценить Oтвет",
 
   // Saved
   favorites: "Избранное",

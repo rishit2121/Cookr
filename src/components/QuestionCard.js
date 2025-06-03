@@ -239,16 +239,36 @@ const QuestionCard = ({
 
   const formatBoldText = (text) => {
     try {
-      const parts = text.split(/(\*\*[^*]+\*\*)/g);
-      return parts.map((part, index) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
+      // Split by markdown code blocks (```)
+      const codeParts = text.split(/(```[\s\S]*?```)/g);
+
+      return codeParts.map((codePart, codeIndex) => {
+        if (codePart.startsWith("```") && codePart.endsWith("```")) {
+          // This is a code block - remove backticks and wrap in a span with a class
+          const codeContent = codePart.slice(3, -3).trim();
           return (
-            <b style={{}} key={index}>
-              <Latex>{part.slice(2, -2)}</Latex>
-            </b>
+            <div key={codeIndex} className="code-snippet">
+              {codeContent}
+            </div>
           );
+        } else {
+          // This is not a code block - apply original bold/Latex logic
+          const boldParts = codePart.split(/(\*\*[^*]+\*\*)/g);
+          return boldParts.map((boldPart, boldIndex) => {
+            if (boldPart.startsWith("**") && boldPart.endsWith("**")) {
+              // This is bold text - remove asterisks and wrap in bold tag with Latex
+              const boldContent = boldPart.slice(2, -2);
+              return (
+                <b style={{}} key={`${codeIndex}-${boldIndex}-bold`}>
+                  <Latex>{boldContent}</Latex>
+                </b>
+              );
+            } else {
+              // Regular text - render with Latex
+              return <Latex key={`${codeIndex}-${boldIndex}-latex`}>{boldPart}</Latex>;
+            }
+          });
         }
-        return <Latex key={index}>{part}</Latex>;
       });
     } catch {}
   };
@@ -1267,7 +1287,7 @@ const QuestionCard = ({
                       }}
                       onClick={() => setActiveTab('answer')}
                     >
-                      {t('Answer Guideline')}
+                      {t("answerGuidelines")}
                     </button>
                     {isSubmitted && (
                       <button
@@ -1286,7 +1306,7 @@ const QuestionCard = ({
                         }}
                         onClick={() => setActiveTab('grading')}
                       >
-                        {t('Grading') || 'Grading'}
+                        {t('grading')}
                       </button>
                     )}
                   </div>
@@ -1327,14 +1347,14 @@ const QuestionCard = ({
                           textAlign: 'center',
                           width: '100%'
                         }}>
-                          Grading In Progress...
+                          {t("gradingInProgress")}
                         </div>
                       )}
                       {gradingError && <div style={{ color: '#FF6B6B' }}>{gradingError}</div>}
                       {gradingResult && gradingResult.grading && (
                         <>
                           <div style={{ marginBottom: 18, fontWeight: 700, color: '#6A6CFF', fontSize: 19, flex: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
-                            Final Score:
+                            {t("finalScore")}
                             {(() => {
                               const scoreStr = gradingResult.finalScore || '';
                               const match = scoreStr.match(/(\d+)\s*\/\s*(\d+)/);
@@ -1492,7 +1512,9 @@ const QuestionCard = ({
             onClick={handleRevealAnswer}
             disabled={isFavorites ? false : (localStorage.getItem("mode") === "3" && !isSubmitted) || (localStorage.getItem("mode") === "1" && reveal)}
           >
-            {isSavedMCQ
+            {localStorage.getItem("mode") === "3"
+              ? t("evaluateAnswer")
+              : isSavedMCQ
               ? t("revealAnswer")
               : (localStorage.getItem("mode") === "2"
                   ? (reveal ? t("hideAnswer") : t("revealAnswer"))
@@ -1539,7 +1561,7 @@ const QuestionCard = ({
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
-                marginRight: "30px"
+                marginRight: isFRQ ? "30px" : hasSubscription ? "0px" : "30px",
               }}
               onClick={handleHeartClick}
             >
@@ -1599,6 +1621,7 @@ const QuestionCard = ({
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
+                marginRight: "30px"
               }}
               onClick={() => setShowComments(!showComments)}
             >

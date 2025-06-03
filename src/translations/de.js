@@ -143,10 +143,15 @@ export default {
   submitAnswer: "Antwort Absenden",
   responseCannotBeBlank: "Antwort darf nicht leer sein",
   noAnswerAvailable: "Keine Antwort verfügbar",
-  answerGuideline: "Antwortleitfaden:",
+  answerGuideline: "Antwortleitfaden",
   pleaseSubmitAnswerFirst: "Bitte antworte zuerst",
   revealAnswer: "Antwort Anzeigen",
   hideAnswer: "Antwort Verbergen",
+  gradingInProgress: "Benotung läuft...",
+  grading: "Benotung",
+  answerGuidelines: "Antwortrichtlinien",
+  finalScore: "Endpunktzahl:",
+  evaluateAnswer: "Antwort Bewerten",
 
   // Saved
   favorites: "Favoriten",

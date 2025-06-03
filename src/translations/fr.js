@@ -102,10 +102,15 @@ export default {
   submitAnswer: "Soumettre la Réponse",
   responseCannotBeBlank: "La réponse ne peut pas être vide",
   noAnswerAvailable: "Aucune réponse disponible",
-  answerGuideline: "Ligne de Réponse:",
+  answerGuideline: "Directives de Réponse",
   pleaseSubmitAnswerFirst: "Veuillez soumettre votre réponse en premier",
   revealAnswer: "Révéler la Réponse",
   hideAnswer: "Masquer la Réponse",
+  gradingInProgress: "Notation en cours...",
+  grading: "Notation",
+  answerGuidelines: "Directives de Réponse",
+  finalScore: "Score Final:",
+  evaluateAnswer: "Évaluer la Réponse",
 
   // Saved
   favorites: "Favoris",

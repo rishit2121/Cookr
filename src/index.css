@@ -25,6 +25,17 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.code-snippet {
+  background-color: #161616; /* Darker background */
+  color: #00ff00; /* Green text color (common for code) */
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* Monospace font */
+  padding: 5px 10px; /* Add some padding around the code */
+  border-radius: 5px; /* Slightly rounded corners */
+  margin: 5px 0; /* Add some vertical space */
+  white-space: pre-wrap; /* Preserve whitespace and wrap lines */
+  word-break: break-word; /* Break long words */
+}
+
 /* Add styling for the reveal button in flashcard mode */
 .revealAnswerButton {
   transition: all 0.2s ease;

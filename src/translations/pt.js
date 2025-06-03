@@ -143,10 +143,15 @@ export default {
   submitAnswer: "Enviar Resposta",
   responseCannotBeBlank: "A resposta não pode estar em branco",
   noAnswerAvailable: "Nenhuma resposta disponível",
-  answerGuideline: "Roteiro de Resposta:",
+  answerGuideline: "Diretriz de Resposta",
   pleaseSubmitAnswerFirst: "Por favor, envie sua resposta primeiro",
   revealAnswer: "Revelar Resposta",
-  hideAnswer: "Ocultar Resposta",
+  hideAnswer: "Esconder Resposta",
+  gradingInProgress: "Avaliação em andamento...",
+  grading: "Avaliação",
+  answerGuidelines: "Diretrizes de Resposta",
+  finalScore: "Pontuação Final:",
+  evaluateAnswer: "Avaliar Resposta",
 
   // Saved
   favorites: "Favoritos",

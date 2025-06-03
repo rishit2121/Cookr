@@ -234,7 +234,13 @@ const MyProfile = ({ mobileDimension }) => {
   const logout = () => {
     signOut(auth)
       .then(() => {
-        localStorage.clear();
+        // Clear specific items from localStorage, preserving language
+        const itemsToKeep = ['language', 'darkMode']; // Add any other items to keep
+        Object.keys(localStorage).forEach(key => {
+          if (!itemsToKeep.includes(key)) {
+            localStorage.removeItem(key);
+          }
+        });
         navigate("/auth");
 
       })
@@ -282,6 +288,8 @@ const MyProfile = ({ mobileDimension }) => {
           setSelectedAlias(profilePicture ? profilePicture : '');
           // Set the language from Firebase, defaulting to 'en' if not set
           setSelectedLanguage(doc.data().language || 'en');
+          // Also update the i18n instance with the fetched language
+          i18n.changeLanguage(doc.data().language || 'en');
         }
       );
           return () => unsubscribeFirestore(); // Cleanup Firestore listener

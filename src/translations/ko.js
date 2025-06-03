@@ -145,8 +145,13 @@ export default {
   noAnswerAvailable: "답변이 없습니다",
   answerGuideline: "답변 가이드라인:",
   pleaseSubmitAnswerFirst: "답변을 먼저 제출해주세요",
-  revealAnswer: "답변 보기",
-  hideAnswer: "답변 숨기기",
+  revealAnswer: "정답 공개",
+  hideAnswer: "정답 숨기기",
+  gradingInProgress: "채점 진행 중...",
+  grading: "채점",
+  answerGuidelines: "답변 가이드라인",
+  finalScore: "최종 점수:",
+  evaluateAnswer: "답변 평가",
 
   // Saved
   favorites: "즐겨찾기",

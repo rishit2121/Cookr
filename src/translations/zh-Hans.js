@@ -116,6 +116,11 @@ export default {
   pleaseSubmitAnswerFirst: "请先提交您的答案",
   revealAnswer: "显示答案",
   hideAnswer: "隐藏答案",
+  gradingInProgress: "评分进行中...",
+  grading: "评分",
+  answerGuidelines: "回答指南",
+  finalScore: "最终得分:",
+  evaluateAnswer: "评估答案",
 
   // Saved
   favorites: "收藏夹",

@@ -143,10 +143,15 @@ export default {
   submitAnswer: "Invia Risposta",
   responseCannotBeBlank: "La risposta non può essere vuota",
   noAnswerAvailable: "Nessuna risposta disponibile",
-  answerGuideline: "Guida alla Risposta:",
+  answerGuideline: "Linee Guida per la Risposta:",
   pleaseSubmitAnswerFirst: "Per favore, invia la tua risposta prima",
-  revealAnswer: "Mostra Risposta",
+  revealAnswer: "Rivela Risposta",
   hideAnswer: "Nascondi Risposta",
+  gradingInProgress: "Valutazione in corso...",
+  grading: "Valutazione",
+  answerGuidelines: "Linee Guida per la Risposta",
+  finalScore: "Punteggio Finale:",
+  evaluateAnswer: "Valuta Risposta",
 
   // Saved
   favorites: "Preferiti",

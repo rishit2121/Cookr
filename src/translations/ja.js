@@ -147,6 +147,11 @@ export default {
   pleaseSubmitAnswerFirst: "回答を送信してください",
   revealAnswer: "回答を表示",
   hideAnswer: "回答を隠す",
+  gradingInProgress: "採点中...",
+  grading: "採点",
+  answerGuidelines: "回答ガイドライン",
+  finalScore: "最終スコア:",
+  evaluateAnswer: "回答を評価",
 
   // Saved
   favorites: "お気に入り",
