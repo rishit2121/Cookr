@@ -5,6 +5,7 @@ import { auth } from "../components/firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { useTranslation } from 'react-i18next';
+import userIcon from "../assets/user_icon_image_bigger.png";
 
 function MyLeaderboard() {
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ function MyLeaderboard() {
     } catch (error) {
       console.error("Error fetching profile image:", error);
       // Set a default image or handle the error
-      setProfileImages(prev => ({ ...prev, [userEmail]: null }));
+      setProfileImages(prev => ({ ...prev, [userEmail]: userIcon }));
     }
   };
 
@@ -35,6 +36,9 @@ function MyLeaderboard() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser?.email || null);
       setLoading(false);
+      if (currentUser) {
+        fetchProfileImage(currentUser.email);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -49,10 +53,6 @@ function MyLeaderboard() {
           const sortedRankings = [...rankingList].sort((a, b) => b.XP - a.XP);
           setLeaderboardData(sortedRankings);
           
-          // Fetch profile images for top 3
-          sortedRankings.slice(0, 3).forEach(player => {
-            fetchProfileImage(player.email);
-          });
         }
       });
       return () => unsubscribe();
@@ -67,6 +67,20 @@ function MyLeaderboard() {
   );
 
   useEffect(() => {
+    // Fetch profile images for nearby players whenever the nearbyPlayers list updates
+    nearbyPlayers.forEach(player => {
+      // Check if the image is already being fetched or is available to avoid unnecessary calls
+      if (!profileImages[player.email]) {
+        fetchProfileImage(player.email);
+      }
+    });
+
+    topThree.forEach(player => {
+      if (!profileImages[player.email]) {
+        fetchProfileImage(player.email);
+      }
+    })
+
     if (scrollContainerRef.current && userEntryRef.current && nearbyPlayers.length > 0) {
       const container = scrollContainerRef.current;
       const userEntry = userEntryRef.current;
@@ -98,10 +112,7 @@ function MyLeaderboard() {
       // Apply the scroll
       container.scrollTop = scrollPosition;
     }
-  }, [nearbyPlayers.length, user]);
-
-  // Get top 3 players
-  
+  }, [nearbyPlayers.length, user]); // This effect depends on nearbyPlayers and user
 
   // Helper function to format name (first name only, capitalize first letter)
   const formatName = (name) => {

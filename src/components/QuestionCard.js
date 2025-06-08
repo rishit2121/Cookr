@@ -115,6 +115,22 @@ const QuestionCard = ({
     }
   };
 
+  // Helper function for manual title truncation
+  const truncateTitle = (title, limit) => {
+    if (!title || title.length <= limit) {
+      return title;
+    }
+    // Truncate and ensure no space before ellipsis
+    let truncated = title.substring(0, limit);
+    // Remove any potential trailing space from the truncated part
+    truncated = truncated.trimEnd();
+    // Ensure the very last character before ellipsis is not a space
+    if (truncated.endsWith(' ')) {
+      truncated = truncated.slice(0, -1);
+    }
+    return truncated + '...';
+  };
+
   React.useEffect(() => {
     const checkOverflow = () => {
       if (questionBoxRef.current) {
@@ -608,15 +624,12 @@ const QuestionCard = ({
               color: color,
               fontWeight: 500,
               fontSize: mobileDimension ? 11 : 13, 
-              whiteSpace: 'nowrap',
               boxShadow: '0 2px 8px 0 rgba(106,108,255,0.05)',
               letterSpacing: 0.2,
               flexShrink: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
             }}
           >
-            {title}
+            {truncateTitle(title, 33)}
           </div>
           {/* Streak oval */}
           {!isFavorites && (
@@ -1204,99 +1217,101 @@ const QuestionCard = ({
                       </div>
                     )} */}
 
-              {/* For mode 3 - slide up/down container */}
+              {/* For mode 3 - slide up/down container and overlay */}
               {fullJSON.targetAreas && (reveal || isClosing) && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "0",
-                    left: "0",
-                    width: "100%",
-                    backgroundColor: "#1B1B1B",
-                    borderTopLeftRadius: "15px",
-                    borderTopRightRadius: "15px",
-                    padding: "32px 20px 20px 20px", // lower top padding for X
-                    boxShadow: "0px -2px 10px rgba(0, 0, 0, 0.2)",
-                    animation: `${isClosing ? 'slideDown' : 'slideUp'} 0.3s ease-out forwards`,
-                    zIndex: 99999,
-                    maxHeight: "75vh",
-                    overflow: "hidden",
-                    willChange: "transform",
-                    backfaceVisibility: "hidden",
-                    boxSizing: "border-box",
-                    transform: dragOffsetY ? `translateY(${dragOffsetY}px)` : undefined,
-                    transition: dragOffsetY ? 'none' : 'transform 0.2s',
-                    touchAction: 'none',
-                  }}
-                  onTouchStart={handleDragStart}
-                  onTouchMove={handleDragMove}
-                  onTouchEnd={handleDragEnd}
-                  onMouseDown={e => { if (e.button === 0) handleDragStart(e); }}
-                  onMouseMove={e => { if (dragStartY !== null) handleDragMove(e); }}
-                  onMouseUp={handleDragEnd}
-                  onMouseLeave={handleDragEnd}
-                >
-                  {/* Close (X) button, floating above tab bar */}
-                  <button
+                <> {/* Use a Fragment to wrap multiple elements */}
+                  <div
+                    style={{
+                      position: 'absolute', // Position relative to the card
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darken the background
+                      zIndex: 99998, // Below the sliding panel
+                    }}
                     onClick={() => {
+                      // Close the container when clicking the overlay
                       setIsClosing(true);
                       setTimeout(() => {
-                        setIsClosing(false);
                         setReveal(false);
+                        setIsClosing(false);
                       }, 300);
                     }}
+                  />
+                  <div // This is the existing sliding container div
                     style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 10,
-                      background: 'rgba(30,30,30,0.85)',
-                      border: 'none',
-                      color: '#fff',
-                      fontSize: 22,
-                      cursor: 'pointer',
-                      padding: 0,
-                      zIndex: 1100,
-                      borderRadius: '50%',
-                      width: 32,
-                      height: 32,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px #0004',
-                      transition: 'background 0.2s',
+                      position: "absolute",
+                      bottom: "0",
+                      left: "0",
+                      width: "100%",
+                      backgroundColor: "#1B1B1B",
+                      borderTopLeftRadius: "15px",
+                      borderTopRightRadius: "15px",
+                      padding: "32px 20px 20px 20px", // lower top padding for X
+                      boxShadow: "0px -2px 10px rgba(0, 0, 0, 0.2)",
+                      animation: `${isClosing ? 'slideDown' : 'slideUp'} 0.3s ease-out forwards`,
+                      zIndex: 99999,
+                      maxHeight: "75vh",
+                      overflow: "hidden",
+                      willChange: "transform",
+                      backfaceVisibility: "hidden",
+                      boxSizing: "border-box",
+                      transform: dragOffsetY ? `translateY(${dragOffsetY}px)` : undefined,
+                      transition: dragOffsetY ? 'none' : 'transform 0.2s',
+                      touchAction: 'none',
                     }}
-                    aria-label="Close"
+                    onTouchStart={handleDragStart}
+                    onTouchMove={handleDragMove}
+                    onTouchEnd={handleDragEnd}
+                    onMouseDown={e => { if (e.button === 0) handleDragStart(e); }}
+                    onMouseMove={e => { if (dragStartY !== null) handleDragMove(e); }}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
+                    onClick={(e) => e.stopPropagation()} // Prevent clicks inside the container from closing it
                   >
-                    ×
-                  </button>
-                  {/* Tab bar */}
-                  <div style={{ display: 'flex', borderBottom: '1px solid #444', marginBottom: 12 }}>
+                    {/* Close (X) button, floating above tab bar */}
                     <button
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        color: activeTab === 'answer' ? '#6A6CFF' : '#aaa',
-                        border: 'none',
-                        borderBottom: activeTab === 'answer' ? '2px solid #6A6CFF' : 'none',
-                        fontWeight: 600,
-                        fontSize: 16,
-                        padding: '8px 0',
-                        cursor: 'pointer',
-                        borderRadius: '10px 10px 0 0',
-                        transition: 'color 0.2s, border-bottom 0.2s',
+                      onClick={() => {
+                        setIsClosing(true);
+                        setTimeout(() => {
+                          setIsClosing(false);
+                          setReveal(false);
+                        }, 300);
                       }}
-                      onClick={() => setActiveTab('answer')}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 10,
+                        background: 'rgba(30,30,30,0.85)',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: 22,
+                        cursor: 'pointer',
+                        padding: 0,
+                        zIndex: 1100,
+                        borderRadius: '50%',
+                        width: 32,
+                        height: 32,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px #0004',
+                        transition: 'background 0.2s',
+                      }}
+                      aria-label="Close"
                     >
-                      {t("answerGuidelines")}
+                      ×
                     </button>
-                    {isSubmitted && (
+                    {/* Tab bar */}
+                    <div style={{ display: 'flex', borderBottom: '1px solid #444', marginBottom: 12 }}>
                       <button
                         style={{
                           flex: 1,
                           background: 'transparent',
-                          color: activeTab === 'grading' ? '#6A6CFF' : '#aaa',
+                          color: activeTab === 'answer' ? '#6A6CFF' : '#aaa',
                           border: 'none',
-                          borderBottom: activeTab === 'grading' ? '2px solid #6A6CFF' : 'none',
+                          borderBottom: activeTab === 'answer' ? '2px solid #6A6CFF' : 'none',
                           fontWeight: 600,
                           fontSize: 16,
                           padding: '8px 0',
@@ -1304,135 +1319,155 @@ const QuestionCard = ({
                           borderRadius: '10px 10px 0 0',
                           transition: 'color 0.2s, border-bottom 0.2s',
                         }}
-                        onClick={() => setActiveTab('grading')}
+                        onClick={() => setActiveTab('answer')}
                       >
-                        {t('grading')}
+                        {t("answerGuidelines")}
                       </button>
-                    )}
-                  </div>
-                  {/* Tab content */}
-                  {activeTab === 'answer' && (
-                    <div
-                      style={{
-                        backgroundColor: "#6A6CFF20",
-                        padding: "15px",
-                        borderRadius: "10px",
-                        border: "1px solid #6A6CFF40",
-                        color: "#6A6CFF",
-                        fontSize: "16px",
-                        lineHeight: "1.5",
-                        maxHeight: '40vh',
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {answer !== undefined && answer !== null ? (
-                        <div>{formatBoldText(answer)}</div>
-                      ) : (
-                        <p style={{ color: "#FF6B6B" }}>{t('noAnswerAvailable')}</p>
+                      {isSubmitted && (
+                        <button
+                          style={{
+                            flex: 1,
+                            background: 'transparent',
+                            color: activeTab === 'grading' ? '#6A6CFF' : '#aaa',
+                            border: 'none',
+                            borderBottom: activeTab === 'grading' ? '2px solid #6A6CFF' : 'none',
+                            fontWeight: 600,
+                            fontSize: 16,
+                            padding: '8px 0',
+                            cursor: 'pointer',
+                            borderRadius: '10px 10px 0 0',
+                            transition: 'color 0.2s, border-bottom 0.2s',
+                          }}
+                          onClick={() => setActiveTab('grading')}
+                        >
+                          {t('grading')}
+                        </button>
                       )}
                     </div>
-                  )}
-                  {activeTab === 'grading' && isSubmitted && (
-                    <div style={{ background: 'none', padding: 0, borderRadius: 10, color: '#fff', minHeight: 80, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      {gradingLoading && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          height: '100%',
-                          minHeight: 120,
-                          fontSize: 18,
-                          fontWeight: 600,
-                          color: '#6A6CFF',
-                          textAlign: 'center',
-                          width: '100%'
-                        }}>
-                          {t("gradingInProgress")}
-                        </div>
-                      )}
-                      {gradingError && <div style={{ color: '#FF6B6B' }}>{gradingError}</div>}
-                      {gradingResult && gradingResult.grading && (
-                        <>
-                          <div style={{ marginBottom: 18, fontWeight: 700, color: '#6A6CFF', fontSize: 19, flex: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {t("finalScore")}
-                            {(() => {
-                              const scoreStr = gradingResult.finalScore || '';
-                              const match = scoreStr.match(/(\d+)\s*\/\s*(\d+)/);
-                              let score = 0, total = 0;
-                              if (match) {
-                                score = parseInt(match[1], 10);
-                                total = parseInt(match[2], 10);
-                              }
-                              let gradient = 'linear-gradient(90deg, #FF6B6B, #FF6B6B)';
-                              if (score >= 4) gradient = 'linear-gradient(90deg, #7ed957, #4be36a)';
-                              else if (score >= 2) gradient = 'linear-gradient(90deg, #ffe066, #ffd700)';
-                              else gradient = 'linear-gradient(90deg, #FF6B6B, #ffb3b3)';
-                              return (
-                                <span
-                                  style={{
-                                    background: gradient,
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    fontWeight: 800,
-                                    fontSize: 16,
-                                    marginLeft: 4,
-                                    letterSpacing: 0.5,
-                                  }}
-                                >
-                                  {scoreStr}
-                                </span>
-                              );
-                            })()}
+                    {/* Tab content */}
+                    {activeTab === 'answer' && (
+                      <div
+                        style={{
+                          backgroundColor: "#6A6CFF20",
+                          padding: "15px",
+                          borderRadius: "10px",
+                          border: "1px solid #6A6CFF40",
+                          color: "#6A6CFF",
+                          fontSize: "16px",
+                          lineHeight: "1.5",
+                          maxHeight: '40vh',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {answer !== undefined && answer !== null ? (
+                          <div>{formatBoldText(answer)}</div>
+                        ) : (
+                          <p style={{ color: "#FF6B6B" }}>{t('noAnswerAvailable')}</p>
+                        )}
+                      </div>
+                    )}
+                    {activeTab === 'grading' && isSubmitted && (
+                      <div style={{ background: 'none', padding: 0, borderRadius: 10, color: '#fff', minHeight: 80, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {gradingLoading && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            minHeight: 120,
+                            fontSize: 18,
+                            fontWeight: 600,
+                            color: '#6A6CFF',
+                            textAlign: 'center',
+                            width: '100%'
+                          }}>
+                            {t("gradingInProgress")}
                           </div>
-                          <div style={{ maxHeight: '32vh', overflowY: 'auto', paddingRight: 4, flex: 1 }}>
-                            {gradingResult.grading.map((g, i) => (
-                              <div
-                                key={i}
-                                style={{
-                                  background: g.pointGiven === 'yes' ? 'rgba(126,217,87,0.10)' : 'rgba(255,107,107,0.10)',
-                                  border: g.pointGiven === 'yes' ? '2px solid #2e7d32' : '2px solid #c62828',
-                                  borderRadius: 16,
-                                  padding: '16px 18px 14px 18px',
-                                  marginBottom: 16,
-                                  color: '#fff',
-                                  position: 'relative',
-                                  boxShadow: 'none',
-                                  minHeight: 60,
-                                  fontWeight: 500,
-                                  fontSize: 16,
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'flex-start',
-                                }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                                  <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{g.area}</span>
+                        )}
+                        {gradingError && <div style={{ color: '#FF6B6B' }}>{gradingError}</div>}
+                        {gradingResult && gradingResult.grading && (
+                          <>
+                            <div style={{ marginBottom: 18, fontWeight: 700, color: '#6A6CFF', fontSize: 19, flex: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+                              {t("finalScore")}
+                              {(() => {
+                                const scoreStr = gradingResult.finalScore || '';
+                                const match = scoreStr.match(/(\d+)\s*\/\s*(\d+)/);
+                                let score = 0, total = 0;
+                                if (match) {
+                                  score = parseInt(match[1], 10);
+                                  total = parseInt(match[2], 10);
+                                }
+                                let gradient = 'linear-gradient(90deg, #FF6B6B, #FF6B6B)';
+                                if (score >= 4) gradient = 'linear-gradient(90deg, #7ed957, #4be36a)';
+                                else if (score >= 2) gradient = 'linear-gradient(90deg, #ffe066, #ffd700)';
+                                else gradient = 'linear-gradient(90deg, #FF6B6B, #ffb3b3)';
+                                return (
                                   <span
                                     style={{
-                                      fontWeight: 700,
-                                      fontSize: 18,
-                                      color: g.pointGiven === 'yes' ? '#eaffea' : '#ffeaea',
-                                      background: g.pointGiven === 'yes' ? '#2e7d32' : '#c62828',
-                                      borderRadius: 12,
-                                      padding: '2px 12px',
-                                      marginLeft: 8,
-                                      position: 'relative',
-                                      top: -2,
-                                      boxShadow: 'none',
+                                      background: gradient,
+                                      WebkitBackgroundClip: 'text',
+                                      WebkitTextFillColor: 'transparent',
+                                      fontWeight: 800,
+                                      fontSize: 16,
+                                      marginLeft: 4,
+                                      letterSpacing: 0.5,
                                     }}
                                   >
-                                    {g.pointGiven === 'yes' ? '1' : '0'}
+                                    {scoreStr}
                                   </span>
+                                );
+                              })()}
+                            </div>
+                            <div style={{ maxHeight: '32vh', overflowY: 'auto', paddingRight: 4, flex: 1 }}>
+                              {gradingResult.grading.map((g, i) => (
+                                <div
+                                  key={i}
+                                  style={{
+                                    background: g.pointGiven === 'yes' ? 'rgba(126,217,87,0.10)' : 'rgba(255,107,107,0.10)',
+                                    border: g.pointGiven === 'yes' ? '2px solid #2e7d32' : '2px solid #c62828',
+                                    borderRadius: 16,
+                                    padding: '16px 18px 14px 18px',
+                                    marginBottom: 16,
+                                    color: '#fff',
+                                    position: 'relative',
+                                    boxShadow: 'none',
+                                    minHeight: 60,
+                                    fontWeight: 500,
+                                    fontSize: 16,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'flex-start',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                                    <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{g.area}</span>
+                                    <span
+                                      style={{
+                                        fontWeight: 700,
+                                        fontSize: 18,
+                                        color: g.pointGiven === 'yes' ? '#eaffea' : '#ffeaea',
+                                        background: g.pointGiven === 'yes' ? '#2e7d32' : '#c62828',
+                                        borderRadius: 12,
+                                        padding: '2px 12px',
+                                        marginLeft: 8,
+                                        position: 'relative',
+                                        top: -2,
+                                        boxShadow: 'none',
+                                      }}
+                                    >
+                                      {g.pointGiven === 'yes' ? '1' : '0'}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: 14, marginTop: 8, color: '#fff', fontWeight: 400 }}>{g.explanation}</div>
                                 </div>
-                                <div style={{ fontSize: 14, marginTop: 8, color: '#fff', fontWeight: 400 }}>{g.explanation}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
               </p>
             </div>

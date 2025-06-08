@@ -1,11 +1,47 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CustomDropdown from "./Dropdown";
 import { useTranslation } from 'react-i18next';
+import userIcon from "../assets/user_icon_image.png";
+import oldUserIcon from "../assets/user_icon_image_bigger.png";
+import { auth } from "./firebase/Firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
 const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, location, currentPage }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
+  const [bottomNavProfileImage, setBottomNavProfileImage] = React.useState(localStorage.getItem("profileImage"));
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser?.email || null);
+
+      if (currentUser) {
+        const storage = getStorage();
+        const imageRef = ref(storage, `images/${currentUser.email}/profile_picture.jpg`);
+        try {
+          const imageUrl = await getDownloadURL(imageRef);
+          localStorage.setItem("profileImage", imageUrl);
+          setBottomNavProfileImage(imageUrl);
+        } catch (error) {
+          console.error("Error fetching profile image in BottomNav:", error);
+          localStorage.setItem("profileImage", userIcon);
+          setBottomNavProfileImage(userIcon);
+        }
+      } else {
+        localStorage.setItem("profileImage", userIcon);
+        setBottomNavProfileImage(userIcon);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    setBottomNavProfileImage(localStorage.getItem("profileImage"));
+  }, [currentPage]);
+
   return (
     <div
       style={{
@@ -51,13 +87,13 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
           }}
         >
           <NavIconWrapper>
-            {localStorage.getItem('profileImage') && localStorage.getItem('profileImage') !== 'null' ? (
+            {bottomNavProfileImage && bottomNavProfileImage !== 'null' ? (
               <div
                 style={{
                   width: 26,
                   height: 26,
                   borderRadius: '50%',
-                  background: `url(${localStorage.getItem('profileImage')}) center/cover`,
+                  background: `url(${bottomNavProfileImage == oldUserIcon ? userIcon : bottomNavProfileImage}) center/cover`,
                 }}
               />
             ) : (

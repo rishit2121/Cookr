@@ -15,6 +15,7 @@ import owl from "../assets/owl.jpeg"
 import chipmunk from "../assets/chipmunk.jpeg"
 import squirrel from "../assets/squirrel.jpeg"
 import dog from "../assets/dog.jpeg"
+import userIcon from "../assets/user_icon_image_bigger.png"
 import { initializeApp } from "firebase/app";
 import { uploadBytes, getDownloadURL,getStorage, ref, deleteObject } from "firebase/storage";
 import i18n from "../i18n";
@@ -321,8 +322,9 @@ const MyProfile = ({ mobileDimension }) => {
           setProfileImage(imageUrl)
         } catch (error) {
           console.error("Error fetching image from Firebase:", error);
-          localStorage.setItem("profileImage", null);
-          setProfileImage(null)
+          const defaultImageUrl = userIcon; 
+          localStorage.setItem("profileImage", defaultImageUrl);
+          setProfileImage(defaultImageUrl);
         }
       }
     };
@@ -345,9 +347,9 @@ const MyProfile = ({ mobileDimension }) => {
       }
     };
 
-    if(!profileImage || profileImage===null || profileImage==='null'){
+    
       fetchProfileImage();
-    }
+    
 
     if(!localStorage.getItem("trueXP")) {
       fetchXP();
