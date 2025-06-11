@@ -271,7 +271,7 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
 
     try {
       const response = await fetch(
-        'http://localhost:5001/genAI/generate-questions',
+        'https://oclrvuqs21.execute-api.us-east-1.amazonaws.com/genAI/generate-questions',
         options
       );
       console.log(response)

@@ -1141,7 +1141,7 @@ const QuestionCard = ({
                           setActiveTab('grading');
                           setGradingLoading(true);
                           setGradingError(null);
-                          fetch('http://localhost:5001/grade/grade-free-response', {
+                          fetch('https://oclrvuqs21.execute-api.us-east-1.amazonaws.com/grade/grade-free-response', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -1397,24 +1397,27 @@ const QuestionCard = ({
                                   score = parseInt(match[1], 10);
                                   total = parseInt(match[2], 10);
                                 }
-                                let gradient = 'linear-gradient(90deg, #FF6B6B, #FF6B6B)';
-                                if (score >= 4) gradient = 'linear-gradient(90deg, #7ed957, #4be36a)';
-                                else if (score >= 2) gradient = 'linear-gradient(90deg, #ffe066, #ffd700)';
-                                else gradient = 'linear-gradient(90deg, #FF6B6B, #ffb3b3)';
-                                return (
-                                  <span
-                                    style={{
-                                      background: gradient,
-                                      WebkitBackgroundClip: 'text',
-                                      WebkitTextFillColor: 'transparent',
-                                      fontWeight: 800,
-                                      fontSize: 16,
-                                      marginLeft: 4,
-                                      letterSpacing: 0.5,
-                                    }}
-                                  >
-                                    {scoreStr}
-                                  </span>
+                                const percentage = total > 0 ? (score / total) * 100 : 0;
+                                let gradient = 'linear-gradient(90deg, #FF6B6B, #ffb3b3)';
+                                if (percentage >= 80) {
+                                  gradient = 'linear-gradient(90deg, #7ed957, #4be36a)';
+                                } else if (percentage >= 33) {
+                                  gradient = 'linear-gradient(90deg, #ffe066, #ffd700)';
+                                } 
+                              return (
+                                <span
+                                  style={{
+                                    background: gradient,
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 800,
+                                    fontSize: 16,
+                                    marginLeft: 4,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  {scoreStr}
+                                </span>
                                 );
                               })()}
                             </div>
