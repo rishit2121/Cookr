@@ -1443,7 +1443,7 @@ const QuestionCard = ({
                                   }}
                                 >
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                                    <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{g.area}</span>
+                                    <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{formatBoldText(g.area)}</span>
                                     <span
                                       style={{
                                         fontWeight: 700,
@@ -1461,7 +1461,7 @@ const QuestionCard = ({
                                       {g.pointGiven === 'yes' ? '1' : '0'}
                                     </span>
                                   </div>
-                                  <div style={{ fontSize: 14, marginTop: 8, color: '#fff', fontWeight: 400 }}>{g.explanation}</div>
+                                  <div style={{ fontSize: 14, marginTop: 8, color: '#fff', fontWeight: 400 }}>{formatBoldText(g.explanation)}</div>
                                 </div>
                               ))}
                             </div>
