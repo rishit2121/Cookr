@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import NewPrompt from "./NewPrompt";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
@@ -12,6 +12,7 @@ import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import { useTutorial } from '../context/TutorialContext';
 
 const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
   const { t } = useTranslation();
@@ -106,8 +107,25 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
   );
 };
 
+function ModeSelectionTutorialAdvance() {
+  const { isTutorialRunning, tutorialStep, goToStep } = useTutorial();
+  useEffect(() => {
+    if (isTutorialRunning && tutorialStep === 8) {
+      const interval = setInterval(() => {
+        if (document.querySelector('.tutorial-mcq-btn')) {
+          goToStep(8);
+          clearInterval(interval);
+        }
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [isTutorialRunning, tutorialStep, goToStep]);
+  return null;
+}
+
 const MyLibrary = ({ mobileDimension }) => {
   const { t } = useTranslation();
+  const { handleNextStep, goToStep, isTutorialRunning, tutorialStep } = useTutorial();
   const [sets, setSets] = useState([]);
   const [openMode, setOpenMode] = useState(false);
   const [newPrompt, setNewPrompt] = useState("");
@@ -119,6 +137,7 @@ const MyLibrary = ({ mobileDimension }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const prevSetsLength = useRef(0);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -142,6 +161,41 @@ const MyLibrary = ({ mobileDimension }) => {
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
+
+  useEffect(() => {
+    if (isTutorialRunning && tutorialStep === 7 && sets.length > prevSetsLength.current) {
+      setTimeout(() => {
+        handleNextStep();
+      }, 350);
+    }
+    prevSetsLength.current = sets.length;
+  }, [sets, isTutorialRunning, tutorialStep, handleNextStep]);
+
+  useEffect(() => {
+    if (isTutorialRunning && tutorialStep === 8 && openMode) {
+      // Wait for the MCQ button to be in the DOM
+      const interval = setInterval(() => {
+        if (document.querySelector('.tutorial-mcq-btn')) {
+          goToStep(8); // 4 is the step index for MCQ mode in the tutorial
+          clearInterval(interval);
+        }
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [isTutorialRunning, tutorialStep, openMode, goToStep]);
+
+  useEffect(() => {
+    if (isTutorialRunning && tutorialStep === 8 && openMode) {
+      const interval = setInterval(() => {
+        if (document.querySelector('.tutorial-mcq-btn')) {
+          goToStep(8); // 4 is the step index for MCQ mode in the tutorial
+          clearInterval(interval);
+        }
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [isTutorialRunning, tutorialStep, openMode, goToStep]);
+
   // Updated generateBlob function with dynamic width and height
   const deleteItemFromFirestore = async (subtitle, subcontent, subsubject, subpromptmode, subselectedmode, subcolor, subtag) => {
     console.log("deleteItemFromFirestore called with:", { subtitle, subcontent });
@@ -272,12 +326,20 @@ const MyLibrary = ({ mobileDimension }) => {
 
   // Function to change style and params when a button is clicked
   const handleNewClick = () => {
+    if (isTutorialRunning && tutorialStep === 6) {
+      setTimeout(() => {
+        handleNextStep();
+      }, 500); // Increased delay to ensure modal animation completes
+    }
     setStyle(0); // Toggle style between 0 and 1
     setParams([]); // Example params
     setOpenNewTopic(!openNewTopic);
   };
 
   const handleLetMeCook = (item) => {
+    if (isTutorialRunning && tutorialStep === 8) {
+      handleNextStep();
+    }
     setSelectedItem(item);
     setOpenMode(true);
   };
@@ -439,7 +501,7 @@ const MyLibrary = ({ mobileDimension }) => {
           }}
         >
           <div
-            className="libCard"
+            className="libCard tutorial-create-set-btn"
             style={{
             position: "fixed",
             bottom: mobileDimension ? "90px" : "30px",
@@ -542,6 +604,11 @@ const MyLibrary = ({ mobileDimension }) => {
                 </p>
 
                 <button
+                  className={`tutorial-let-me-cook-btn ${
+                    isTutorialRunning && tutorialStep === 8 && index === sets.length - 1
+                      ? 'tutorial-targeted-let-me-cook-btn'
+                      : ''
+                  }`}
                   style={{
                     margin: "10px 10px",
                     color: "white",
@@ -589,9 +656,13 @@ const MyLibrary = ({ mobileDimension }) => {
             position: "relative"
           }}>
             <svg
-              onClick={() => setOpenMode(false)}
+              onClick={() => {
+                if (!(isTutorialRunning && tutorialStep === 8)) {
+                  setOpenMode(false);
+                }
+              }}
               style={{
-                cursor: "pointer",
+                cursor: (isTutorialRunning && tutorialStep === 8) ? "not-allowed" : "pointer",
                 position: "absolute",
                 left: "20px"
               }}
@@ -634,6 +705,7 @@ const MyLibrary = ({ mobileDimension }) => {
             marginTop: "5%"
           }}>
             <button
+              className="tutorial-mcq-btn"
               style={{
                 color: "white",
                 background: `#0194a3`,
@@ -652,12 +724,16 @@ const MyLibrary = ({ mobileDimension }) => {
               }}
               onClick={() => {
                 if (!selectedItem) return;
+                if (isTutorialRunning && tutorialStep !== 8) {
+                  goToStep(8);
+                }
                 localStorage.setItem("currentSet", JSON.stringify(selectedItem));
                 localStorage.removeItem("lastSet");
                 localStorage.removeItem("lastFlashSet");
                 localStorage.setItem("mode", 1);
                 navigate("/");
               }}
+              disabled={isTutorialRunning && tutorialStep === 8 && !selectedItem}
             >
               <span style={{ fontWeight: "bold" }}>{t("multipleChoice")}</span>
               <svg
@@ -682,7 +758,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 fontSize: "23px",
                 textAlign: "center",
                 border: "none",
-                cursor: "pointer",
+                cursor: (isTutorialRunning && tutorialStep === 8) ? "not-allowed" : "pointer",
                 width: "90%",
                 marginTop:'4dvh',
                 height: "20dvh",
@@ -691,6 +767,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 alignItems: "center"
               }}
               onClick={() => {
+                if (isTutorialRunning && tutorialStep === 8) return;
                 if (!selectedItem) return;
                 localStorage.setItem("currentSet", JSON.stringify(selectedItem));
                 localStorage.removeItem("lastSet");
@@ -698,10 +775,9 @@ const MyLibrary = ({ mobileDimension }) => {
                 localStorage.setItem("mode", 2);
                 navigate("/");
               }}
+              disabled={isTutorialRunning && tutorialStep === 8}
             >
               <span style={{ fontWeight: "bold" }}>{t("flashcards")}</span>
-
-
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 14 14"
@@ -719,7 +795,6 @@ const MyLibrary = ({ mobileDimension }) => {
                   <path d="M9 12.5H1.5a1 1 0 0 1-1-1V6"></path>
                 </g>
               </svg>
-
             </button>
             <button
               style={{
@@ -731,7 +806,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 fontSize: "23px",
                 textAlign: "center",
                 border: "none",
-                cursor: hasSubscription ? "pointer" : "not-allowed",
+                cursor: (isTutorialRunning && tutorialStep === 8) ? "not-allowed" : (hasSubscription ? "pointer" : "not-allowed"),
                 width: "90%",
                 marginTop:'4dvh',
                 height: "20dvh",
@@ -742,6 +817,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 position: "relative"
               }}
               onClick={() => {
+                if (isTutorialRunning && tutorialStep === 8) return;
                 if (!selectedItem || !hasSubscription) return;
                 localStorage.setItem("currentSet", JSON.stringify(selectedItem));
                 localStorage.removeItem("lastSet");
@@ -749,6 +825,7 @@ const MyLibrary = ({ mobileDimension }) => {
                 localStorage.setItem("mode", 3);
                 navigate("/");
               }}
+              disabled={isTutorialRunning && tutorialStep === 8}
             >
               <span style={{ fontWeight: "bold" }}>{t("freeResponse")}</span>
               {!hasSubscription && (
@@ -790,6 +867,7 @@ const MyLibrary = ({ mobileDimension }) => {
               </svg>
             </button>
           </div>
+          <ModeSelectionTutorialAdvance />
         </div>
       )}
       {openNewTopic && (

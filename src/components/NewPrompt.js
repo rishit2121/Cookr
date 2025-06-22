@@ -15,6 +15,7 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import { auth, signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useTranslation } from 'react-i18next';
+import { useTutorial } from '../context/TutorialContext'; // Import the tutorial context
 
 // Set the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker;
@@ -115,6 +116,7 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
 
 function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const { t } = useTranslation();
+  const { handleNextStep, isTutorialRunning, tutorialStep } = useTutorial(); // Use the tutorial context
   const [promptMode, setPromptMode] = useState(1);
   const [
     subcolor,
@@ -146,6 +148,14 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [titleExplicitError, setTitleExplicitError] = useState(false);
   const [contentExplicitError, setContentExplicitError] = useState(false);
   const [subjectExplicitError, setSubjectExplicitError] = useState(false);
+
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const explicitWords = [
     "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "cunt", "twat", 
@@ -672,6 +682,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
       // Close the modal
       setOpenNewTopic(false);
+
     } catch (e) {
       console.error('Error in saveToFirestore:', e);
       console.error('Error details:', {
@@ -727,6 +738,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   });
 
   const handleClose = () => {
+    if (isTutorialRunning) return; 
     setIsClosing(true);
     setTimeout(() => {
       setOpenNewTopic(false);
@@ -744,6 +756,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
   return (
     <div
+      className="tutorial-new-prompt"
       style={{
         position: "fixed",
         top: 0,
@@ -756,7 +769,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         flexDirection: "column",
         padding: "30px",
         justifyContent: "space-between",
-        zIndex: 99999999999999,
+        zIndex: 9999,
         boxSizing: "border-box",
         transform: isClosing ? "translateY(100%)" : isOpening ? "translateY(100%)" : "translateY(0)",
         transition: "transform 0.3s ease-in-out",
@@ -784,7 +797,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           height: "20px",
           right: "10px",
           top: "10px",
-          cursor: "pointer",
+          cursor: isTutorialRunning ? 'not-allowed' : 'pointer',
         }}
       >
         <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
@@ -846,6 +859,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           </p>
           <div style={{ width: "100%" }}>
             <input
+              className="tutorial-title-input"
               value={title}
               onChange={handleTitleChange}
               style={{
@@ -1104,6 +1118,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         <div style={{ width: "100%", marginBottom: "20px" }}>
           {style === 0 && (
             <button
+              className="tutorial-save-btn"
               onClick={() => saveToFirestore(false)}
               disabled={
                 title.length > 100 ||

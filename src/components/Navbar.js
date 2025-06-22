@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase/Firebase";
-import { useNavigate } from "react-router-dom";
 import { Toggle } from "./Toggle.js";
 import { signInWithGoogle, logOut } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -10,10 +9,11 @@ import myImage from "../assets/cookr_logo.png";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
 import { useTranslation } from 'react-i18next';
+import { useTutorial } from "../context/TutorialContext"; // Import the tutorial context
 
 
 const Navbar = ({ setMobileDimension }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [darkMode, setDarkMode] = useState(true); // State for theme
@@ -29,6 +29,7 @@ const Navbar = ({ setMobileDimension }) => {
   };
   const [user, setUser] = useState('rishit.agrawal121@gmail.com');
   const [hasSubscription, setHasSubscription] = useState(false);
+  const { handleNextStep, isTutorialRunning, tutorialStep } = useTutorial(); // Use the tutorial context
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -98,6 +99,18 @@ const Navbar = ({ setMobileDimension }) => {
   const toggleNavbar = () => {
     setIsExpanded(!isExpanded);
   };
+
+  const handleLibraryClick = () => {
+    if (isTutorialRunning && tutorialStep === 5) {
+      navigate("/library");
+      setTimeout(() => {
+        handleNextStep();
+      }, 0);
+    } else {
+      navigate("/library");
+    }
+  };
+
   // if (loading) {
   //   return <p>Loading...</p>; // Show loading indicator while resolving auth state
   // }
@@ -165,6 +178,7 @@ const Navbar = ({ setMobileDimension }) => {
         <Link
           to={"/"}
           style={navLinkStyle}
+          className="nav-home"
         >
           <div style={iconContainerStyle}>
             <svg
@@ -219,7 +233,14 @@ const Navbar = ({ setMobileDimension }) => {
         </Link>
         )} */}
         {user && (
-        <Link to={"/library"} style={navLinkStyle}>
+        <Link
+          to={"/library"}
+          style={navLinkStyle}
+          onClick={handleLibraryClick}
+          className={`nav-item nav-library ${
+            window.location.pathname === "/library" ? "active" : ""
+          } tutorial-library-btn`}
+        >
           <div style={iconContainerStyle}>
             <svg
               fill={"#ffffff"}
@@ -237,8 +258,14 @@ const Navbar = ({ setMobileDimension }) => {
           </div>
         </Link>
         )}
-        {user && (
-        <Link to={"/leaderboard"} style={navLinkStyle}>
+        {user && hasSubscription && (
+        <Link
+          to={"/leaderboard"}
+          style={navLinkStyle}
+          className={`nav-item nav-leaderboard ${
+            window.location.pathname === "/leaderboard" ? "active" : ""
+          }`}
+        >
           <div style={iconContainerStyle}>
             <svg
               xmlns="https://www.w3.org/2000/svg"
@@ -288,7 +315,13 @@ const Navbar = ({ setMobileDimension }) => {
         </Link>
         )} */}
         {user && (
-        <Link to="/saved" style={navLinkStyle}>
+        <Link
+          to={"/saved"}
+          style={navLinkStyle}
+          className={`nav-item nav-favorites ${
+            window.location.pathname === "/saved" ? "active" : ""
+          }`}
+        >
           <div style={iconContainerStyle}>
             <svg
               fill={"#ffffff"}
@@ -345,7 +378,13 @@ const Navbar = ({ setMobileDimension }) => {
         </Link>
         )} */}
         {user && (
-        <Link to="/profile" style={navLinkStyle}>
+        <Link
+          to={"/profile"}
+          style={navLinkStyle}
+          className={`nav-item nav-profile ${
+            window.location.pathname === "/profile" ? "active" : ""
+          }`}
+        >
           <div style={iconContainerStyle}>
             <svg
               fill={"#ffffff"}
@@ -387,6 +426,9 @@ const Navbar = ({ setMobileDimension }) => {
         <Link
           to="https://forms.gle/aWnQhHmELkT1Mvhw6"
           style={navLinkStyle}
+          className={`nav-item ${
+            window.location.pathname === "/report" ? "active" : ""
+          }`}
         >
           <div style={iconContainerStyle}>
             <svg

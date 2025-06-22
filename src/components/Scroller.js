@@ -255,6 +255,9 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
   };
 
   const fetchQuestions = async () => {
+    const mode = localStorage.getItem("mode");
+    const sliceAmount = mode === '3' ? -5 : -10;
+
     const options = {
       method: "POST",
       headers: {
@@ -263,8 +266,8 @@ const QuestionScroller = ({ setStreak, setXP, currentSet, mobileDimension}) => {
       },
       body: JSON.stringify({
         info: currentSet,
-        lastQuestionSet: questions.slice(-10),
-        mode: localStorage.getItem("mode"),
+        lastQuestionSet: questions.slice(sliceAmount),
+        mode: mode,
         language: localStorage.getItem('language') || 'en',
       }),
     };

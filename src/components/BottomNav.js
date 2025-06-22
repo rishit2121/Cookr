@@ -7,9 +7,18 @@ import oldUserIcon from "../assets/user_icon_image_bigger.png";
 import { auth } from "./firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { useTutorial } from "../context/TutorialContext";
 
 const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, location, currentPage }) => {
   const { t, i18n } = useTranslation();
+  const { handleNextStep, isTutorialRunning, tutorialStep } = useTutorial();
+
+  const handleLibraryClick = () => {
+    if (isTutorialRunning && tutorialStep === 5) {
+      handleNextStep();
+    }
+  };
+
   const currentLanguage = i18n.language;
   const [bottomNavProfileImage, setBottomNavProfileImage] = React.useState(localStorage.getItem("profileImage"));
   const [user, setUser] = useState(null);
@@ -76,6 +85,7 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
 
         <Link
           to="/profile"
+          className="nav-profile mobile-nav-profile"
           style={{
             display: "flex",
             marginTop:'5px',
@@ -113,6 +123,8 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
         
         <Link
           to={"/library"}
+          onClick={handleLibraryClick}
+          className="nav-library tutorial-library-btn mobile-nav-library mobile-tutorial-library-btn"
           style={{
             display: "flex",
             marginTop:'5px',
@@ -133,6 +145,7 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
         </Link>
         <Link
           to={"/"}
+          className="nav-home mobile-nav-home"
           style={{
             display: "flex",
             alignItems: "center",
@@ -158,6 +171,7 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
         </Link>
           <Link
           to={"/leaderboard"}
+          className="nav-leaderboard mobile-nav-leaderboard"
           style={{
             display: "flex",
             alignItems: "center",
@@ -192,6 +206,7 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
         </Link>
         <Link
           to="/saved"
+          className="nav-favorites mobile-nav-favorites"
           style={{
             display: "flex",
             alignItems: "center",
