@@ -1359,7 +1359,7 @@ return (
                   setStudyGuideData(null);
 
                   try {
-                    const response = await fetch('http://localhost:5002/genAI/generate-study-guide', {
+                    const response = await fetch('https://oclrvuqs21.execute-api.us-east-1.amazonaws.com/genAI/generate-study-guide', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
