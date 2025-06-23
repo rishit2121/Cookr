@@ -266,14 +266,14 @@ const SavedQuestions = () => {
           {/* Centered Question Cards */}
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: mobileDimension ? "center" : "center",
-              justifyContent: "flex-start",
-              gap: 8,
-              width: '100%',
-              paddingTop: 0,
-              paddingBottom: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: mobileDimension ? "center" : "center",
+            justifyContent: "flex-start",
+            gap: 8,
+            width: '100%',
+            paddingTop: 0,
+            paddingBottom: 0,
               overflowY: 'auto',
               maxHeight: mobileDimension ? 'calc(100dvh - 140px)' : 'calc(100vh - 140px)', // keep only vertical scroll for cards
             }}

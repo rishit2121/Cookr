@@ -115,7 +115,7 @@ public class CordovaWebViewImpl implements CordovaWebView {
         // This isn't enforced by the compiler, so assert here.
         assert engine.getView() instanceof CordovaWebViewEngine.EngineView;
 
-        pluginManager.addService(CoreAndroid.PLUGIN_NAME, "org.apache.cordova.CoreAndroid", true);
+        pluginManager.addService(CoreAndroid.PLUGIN_NAME, "org.apache.cordova.CoreAndroid");
         pluginManager.init();
     }
 
@@ -149,7 +149,6 @@ public class CordovaWebViewImpl implements CordovaWebView {
 
         // Timeout error method
         final Runnable loadError = new Runnable() {
-            @Override
             public void run() {
                 stopLoading();
                 LOG.e(TAG, "CordovaWebView: TIMEOUT ERROR!");
@@ -169,7 +168,6 @@ public class CordovaWebViewImpl implements CordovaWebView {
 
         // Timeout timer method
         final Runnable timeoutCheck = new Runnable() {
-            @Override
             public void run() {
                 try {
                     synchronized (this) {
@@ -191,7 +189,6 @@ public class CordovaWebViewImpl implements CordovaWebView {
         if (cordova.getActivity() != null) {
             final boolean _recreatePlugins = recreatePlugins;
             cordova.getActivity().runOnUiThread(new Runnable() {
-                @Override
                 public void run() {
                     if (loadUrlTimeoutValue > 0) {
                         cordova.getThreadPool().execute(timeoutCheck);
@@ -582,13 +579,11 @@ public class CordovaWebViewImpl implements CordovaWebView {
             // Make app visible after 2 sec in case there was a JS error and Cordova JS never initialized correctly
             if (engine.getView().getVisibility() != View.VISIBLE) {
                 Thread t = new Thread(new Runnable() {
-                    @Override
                     public void run() {
                         try {
                             Thread.sleep(2000);
                             if (cordova.getActivity() != null) {
                                 cordova.getActivity().runOnUiThread(new Runnable() {
-                                    @Override
                                     public void run() {
                                         pluginManager.postMessage("spinner", "stop");
                                     }
