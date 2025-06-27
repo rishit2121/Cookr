@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef} from "react";
 import NewPrompt from "./NewPrompt";
-import { getDoc, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
+import { getDoc, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db} from "./firebase/Firebase";
 import Plans from "./Plans";
 import { useNavigate } from "react-router-dom";
 import AdsComponent from './adComponent';
 import { auth, signInWithGoogle, logOut, } from "./firebase/Firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import panda from "../assets/panda.jpeg"
 import monkey from "../assets/monkey.jpeg"
 import shark from "../assets/shark.jpeg"
@@ -91,6 +90,14 @@ const MyProfile = ({ mobileDimension }) => {
   const [editedUsername, setEditedUsername] = useState(name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Add state for the random code and user input
+  const [deleteConfirmCode, setDeleteConfirmCode] = useState("");
+  const [deleteUserInput, setDeleteUserInput] = useState("");
 
   const handleCopy = () => {
     navigator.clipboard.writeText(link);
@@ -263,50 +270,59 @@ const MyProfile = ({ mobileDimension }) => {
   
   useEffect(() => {
     // Listen for authentication state changes
+    let unsubscribeFirestore = null;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-      setUser(currentUser.email);
+        setUser(currentUser.email);
         const userName = currentUser.displayName ? currentUser.displayName : null;
-      const rawJoinDate = currentUser.metadata.creationTime;
-      const formattedJoinDate = formatJoinDate(rawJoinDate);
-
+        const rawJoinDate = currentUser.metadata.creationTime;
+        const formattedJoinDate = formatJoinDate(rawJoinDate);
         setName(userName);
-      setJoinDate(formattedJoinDate);
+        setJoinDate(formattedJoinDate);
         setLoading(false);
-
         // Set up Firestore listener only when we have a valid user
         try {
-          const unsubscribeFirestore = onSnapshot(
+          unsubscribeFirestore = onSnapshot(
             doc(db, "users", currentUser.email),
-        (doc) => {
-              if(doc.data().name !== null){
-          setName(doc.data().name);
-          }
-              setPlanType(doc.data().plan || 'free');
-              setReferalCode(doc.data().myCode);
-              setStreak(doc.data().streak || 0);
-          const profilePicture = doc.data().profilePicture;
-          setSelectedAlias(profilePicture ? profilePicture : '');
-          // Set the language from Firebase, defaulting to 'en' if not set
-          setSelectedLanguage(doc.data().language || 'en');
-          // Also update the i18n instance with the fetched language
-          i18n.changeLanguage(doc.data().language || 'en');
-        }
-      );
-          return () => unsubscribeFirestore(); // Cleanup Firestore listener
-    } catch (error) {
+            (docSnap) => {
+              if (docSnap.exists() && docSnap.data()) {
+                const data = docSnap.data();
+                setName(data.name || null);
+                setPlanType(data.plan || 'free');
+                setReferalCode(data.myCode);
+                setStreak(data.streak || 0);
+                const profilePicture = data.profilePicture;
+                setSelectedAlias(profilePicture ? profilePicture : '');
+                setSelectedLanguage(data.language || 'en');
+                i18n.changeLanguage(data.language || 'en');
+              } else {
+                // User doc deleted: clean up and redirect
+                setUser(null);
+                setName(null);
+                setPlanType('free');
+                setLoading(false);
+                if (unsubscribeFirestore) unsubscribeFirestore();
+                navigate("/auth");
+              }
+            }
+          );
+        } catch (error) {
           setPlanType('free');
-      alert("Error");
-    }
+          alert("Error");
+        }
       } else {
         // Handle case when user is not logged in
         setUser(null);
         setName(null);
         setPlanType('free');
         setLoading(false);
+        if (unsubscribeFirestore) unsubscribeFirestore();
       }
     });
-    return () => unsubscribe(); // Cleanup auth listener
+    return () => {
+      if (unsubscribeFirestore) unsubscribeFirestore();
+      unsubscribe(); // Cleanup auth listener
+    };
   }, []);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get the initial dark mode state from localStorage, default to false
@@ -577,6 +593,59 @@ const MyProfile = ({ mobileDimension }) => {
     setIsEditingUsername(false);
     setEditedUsername(name || '');
     setErrorMessage('');
+  };
+
+  // Update the delete button handler to generate a code
+  const handleShowDeletePopup = () => {
+    // Generate a random 8-digit number as a string
+    const code = Math.floor(10000000 + Math.random() * 90000000).toString();
+    setDeleteConfirmCode(code);
+    setDeleteUserInput("");
+    setDeleteError("");
+    setShowDeletePopup(true);
+  };
+
+  // Update the delete account handler to check the code
+  const handleDeleteAccount = async () => {
+    setDeleteError("");
+    setDeleteLoading(true);
+    if (deleteUserInput !== deleteConfirmCode) {
+      setDeleteError("The number you entered does not match. Please try again.");
+      setDeleteLoading(false);
+      return;
+    }
+    try {
+      // ... (rest of the deletion logic remains unchanged)
+      const userObj = auth.currentUser;
+      if (!userObj || !user) {
+        setDeleteError("User not found.");
+        setDeleteLoading(false);
+        return;
+      }
+      // Delete Firestore user document
+      await deleteDoc(doc(db, "users", user));
+      // Delete profile image from Storage
+      try {
+        const imageRef = ref(storage, `images/${user}/profile_picture.jpg`);
+        await deleteObject(imageRef);
+      } catch (e) {}
+      // Delete Auth account
+      await userObj.delete();
+      setShowDeletePopup(false);
+      setDeleteUserInput("");
+      setDeleteError("");
+      setDeleteLoading(false);
+      const itemsToKeep = ['language', 'darkMode'];
+      Object.keys(localStorage).forEach(key => {
+        if (!itemsToKeep.includes(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+      navigate("/auth");
+    } catch (error) {
+      setDeleteError(error.message || "Failed to delete account. Please try again.");
+      setDeleteLoading(false);
+    }
   };
 
   if (loading) {
@@ -1735,33 +1804,147 @@ const MyProfile = ({ mobileDimension }) => {
               Account Details
             </h4> */}
             <button
-              style={{
-                marginTop: "5%",
-                color: "black",
-                background: `#F05858`,
-                // boxShadow: `0px 5px 0px 0pxrgb(230, 38, 38)`,
-                padding: "5px 15px",
-                borderRadius: "10px",
-                fontSize: "20px",
-                textAlign: "center",
-                border: "none",
-                cursor: "pointer",
-                width:'80%',
-                marginLeft:'10%',
-                height:'50%',
-                fontWeight: "bold",
-
+                style={{
+                  marginTop: "3%",
+                  color: "black",
+                  background: `#F05858`,
+                  padding: "5px 1px",
+                  borderRadius: "10px",
+                  fontSize: "20px",
+                  textAlign: "center",
+                  border: "none",
+                  cursor: "pointer",
+                  width:'80%',
+                  marginLeft:'10%',
+                  height:'50%',
+                  fontWeight: "bold",
               }}
               onClick={async () => logout()}
             >
-              {t("logOut")}
+                {t("logOut")}
             </button>
-
-            {/* Spacer */}
-            {/* <div style={{ flexGrow: 1 }}></div> Pushes email to the bottom */}
-
-            {/* Email */}
-            
+            {/* Delete Account Button */}
+            <button
+                style={{
+                  marginTop: "3%",
+                  color: "white",
+                  background: `#a90000`,
+                  padding: "5px 1px",
+                  borderRadius: "10px",
+                  fontSize: "20px",
+                  textAlign: "center",
+                  border: "none",
+                  cursor: "pointer",
+                  width:'80%',
+                  marginLeft:'10%',
+                  height:'50%',
+                  fontWeight: "bold",
+                  border: '2px solid #ff4444',
+                  marginBottom: isMobile ? '18px' : undefined,
+              }}
+              onClick={handleShowDeletePopup}
+            >
+                Delete Account
+            </button>
+            {/* Delete Account Popup */}
+            {showDeletePopup && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.7)',
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{
+                  background: '#232323',
+                  borderRadius: '20px',
+                  padding: isMobile ? '16px' : '32px',
+                  width: isMobile ? '85vw' : '350px',
+                  maxWidth: isMobile ? '95vw' : '90vw',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  position: 'relative',
+                }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '18px',
+                      color: 'white',
+                      fontSize: '32px',
+                      cursor: 'pointer',
+                      zIndex: 100000
+                    }}
+                    onClick={() => {
+                      setShowDeletePopup(false);
+                      setDeletePassword('');
+                      setDeleteError('');
+                    }}
+                  >
+                    ×
+                  </span>
+                  <h2 style={{ color: 'white', marginBottom: '20px' }}>Delete Account</h2>
+                  <p style={{ color: '#ff4444', marginBottom: '20px', textAlign: 'center' }}>
+                    This action is <b>permanent</b> and will delete all your data. To confirm, type the number below:
+                  </p>
+                  <div style={{
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    letterSpacing: '2px',
+                    color: '#fff',
+                    background: '#181818',
+                    borderRadius: '8px',
+                    padding: '10px 0',
+                    marginBottom: '15px',
+                    textAlign: 'center',
+                    userSelect: 'all',
+                    width: '100%',
+                    wordBreak: 'break-all',
+                  }}>{deleteConfirmCode}</div>
+                  <input
+                    type="text"
+                    placeholder="Type the number above to confirm"
+                    value={deleteUserInput}
+                    onChange={e => setDeleteUserInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #ff4444',
+                      marginBottom: '15px',
+                      fontSize: '16px',
+                      background: '#181818',
+                      color: 'white',
+                    }}
+                  />
+                  {deleteError && <p style={{ color: '#ff4444', marginBottom: '10px' }}>{deleteError}</p>}
+                  <button
+                    style={{
+                      background: '#a90000',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '10px 20px',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      marginTop: '10px',
+                      width: '100%',
+                    }}
+                    onClick={handleDeleteAccount}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {popupType === "share" && (
             <div
@@ -2435,6 +2618,139 @@ const MyProfile = ({ mobileDimension }) => {
             >
                 {t("logOut")}
             </button>
+          </div>
+          <div
+            style={{
+              backgroundColor: "#232323",
+              borderRadius: "15px",
+              width: "90%",
+              height: "12%",
+              display: "flex",
+              flexDirection: "column",
+              color: "white",
+              marginTop: '2%'
+            }}
+          >
+            <button
+              style={{
+                marginTop: "3%",
+                color: "white",
+                background: `#a90000`,
+                padding: "5px 1px",
+                borderRadius: "10px",
+                fontSize: "20px",
+                textAlign: "center",
+                border: "none",
+                cursor: "pointer",
+                width: '80%',
+                marginLeft: '10%',
+                height: '50%',
+                fontWeight: "bold",
+                border: '2px solid #ff4444',
+                
+              }}
+              onClick={handleShowDeletePopup}
+            >
+              Delete Account
+            </button>
+            {showDeletePopup && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.7)',
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{
+                  background: '#232323',
+                  borderRadius: '20px',
+                  padding: isMobile ? '16px' : '32px',
+                  width: isMobile ? '85vw' : '350px',
+                  maxWidth: isMobile ? '95vw' : '90vw',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  position: 'relative',
+                }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '18px',
+                      color: 'white',
+                      fontSize: '32px',
+                      cursor: 'pointer',
+                      zIndex: 100000
+                    }}
+                    onClick={() => {
+                      setShowDeletePopup(false);
+                      setDeletePassword('');
+                      setDeleteError('');
+                    }}
+                  >
+                    ×
+                  </span>
+                  <h2 style={{ color: 'white', marginBottom: '20px' }}>Delete Account</h2>
+                  <p style={{ color: '#ff4444', marginBottom: '20px', textAlign: 'center' }}>
+                    This action is <b>permanent</b> and will delete all your data. To confirm, type the number below:
+                  </p>
+                  <div style={{
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    letterSpacing: '2px',
+                    color: '#fff',
+                    background: '#181818',
+                    borderRadius: '8px',
+                    padding: '10px 0',
+                    marginBottom: '15px',
+                    textAlign: 'center',
+                    userSelect: 'all',
+                    width: '100%',
+                    wordBreak: 'break-all',
+                  }}>{deleteConfirmCode}</div>
+                  <input
+                    type="text"
+                    placeholder="Type the number above to confirm"
+                    value={deleteUserInput}
+                    onChange={e => setDeleteUserInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #ff4444',
+                      marginBottom: '15px',
+                      fontSize: '16px',
+                      background: '#181818',
+                      color: 'white',
+                    }}
+                  />
+                  {deleteError && <p style={{ color: '#ff4444', marginBottom: '10px' }}>{deleteError}</p>}
+                  <button
+                    style={{
+                      background: '#a90000',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '10px 20px',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      marginTop: '10px',
+                      width: '100%',
+                    }}
+                    onClick={handleDeleteAccount}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         )}

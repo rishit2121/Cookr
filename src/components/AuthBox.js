@@ -127,6 +127,7 @@ const AuthBox = () => {
           myCode: myCode,
           sets: [],
           cards: [],
+          tutorialCompleted: 'no',
         });
       }
 
@@ -162,6 +163,7 @@ const AuthBox = () => {
           myCode: myCode,
           sets: [],
           cards: [],
+          tutorialCompleted: 'no',
         });
       }
   

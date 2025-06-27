@@ -12,8 +12,9 @@ export const useTutorial = () => useContext(TutorialContext);
 export const TutorialProvider = ({ children }) => {
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [tutorialCompleted, setTutorialCompleted] = useState('yes'); // Default to 'yes'
+  const [tutorialCompleted, setTutorialCompleted] = useState(null); // Default to null (unknown)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false); // NEW: confirmation dialog state
+  const [loading, setLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const [isNarrowScreen, setIsNarrowScreen] = useState(window.innerWidth < 768);
 
@@ -118,12 +119,21 @@ export const TutorialProvider = ({ children }) => {
         } else {
           // If user doc doesn't exist, create it and start the tutorial immediately.
           await setDoc(userRef, { tutorialCompleted: 'no', email: user.email });
-          startTutorial(); // Start the tutorial immediately!
+          // Now fetch the doc again to ensure the rest of the logic runs as normal
+          const newUserSnap = await getDoc(userRef);
+          const newUserData = newUserSnap.data();
+          if (newUserData.tutorialCompleted === 'no') {
+            startTutorial();
+          } else {
+            setTutorialCompleted('yes');
+            setRun(false);
+          }
         }
       } else {
         setRun(false);
         setTutorialCompleted('yes');
       }
+      setLoading(false); // Set loading to false after check
     });
 
     return () => unsubscribe();
@@ -191,133 +201,137 @@ export const TutorialProvider = ({ children }) => {
 
   return (
     <TutorialContext.Provider value={{ handleNextStep, goToStep, isTutorialRunning, tutorialStep: stepIndex }}>
-      {children}
-      <Joyride
-        key={run}
-        run={run && !showSkipConfirm}
-        steps={steps}
-        stepIndex={stepIndex}
-        callback={handleJoyrideCallback}
-        continuous
-        disableOverlayClose
-        hideBackButton
-        showProgress={false}
-        showSkipButton={false}
-        spotlightClicks={spotlightClicks}
-        styles={{
-          options: {
-            zIndex: 10000,
-            backgroundColor: '#18181c', // dark background
-            color: '#fff', // white text
-            borderRadius: 16,
-            border: '2px solid #6A6CFF', // purple border
-            fontSize: 16,
-            padding: '18px 22px',
-            fontWeight: 500,
-            maxWidth: 340,
-            minWidth: 220,
-          },
-          tooltipContent: {
-            marginTop: "15px",
-            marginBottom: "-10px"
-          },
-          overlay: {
-            zIndex: 10001,
-            backgroundColor: 'rgba(10,10,20,0.55)',
-          },
-          tooltip: {
-            zIndex: 10002,
-            backgroundColor: '#18181c',
-            color: '#fff',
-            borderRadius: 16,
-            border: '2px solid #6A6CFF', // purple border
-            fontSize: 16,
-            padding: '18px 22px',
-            fontWeight: 500,
-            maxWidth: 340,
-            minWidth: 220,
-          },
-          buttonNext: {
-            backgroundColor: '#6A6CFF',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 16px',
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: 'pointer',
-            display: !spotlightClicks ? 'inline-block' : 'none',
-          },
-          arrow: {
-            display: 'none',
-          },
-        }}
-      />
-      {/* Confirmation dialog for skipping tutorial */}
-      {showSkipConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.45)',
-          zIndex: 20000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div style={{
-            background: '#18181c',
-            border: '2px solid #6A6CFF',
-            borderRadius: 16,
-            padding: '32px 28px',
-            color: '#fff',
-            minWidth: 260,
-            maxWidth: 340,
-            boxShadow: '0 4px 32px #0008',
-            textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 18 }}>
-              Are you sure you want to skip the tutorial?
+      {loading ? null : (
+        <>
+          {children}
+          <Joyride
+            key={run}
+            run={run && !showSkipConfirm}
+            steps={steps}
+            stepIndex={stepIndex}
+            callback={handleJoyrideCallback}
+            continuous
+            disableOverlayClose
+            hideBackButton
+            showProgress={false}
+            showSkipButton={false}
+            spotlightClicks={spotlightClicks}
+            styles={{
+              options: {
+                zIndex: 10000,
+                backgroundColor: '#18181c', // dark background
+                color: '#fff', // white text
+                borderRadius: 16,
+                border: '2px solid #6A6CFF', // purple border
+                fontSize: 16,
+                padding: '18px 22px',
+                fontWeight: 500,
+                maxWidth: 340,
+                minWidth: 220,
+              },
+              tooltipContent: {
+                marginTop: "15px",
+                marginBottom: "-10px"
+              },
+              overlay: {
+                zIndex: 10001,
+                backgroundColor: 'rgba(10,10,20,0.55)',
+              },
+              tooltip: {
+                zIndex: 10002,
+                backgroundColor: '#18181c',
+                color: '#fff',
+                borderRadius: 16,
+                border: '2px solid #6A6CFF', // purple border
+                fontSize: 16,
+                padding: '18px 22px',
+                fontWeight: 500,
+                maxWidth: 340,
+                minWidth: 220,
+              },
+              buttonNext: {
+                backgroundColor: '#6A6CFF',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontWeight: 600,
+                fontSize: 16,
+                cursor: 'pointer',
+                display: !spotlightClicks ? 'inline-block' : 'none',
+              },
+              arrow: {
+                display: 'none',
+              },
+            }}
+          />
+          {/* Confirmation dialog for skipping tutorial */}
+          {showSkipConfirm && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.45)',
+              zIndex: 20000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <div style={{
+                background: '#18181c',
+                border: '2px solid #6A6CFF',
+                borderRadius: 16,
+                padding: '32px 28px',
+                color: '#fff',
+                minWidth: 260,
+                maxWidth: 340,
+                boxShadow: '0 4px 32px #0008',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 18 }}>
+                  Are you sure you want to skip the tutorial?
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 18 }}>
+                  <button
+                    style={{
+                      background: '#6A6CFF',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '8px 22px',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      cursor: 'pointer',
+                      marginRight: 8,
+                      boxShadow: '0 2px 8px #6A6CFF44',
+                    }}
+                    onClick={completeTutorial}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    style={{
+                      background: 'transparent',
+                      color: '#fff',
+                      border: '1.5px solid #6A6CFF',
+                      borderRadius: 8,
+                      padding: '8px 22px',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      cursor: 'pointer',
+                      marginLeft: 8,
+                    }}
+                    onClick={() => setShowSkipConfirm(false)}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 18 }}>
-              <button
-                style={{
-                  background: '#6A6CFF',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '8px 22px',
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: 'pointer',
-                  marginRight: 8,
-                  boxShadow: '0 2px 8px #6A6CFF44',
-                }}
-                onClick={completeTutorial}
-              >
-                Yes
-              </button>
-              <button
-                style={{
-                  background: 'transparent',
-                  color: '#fff',
-                  border: '1.5px solid #6A6CFF',
-                  borderRadius: 8,
-                  padding: '8px 22px',
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: 'pointer',
-                  marginLeft: 8,
-                }}
-                onClick={() => setShowSkipConfirm(false)}
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </TutorialContext.Provider>
   );
