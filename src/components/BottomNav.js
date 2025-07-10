@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import CustomDropdown from "./Dropdown";
 import { useTranslation } from 'react-i18next';
 import userIcon from "../assets/user_icon_image.png";
@@ -12,10 +12,23 @@ import { useTutorial } from "../context/TutorialContext";
 const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, location, currentPage }) => {
   const { t, i18n } = useTranslation();
   const { handleNextStep, isTutorialRunning, tutorialStep } = useTutorial();
+  const navigate = useNavigate();
+  const loc = useLocation();
 
-  const handleLibraryClick = () => {
+  const handleLibraryClick = (e) => {
+    console.log('Library click detected:', { isTutorialRunning, tutorialStep, mobileDimension });
     if (isTutorialRunning && tutorialStep === 5) {
-      handleNextStep();
+      console.log('Tutorial step 5 detected, navigating first then advancing tutorial');
+      e.preventDefault(); // Prevent default navigation
+      // Navigate to library first
+      navigate("/library");
+      // Then advance the tutorial after a delay to ensure the target element is available
+      setTimeout(() => {
+        console.log('Advancing tutorial to step 6...');
+        handleNextStep();
+      }, 1);
+    } else {
+      console.log('Not in tutorial step 5, allowing normal navigation');
     }
   };
 
@@ -82,6 +95,19 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             // marginRight:'auto',
           }}
         >
+          {/* Overlay for disabling nav during tutorial step 7 and 8 */}
+          {isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) && (
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.35)',
+              zIndex: 10000,
+              pointerEvents: 'none',
+            }} />
+          )}
 
         <Link
           to="/profile"
@@ -94,6 +120,8 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             color: "#fff",
             textDecoration: "none",
             justifyContent: "space-between",
+            pointerEvents: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 'none' : 'auto',
+            opacity: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 0.5 : 1,
           }}
         >
           <NavIconWrapper>
@@ -123,7 +151,6 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
         
         <Link
           to={"/library"}
-          onClick={handleLibraryClick}
           className="nav-library tutorial-library-btn mobile-nav-library mobile-tutorial-library-btn"
           style={{
             display: "flex",
@@ -133,7 +160,10 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             color:"#fff",
             textDecoration: "none",
             justifyContent: "space-between",
+            pointerEvents: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 'none' : 'auto',
+            opacity: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 0.5 : 1,
           }}
+          onClick={handleLibraryClick}
         >
           <NavIconWrapper>
             <svg height={20} viewBox="0 0 28 28" version="1.1" style={{ transform: "scale(1.2)" }}>
@@ -141,7 +171,6 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             </svg>
           </NavIconWrapper>
           <span style={{ fontSize: currentPage === "library" ? "8px" : "8px", marginTop: "4px" }}>{t("library")}</span>
-
         </Link>
         <Link
           to={"/"}
@@ -153,6 +182,8 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             color: "#fff",
             textDecoration: "none",
             justifyContent: "space-between",
+            pointerEvents: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 'none' : 'auto',
+            opacity: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 0.5 : 1,
           }}
         >
           <NavIconWrapper>
@@ -179,6 +210,8 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             color: "#fff",
             textDecoration: "none",
             justifyContent: "space-between",
+            pointerEvents: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 'none' : 'auto',
+            opacity: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 0.5 : 1,
           }}
         >
           <NavIconWrapper>
@@ -215,6 +248,8 @@ const Bottom = ({ streak, xp, sets, setCurrentSet, mobileDimension, currentSet, 
             color: "#fff",
             textDecoration: "none",
             justifyContent: "space-between",
+            pointerEvents: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 'none' : 'auto',
+            opacity: isTutorialRunning && (tutorialStep === 7 || tutorialStep === 8) ? 0.5 : 1,
           }}
         >
           <NavIconWrapper>

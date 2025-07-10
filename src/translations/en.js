@@ -104,6 +104,14 @@ export default {
   clickOrDragAndDrop: "Click or Drag & Drop to Upload",
   confirm: "Confirm",
   retake: "Retake",
+  deleteAccount: "Delete Account",
+  confirmDelete: "Confirm Delete",
+  typeTheNumberAboveToConfirm: "Type the number above to confirm",
+  deletingDots: "Deleting...",
+  permanent: "permanent",
+  deleteAccountWarning: "This action is <b>{{permanent}}</b> and will delete all your data. To confirm, type the number below:",
+  deleteErrorMsg: "The number you entered does not match. Please try again.",
+
 
   // Bottom Nav
   profile: "Profile",

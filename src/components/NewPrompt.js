@@ -572,8 +572,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           isPublic: originalSet?.isPublic || false,
           author: originalSet?.author || userEmail,
           tag: tag,
-          scrollGenerationMode: selectedMode || 1,
-          studyGuide: null
+          scrollGenerationMode: selectedMode || 1
         };
         console.log('Updated set:', updatedSet);
 

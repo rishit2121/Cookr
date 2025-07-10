@@ -70,8 +70,9 @@ export default {
   privacyPolicy: "Политика конфиденциальности",
   accountSettings: "Настройки аккаунта",
   changePassword: "Изменить пароль",
-  deleteAccount: "Удалить аккаунт",
-  deleteAccountConfirm: "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.",
+  deleteAccount: "Удалить Аккаунт",
+  confirmDelete: "Подтвердить Удаление",
+  typeTheNumberAboveToConfirm: "Введите вышеуказанный номер для подтверждения",
   updateProfile: "Обновить профиль",
   profileUpdated: "Профиль успешно обновлен",
   memberSince: "Участник с",
@@ -94,6 +95,8 @@ export default {
   clickOrDragAndDrop: "Нажмите или перетащите файл для загрузки",
   confirm: "Подтвердить",
   retake: "Переснять",
+  deletingDots: "Удаление...",
+  deleteErrorMsg: "Введённый вами номер не совпадает. Пожалуйста, попробуйте ещё раз.",
 
   // BottomNav
   profile: "Профиль",

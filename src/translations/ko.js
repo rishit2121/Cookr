@@ -71,7 +71,8 @@ export default {
   accountSettings: "계정 설정",
   changePassword: "비밀번호 변경",
   deleteAccount: "계정 삭제",
-  deleteAccountConfirm: "정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  confirmDelete: "삭제 확인",
+  typeTheNumberAboveToConfirm: "위의 번호를 입력하여 확인하세요",
   updateProfile: "프로필 업데이트",
   profileUpdated: "프로필이 성공적으로 업데이트되었습니다",
   memberSince: "가입일",
@@ -94,6 +95,7 @@ export default {
   clickOrDragAndDrop: "클릭하거나 드래그 & 드롭하여 업로드",
   confirm: "확인",
   retake: "다시 찍기",
+  deletingDots: "삭제 중...",
 
   // BottomNav
   profile: "프로필",
@@ -219,5 +221,8 @@ export default {
   // Dropdown
   choose: "선택",
   titleTooLong: "제목은 100자를 초과할 수 없습니다",
+  permanent: "영구적",
+  deleteAccountWarning: "이 작업은 <b>{{permanent}}</b>이며 모든 데이터가 삭제됩니다. 확인하려면 아래 번호를 입력하세요:",
+  deleteErrorMsg: "입력하신 번호가 일치하지 않습니다. 다시 시도해 주세요.",
 }
 

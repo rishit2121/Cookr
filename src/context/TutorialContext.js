@@ -97,8 +97,20 @@ export const TutorialProvider = ({ children }) => {
   const startTutorial = useCallback(() => {
     setTutorialCompleted('no');
     setStepIndex(0);
-    setRun(true);
-  }, []);
+    if (isNarrowScreen) {
+      // Wait for the first mobile nav item to exist in the DOM
+      const waitForMobileNav = () => {
+        if (document.querySelector('.mobile-nav-home')) {
+          setRun(true);
+        } else {
+          setTimeout(waitForMobileNav, 30);
+        }
+      };
+      waitForMobileNav();
+    } else {
+      setRun(true);
+    }
+  }, [isNarrowScreen]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -167,7 +179,7 @@ export const TutorialProvider = ({ children }) => {
     }
   }, [completeTutorial]);
   
-  const handleNextStep = () => {
+  const handleNextStep = useCallback(() => {
     setStepIndex(prev => {
       const next = prev + 1;
       if (next === steps.length) {
@@ -177,7 +189,7 @@ export const TutorialProvider = ({ children }) => {
       }
       return next;
     });
-  };
+  }, [completeTutorial, steps.length]);
   
   const goToStep = (index) => {
     if (index === steps.length) {
@@ -190,14 +202,24 @@ export const TutorialProvider = ({ children }) => {
 
   const isTutorialRunning = run;
 
-  // Auto-advance tutorial if already on the library page
+  const spotlightClicks = stepIndex >= 5;
+
+  // Wait for step 6 target element to be available after navigation
   useEffect(() => {
-    if (isTutorialRunning && stepIndex === 5 && window.location.pathname === '/library') {
-      setStepIndex(6);
+    if (isTutorialRunning && stepIndex === 6 && window.location.pathname === "/library") {
+      console.log('Waiting for .tutorial-create-set-btn to be available...');
+      const waitForElement = () => {
+        const element = document.querySelector('.tutorial-create-set-btn');
+        if (element) {
+          console.log('Found .tutorial-create-set-btn, tutorial should continue');
+        } else {
+          console.log('Element not found, retrying...');
+          setTimeout(waitForElement, 100);
+        }
+      };
+      waitForElement();
     }
   }, [isTutorialRunning, stepIndex]);
-
-  const spotlightClicks = stepIndex >= 5;
 
   return (
     <TutorialContext.Provider value={{ handleNextStep, goToStep, isTutorialRunning, tutorialStep: stepIndex }}>

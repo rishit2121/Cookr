@@ -44,7 +44,7 @@ export default {
   privacyPolicy: "隐私政策",
   accountSettings: "账号设置",
   changePassword: "修改密码",
-  deleteAccount: "删除账号",
+  deleteAccount: "删除账户",
   deleteAccountConfirm: "您确定要删除您的账号吗？此操作无法撤销。",
   updateProfile: "更新个人资料",
   profileUpdated: "个人资料已成功更新",
@@ -189,6 +189,13 @@ export default {
   choose: "选择",
 
   titleTooLong: "标题不能超过100个字符",
+  deleteAccount: "删除账户",
+  confirmDelete: "确认删除",
+  typeTheNumberAboveToConfirm: "请输入上方的数字以确认",
+  deletingDots: "正在删除...",
+  permanent: "永久",
+  deleteAccountWarning: "此操作是<b>{{permanent}}</b>，将删除您的所有数据。要确认，请在下方输入数字：",
+  deleteErrorMsg: "您输入的数字不匹配。请再试一次。",
 }
 
 

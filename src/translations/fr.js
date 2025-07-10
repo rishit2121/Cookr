@@ -178,5 +178,12 @@ export default {
   // Dropdown
   choose: "Choisir",
   titleTooLong: "Le titre ne peut pas contenir plus de 100 caractères",
+  deleteAccount: "Supprimer le Compte",
+  confirmDelete: "Confirmer la Suppression",
+  typeTheNumberAboveToConfirm: "Tapez le numéro ci-dessus pour confirmer",
+  deletingDots: "Suppression...",
+  permanent: "permanente",
+  deleteAccountWarning: "Cette action est <b>{{permanent}}</b> et supprimera toutes vos données. Pour confirmer, tapez le numéro ci-dessous:",
+  deleteErrorMsg: "Le numéro que vous avez saisi ne correspond pas. Veuillez réessayer.",
 }
 

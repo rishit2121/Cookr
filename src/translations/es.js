@@ -70,8 +70,9 @@ export default {
   privacyPolicy: "Política de privacidad",
   accountSettings: "Configuración de la cuenta",
   changePassword: "Cambiar contraseña",
-  deleteAccount: "Eliminar cuenta",
-  deleteAccountConfirm: "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+  deleteAccount: "Eliminar Cuenta",
+  confirmDelete: "Confirmar Eliminación",
+  typeTheNumberAboveToConfirm: "Escriba el número de arriba para confirmar",
   updateProfile: "Actualizar perfil",
   profileUpdated: "Perfil actualizado con éxito",
   memberSince: "Miembro desde",
@@ -95,6 +96,10 @@ export default {
   clickOrDragAndDrop: "Haz clic o arrastra y suelta para subir", 
   confirm: "Confirmar",
   retake: "Volver a tomar",
+  deletingDots: "Eliminando...",
+  permanent: "permanente",
+  deleteAccountWarning: "Esta acción es <b>{{permanent}}</b> y eliminará todos tus datos. Para confirmar, escribe el número a continuación:",
+  deleteErrorMsg: "El número que ingresaste no coincide. Por favor, inténtalo de nuevo.",
 
   // BottomNav
   profile: "Perfil",

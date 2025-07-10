@@ -26,6 +26,7 @@ export default {
   yes: "Ja",
   no: "Nein",
   ok: "OK",
+  deletingDots: "Löschen...",
   
   // Authentication
   auth: {
@@ -70,8 +71,9 @@ export default {
   privacyPolicy: "Datenschutzrichtlinie",
   accountSettings: "Kontoeinstellungen",
   changePassword: "Passwort ändern",
-  deleteAccount: "Konto löschen",
-  deleteAccountConfirm: "Bist du sicher, dass du dein Konto löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+  deleteAccount: "Konto Löschen",
+  confirmDelete: "Löschen Bestätigen",
+  typeTheNumberAboveToConfirm: "Geben sie die oben stehende zahl zur bestätigung ein",
   updateProfile: "Profil aktualisieren",
   profileUpdated: "Profil erfolgreich aktualisiert",
   memberSince: "Mitglied seit",
@@ -219,6 +221,9 @@ export default {
   // Dropdown
   choose: "Wähle",
   titleTooLong: "Der Titel darf nicht mehr als 100 Zeichen enthalten", 
+  permanent: "dauerhaft",
+  deleteAccountWarning: "Diese Aktion ist <b>{{permanent}}</b> und wird alle ihre daten löschen. Zur bestätigung geben sie unten die zahl ein:",
+  deleteErrorMsg: "Die eingegebene Zahl stimmt nicht überein. Bitte versuchen Sie es erneut.",
 
 
 }

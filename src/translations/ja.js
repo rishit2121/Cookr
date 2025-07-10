@@ -71,7 +71,8 @@ export default {
   accountSettings: "アカウント設定",
   changePassword: "パスワード変更",
   deleteAccount: "アカウント削除",
-  deleteAccountConfirm: "本当にアカウントを削除しますか？この操作は元に戻せません。",
+  confirmDelete: "削除を確認",
+  typeTheNumberAboveToConfirm: "上の番号を入力して確認してください",
   updateProfile: "プロフィール更新",
   profileUpdated: "プロフィールが正常に更新されました",
   memberSince: "登録日",
@@ -94,6 +95,7 @@ export default {
   clickOrDragAndDrop: "クリックまたはドラッグ&ドロップしてアップロード",
   confirm: "確認",
   retake: "再撮影",
+  deletingDots: "削除中...",
 
   // BottomNav
   profile: "プロフィール",
@@ -219,5 +221,8 @@ export default {
   // Dropdown
   choose: "選択",
   titleTooLong: "タイトルは100文字以内で入力してください",
+  permanent: "永久",
+  deleteAccountWarning: "この操作は<b>{{permanent}}</b>で、すべてのデータが削除されます。確認するには、下の番号を入力してください:",
+  deleteErrorMsg: "入力した番号が一致しません。もう一度お試しください。",
 }
 

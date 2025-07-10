@@ -18,7 +18,7 @@ import userIcon from "../assets/user_icon_image_bigger.png"
 import { initializeApp } from "firebase/app";
 import { uploadBytes, getDownloadURL,getStorage, ref, deleteObject } from "firebase/storage";
 import i18n from "../i18n";
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 
 
@@ -610,7 +610,7 @@ const MyProfile = ({ mobileDimension }) => {
     setDeleteError("");
     setDeleteLoading(true);
     if (deleteUserInput !== deleteConfirmCode) {
-      setDeleteError("The number you entered does not match. Please try again.");
+      setDeleteError(t("deleteErrorMsg"));
       setDeleteLoading(false);
       return;
     }
@@ -1844,7 +1844,7 @@ const MyProfile = ({ mobileDimension }) => {
               }}
               onClick={handleShowDeletePopup}
             >
-                Delete Account
+                {t("deleteAccount")}
             </button>
             {/* Delete Account Popup */}
             {showDeletePopup && (
@@ -1889,9 +1889,9 @@ const MyProfile = ({ mobileDimension }) => {
                   >
                     ×
                   </span>
-                  <h2 style={{ color: 'white', marginBottom: '20px' }}>Delete Account</h2>
+                  <h2 style={{ color: 'white', marginBottom: '20px' }}>{t("deleteAccount")}</h2>
                   <p style={{ color: '#ff4444', marginBottom: '20px', textAlign: 'center' }}>
-                    This action is <b>permanent</b> and will delete all your data. To confirm, type the number below:
+                    <Trans i18nKey="deleteAccountWarning" values={{ permanent: t('permanent') }} components={{ b: <b /> }} />
                   </p>
                   <div style={{
                     fontSize: '2rem',
@@ -1909,7 +1909,7 @@ const MyProfile = ({ mobileDimension }) => {
                   }}>{deleteConfirmCode}</div>
                   <input
                     type="text"
-                    placeholder="Type the number above to confirm"
+                    placeholder={t("typeTheNumberAboveToConfirm")}
                     value={deleteUserInput}
                     onChange={e => setDeleteUserInput(e.target.value)}
                     style={{
@@ -1940,7 +1940,7 @@ const MyProfile = ({ mobileDimension }) => {
                     onClick={handleDeleteAccount}
                     disabled={deleteLoading}
                   >
-                    {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
+                    {deleteLoading ? t("deletingDots") : t("confirmDelete")}
                   </button>
                 </div>
               </div>
@@ -2651,7 +2651,7 @@ const MyProfile = ({ mobileDimension }) => {
               }}
               onClick={handleShowDeletePopup}
             >
-              Delete Account
+              {t("deleteAccount")}
             </button>
             {showDeletePopup && (
               <div style={{
@@ -2695,9 +2695,9 @@ const MyProfile = ({ mobileDimension }) => {
                   >
                     ×
                   </span>
-                  <h2 style={{ color: 'white', marginBottom: '20px' }}>Delete Account</h2>
+                  <h2 style={{ color: 'white', marginBottom: '20px' }}>{t("deleteAccount")}</h2>
                   <p style={{ color: '#ff4444', marginBottom: '20px', textAlign: 'center' }}>
-                    This action is <b>permanent</b> and will delete all your data. To confirm, type the number below:
+                    <Trans i18nKey="deleteAccountWarning" values={{ permanent: t('permanent') }} components={{ b: <b /> }} />
                   </p>
                   <div style={{
                     fontSize: '2rem',
@@ -2715,7 +2715,7 @@ const MyProfile = ({ mobileDimension }) => {
                   }}>{deleteConfirmCode}</div>
                   <input
                     type="text"
-                    placeholder="Type the number above to confirm"
+                    placeholder={t("typeTheNumberAboveToConfirm")}
                     value={deleteUserInput}
                     onChange={e => setDeleteUserInput(e.target.value)}
                     style={{
@@ -2746,7 +2746,7 @@ const MyProfile = ({ mobileDimension }) => {
                     onClick={handleDeleteAccount}
                     disabled={deleteLoading}
                   >
-                    {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
+                    {deleteLoading ? t("deletingDots") : t("confirmDelete")}
                   </button>
                 </div>
               </div>

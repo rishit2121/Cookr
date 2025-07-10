@@ -18,6 +18,11 @@ import Latex from 'react-latex-next';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// Defensive: if subtopics is not an array at any point, don't throw
+function safeMapSubtopics(subtopics, fn) {
+  return Array.isArray(subtopics) ? subtopics.map(fn) : [];
+}
+
 const MiniMap = ({ guide, onTopicSelect, mobileDimension, activeTopicId }) => {
   const { t } = useTranslation();
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
@@ -49,22 +54,23 @@ const MiniMap = ({ guide, onTopicSelect, mobileDimension, activeTopicId }) => {
 
   // --- Data for Navigator ---
   const getNavNodeData = () => {
-      let currentLevel = { topic: "Navigation", subtopics: guide };
-      let parent = null;
-      if (!guide) return { parent, children: [] };
-      
-      let pathTrace = "topic";
-      for (const index of navPath) {
-          parent = currentLevel.subtopics[index];
-          currentLevel = currentLevel.subtopics[index];
-          pathTrace += `-${index}`;
+    let currentLevel = { topic: "Navigation", subtopics: guide };
+    let parent = null;
+    if (!guide) return { parent, children: [] };
+    let pathTrace = "topic";
+    for (const index of navPath) {
+      if (!Array.isArray(currentLevel.subtopics) || !currentLevel.subtopics[index]) {
+        return { parent, children: [] };
       }
-      const childrenWithPaths = (currentLevel.subtopics || []).map((child, index) => ({
-          ...child,
-          fullPath: `${pathTrace}-${index}`
-      }));
-
-      return { parent: parent, children: childrenWithPaths };
+      parent = currentLevel.subtopics[index];
+      currentLevel = currentLevel.subtopics[index];
+      pathTrace += `-${index}`;
+    }
+    const childrenWithPaths = safeMapSubtopics(currentLevel.subtopics, (child, index) => ({
+      ...child,
+      fullPath: `${pathTrace}-${index}`
+    }));
+    return { parent: parent, children: childrenWithPaths };
   };
   const { parent: navParent, children: navChildren } = getNavNodeData();
   const navParentTitle = navParent ? navParent.topic : "Navigation";
@@ -301,6 +307,7 @@ const MyLibrary = ({ mobileDimension }) => {
   const [studyGuideData, setStudyGuideData] = useState(null);
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
   const prevSetsLength = useRef(0);
+  const [loadingStage, setLoadingStage] = useState(0);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
@@ -432,6 +439,19 @@ const MyLibrary = ({ mobileDimension }) => {
             <div style={{ paddingLeft: '26px' }}>
               {hasSummary && (
                  <SummaryRenderer text={topic.summary} />
+              )}
+              {!hasSummary && (
+                <div style={{
+                  background: '#222',
+                  color: '#fff',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  margin: '10px 0',
+                  fontSize: '14px',
+                  wordBreak: 'break-all',
+                }}>
+                  We were unable to generate content for this, likely due to it being a large study guide.
+                </div>
               )}
               {hasSubtopics && (
                 <div style={{ 
@@ -896,7 +916,7 @@ const MyLibrary = ({ mobileDimension }) => {
           <div ref={mobileContentRef} style={{flex: 1, overflowY: 'auto', padding: '20px 20px 100px 20px', position: 'relative'}}>
             {isLoading ? ( 
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <p style={{ fontSize: '18px' }}>{t('generatingStudyGuide', 'Generating your study guide, one moment...')}</p>
+                  <LoadingBar loadingStage={loadingStage} />
               </div>
             ) : currentTopic ? (
                 <div style={{ opacity: isFading ? 0 : 1, transition: 'opacity 0.2s ease-in-out' }}>
@@ -904,8 +924,35 @@ const MyLibrary = ({ mobileDimension }) => {
                     <SummaryRenderer text={currentTopic.summary} />
                 </div>
             ) : (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <p>{t('noStudyGuide', 'Could not load study guide.')}</p>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
+                  <p>{t('noStudyGuide', 'Could not load study guide.')}</p>
+                  {/* Show cleaned JSON if available for debugging */}
+                  {typeof studyGuideData === 'object' && studyGuideData !== null && studyGuideData.aiRaw && (
+                    <div style={{
+                      marginTop: '20px',
+                      background: '#222',
+                      color: '#fff',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      maxWidth: '90vw',
+                      overflowX: 'auto',
+                      fontSize: '12px',
+                      wordBreak: 'break-all',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Cleaned JSON (for debugging):</div>
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{
+                        (() => {
+                          let cleaned = studyGuideData.aiRaw.trim();
+                          if (cleaned.startsWith('```json')) {
+                            cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+                          } else if (cleaned.startsWith('```')) {
+                            cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+                          }
+                          return cleaned;
+                        })()
+                      }</pre>
+                    </div>
+                  )}
                 </div>
             )}
           </div>
@@ -970,6 +1017,18 @@ const MyLibrary = ({ mobileDimension }) => {
     marginTop: 0,
   };
 
+  // DEBUG: Print cleaned JSON for outline if error contains aiRaw
+  let debugCleanedOutline = null;
+  if (typeof studyGuideData === 'object' && studyGuideData !== null && studyGuideData.aiRaw) {
+    let cleaned = studyGuideData.aiRaw.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+    }
+    debugCleanedOutline = cleaned;
+  }
+
   return (
     <div style={overlayStyle}>
       <div style={headerStyle}>
@@ -994,18 +1053,26 @@ const MyLibrary = ({ mobileDimension }) => {
         <div ref={contentRef} style={contentStyle}>
           {isLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <p style={{ fontSize: '18px' }}>{t('generatingStudyGuide', 'Generating your study guide, one moment...')}</p>
+              <LoadingBar loadingStage={loadingStage} />
             </div>
-          ) : guide ? (
-            typeof guide === 'string' ? <p style={{color: 'red'}}>{guide}</p> : (Array.isArray(guide) ? guide.map((topic, index) => <CollapsibleTopic key={topic.topic} topic={topic} topicId={`topic-${index}`} collapsedTopics={collapsedTopics} setCollapsedTopics={setCollapsedTopics} />) : <p>Invalid study guide format.</p>)
+          ) : guide && Array.isArray(guide) ? (
+            guide.map((topic, index) => <CollapsibleTopic key={topic.topic} topic={topic} topicId={`topic-${index}`} collapsedTopics={collapsedTopics} setCollapsedTopics={setCollapsedTopics} />)
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <p>{t('noStudyGuide', 'Could not load study guide.')}</p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
+              <p style={{ color: 'red', fontWeight: 600, fontSize: 18 }}>Study guide failed to load. Please try again.</p>
             </div>
           )}
         </div>
       </div>
       <MiniMap guide={guide} onTopicSelect={handleTopicSelect} mobileDimension={mobileDimension} activeTopicId={activeTopicId} />
+      {debugCleanedOutline && (
+        <pre style={{
+          background: '#222', color: '#fff', padding: '10px', borderRadius: '8px', maxWidth: '90vw', overflowX: 'auto', fontSize: '12px', wordBreak: 'break-all', margin: '20px auto', border: '2px solid #a00',
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>DEBUG: Cleaned JSON for Outline</div>
+          {debugCleanedOutline}
+        </pre>
+      )}
     </div>
   );
 };
@@ -1161,6 +1228,24 @@ const confirmDelete = () => {
   );
   setShowDeleteConfirmation(false);
 };
+
+// Utility to clean and parse AI JSON output
+function cleanAndParseAIJson(raw) {
+  if (!raw || typeof raw !== 'string') throw new Error('No AI output to parse');
+  // Remove code block wrappers
+  let cleaned = raw.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+  }
+  // Try to parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error('Failed to parse AI JSON: ' + e.message);
+  }
+}
 
 return (
   user ? (
@@ -1348,22 +1433,21 @@ return (
                 onClick={async () => {
                   setStudyGuideContent(item);
                   setShowStudyGuide(true);
-                  
                   if (item.studyGuide) {
                     setStudyGuideData(item.studyGuide);
                     setIsGeneratingStudyGuide(false);
+                    setLoadingStage(0);
                     return;
                   }
-                  
                   setIsGeneratingStudyGuide(true);
                   setStudyGuideData(null);
-
+                  setLoadingStage(1); // Making outline (0%)
                   try {
-                    const response = await fetch('https://oclrvuqs21.execute-api.us-east-1.amazonaws.com/genAI/generate-study-guide', {
+                    // 1. Get the outline
+                    const apiBase = 'https://oclrvuqs21.execute-api.us-east-1.amazonaws.com';
+                    const outlineRes = await fetch(`${apiBase}/generate-study-guide-outline`, {
                       method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         language: i18n.language,
                         info: {
@@ -1373,16 +1457,101 @@ return (
                         },
                       }),
                     });
+                    if (!outlineRes.ok) {
+                      const errorData = await outlineRes.json();
+                      throw errorData;
+                    }
+                    const outline = await outlineRes.json();
+                    setLoadingStage(2); // Filling outline (part 1, 30%)
+                    // 2. Flatten topic names
+                    function flattenTopics(nodes) {
+                      let flat = [];
+                      for (const node of nodes) {
+                        flat.push(node.topic);
+                        if (node.subtopics) {
+                          flat = flat.concat(flattenTopics(node.subtopics));
+                        }
+                      }
+                      return flat;
+                    }
+                    const allTopicNames = flattenTopics(outline);
+                    // 3. Split into chunks (2 chunks as before)
+                    const midPoint = Math.ceil(allTopicNames.length / 2);
+                    const chunks = [allTopicNames.slice(0, midPoint), allTopicNames.slice(midPoint)].filter(c => c.length);
+                    const summariesMap = new Map();
 
-                    if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.error || 'Failed to generate study guide');
+                    // 4. For each chunk, call summaries endpoint
+                    for (let i = 0; i < chunks.length; i++) {
+                      if (i === 0) setLoadingStage(2); // Filling outline (part 1, 30%)
+                      if (i === 1) setLoadingStage(3); // Filling outline (part 2, 60%)
+                      const chunk = chunks[i];
+                      if (!chunk.length) continue;
+                      const summariesRes = await fetch(`${apiBase}/generate-study-guide-summaries`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          language: i18n.language,
+                          topicNames: chunk,
+                        }),
+                      });
+                      if (!summariesRes.ok) {
+                        const errorData = await summariesRes.json();
+                        throw errorData;
+                      }
+                      const chunkSummaries = await summariesRes.json();
+                      // Debug: print the result of each summary call
+                      console.log('Summary call result for chunk:', chunk, chunkSummaries);
+                      for (const [topic, summary] of Object.entries(chunkSummaries)) {
+                        summariesMap.set(topic, summary);
+                      }
                     }
 
-                    const guideData = await response.json();
-                    setStudyGuideData(guideData);
+                    // 5. Retry for missing topics if needed
+                    const missingTopics = allTopicNames.filter(name => !summariesMap.has(name));
+                    if (missingTopics.length > 0) {
+                      setLoadingStage(4); // Applying final touches (90%)
+                      const retryRes = await fetch(`${apiBase}/generate-study-guide-retry-summaries`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          language: i18n.language,
+                          topicNames: missingTopics,
+                        }),
+                      });
+                      if (!retryRes.ok) {
+                        const errorData = await retryRes.json();
+                        throw errorData;
+                      }
+                      const retrySummaries = await retryRes.json();
+                      // Debug: print the result of the retry summary call
+                      console.log('Retry summary call result for topics:', missingTopics, retrySummaries);
+                      for (const [topic, summary] of Object.entries(retrySummaries)) {
+                        summariesMap.set(topic, summary);
+                      }
+                    }
 
-                    // --- [NEW] Save the generated guide to Firestore ---
+                    // 6. Populate summaries into outline
+                    function populateSummaries(nodes) {
+                      for (const node of nodes) {
+                        node.summary = summariesMap.get(node.topic) || 'Summary not generated.';
+                        if (node.subtopics) populateSummaries(node.subtopics);
+                      }
+                    }
+                    populateSummaries(outline);
+                    // Debug: print each topic and its summary
+                    function debugPrintSummaries(nodes) {
+                      for (const node of nodes) {
+                        if (node.summary) {
+                          console.log(`content: ${node.summary} for topic: ${node.topic}`);
+                        }
+                        if (node.subtopics) debugPrintSummaries(node.subtopics);
+                      }
+                    }
+                    debugPrintSummaries(outline);
+                    setLoadingStage(0); // Done
+                    setStudyGuideData(outline);
+
+                    // Save to Firestore as before
                     const userDocRef = doc(db, 'users', user);
                     const userDocSnap = await getDoc(userDocRef);
                     if (userDocSnap.exists()) {
@@ -1390,15 +1559,34 @@ return (
                       const setIndex = userSets.findIndex(s => s.title === item.title && s.content === item.content);
                       if (setIndex !== -1) {
                         const updatedSets = [...userSets];
-                        updatedSets[setIndex].studyGuide = guideData;
+                        updatedSets[setIndex].studyGuide = outline;
                         await updateDoc(userDocRef, { sets: updatedSets });
                       }
                     }
-                    // --- End of new logic ---
-
                   } catch (error) {
                     console.error("Error generating study guide:", error);
-                    setStudyGuideData(`Error: ${error.message}`);
+                    // If backend returns aiRaw, try to clean and parse it
+                    if (error && error.aiRaw) {
+                      try {
+                        // Print raw JSON to console
+                        console.log('AI RAW JSON:', error.aiRaw);
+                        let cleaned = error.aiRaw.trim();
+                        if (cleaned.startsWith('```json')) {
+                          cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+                        } else if (cleaned.startsWith('```')) {
+                          cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+                        }
+                        // Print cleaned JSON to console
+                        console.log('AI CLEANED JSON:', cleaned);
+                        const parsed = cleanAndParseAIJson(error.aiRaw);
+                        setStudyGuideData(parsed);
+                        return;
+                      } catch (e) {
+                        setStudyGuideData(`Error: ${error.error || error.message || error}\nAI Raw: ${error.aiRaw}\nParse error: ${e.message}`);
+                        return;
+                      }
+                    }
+                    setStudyGuideData(`Error: ${error.error || error.message || error}`);
                   } finally {
                     setIsGeneratingStudyGuide(false);
                   }
@@ -1766,3 +1954,143 @@ return (
 };
 
 export default MyLibrary;
+
+// LoadingBar component for study guide generation
+function LoadingBar({ loadingStage }) {
+  // Stages: 1 = outline, 2 = fill1, 3 = fill2, 4 = final touches
+  const stages = [
+    { label: 'Making outline', percent: 0 },
+    { label: 'Filling outline (part 1)', percent: 30 },
+    { label: 'Filling outline (part 2)', percent: 60 },
+    { label: 'Applying final touches', percent: 90 },
+  ];
+  let current = 0;
+  if (loadingStage > 0 && loadingStage <= stages.length) {
+    current = loadingStage - 1;
+  }
+  const stageStart = stages[current]?.percent || 0;
+  const stageEnd = stages[current + 1]?.percent || 100;
+  const label = stages[current]?.label || '';
+
+  // Animate the bar toward a targetPercent
+  const [displayPercent, setDisplayPercent] = useState(stageStart);
+  const [targetPercent, setTargetPercent] = useState(stageEnd - 2);
+  const [speed, setSpeed] = useState(0.02); // slow by default
+  const lastStage = useRef(current);
+
+  // Update targetPercent and speed when loadingStage changes
+  useEffect(() => {
+    // If stage changes, set new target and reset speed
+    if (current !== lastStage.current) {
+      setDisplayPercent(stageStart);
+      setTargetPercent(stageEnd - 2);
+      setSpeed(0.02); // slow
+      lastStage.current = current;
+    }
+  }, [current, stageStart, stageEnd]);
+
+  // When the parent wants to move to the next checkpoint, call this:
+  // setTargetPercent(stageEnd); setSpeed(0.25);
+  useEffect(() => {
+    // If displayPercent is close to target, slow down again
+    if (displayPercent >= targetPercent - 0.5 && speed > 0.02) {
+      setSpeed(0.02);
+    }
+  }, [displayPercent, targetPercent, speed]);
+
+  // Animate toward targetPercent
+  useEffect(() => {
+    if (displayPercent >= targetPercent) return;
+    const interval = setInterval(() => {
+      setDisplayPercent(prev => {
+        if (prev >= targetPercent) {
+          clearInterval(interval);
+          return targetPercent;
+        }
+        return Math.min(prev + speed, targetPercent);
+      });
+    }, 16); // ~60fps
+    return () => clearInterval(interval);
+    // eslint-disable-next-line
+  }, [targetPercent, speed, displayPercent]);
+
+  // Animated gradient CSS
+  const gradientAnim = {
+    background: 'linear-gradient(270deg, #6A6CFF, #0194a3, #6A6CFF)',
+    backgroundSize: '400% 400%',
+    animation: 'moveGradient 2s linear infinite',
+    borderRadius: 32,
+    height: '100%',
+    width: '100%',
+  };
+
+  // Expose a way for the parent to trigger a fast catch-up to the checkpoint
+  useEffect(() => {
+    window.__setLoadingBarCheckpoint = (percent) => {
+      setTargetPercent(percent);
+      setSpeed(0.25); // fast
+    };
+  }, []);
+
+  return (
+    <div style={{ width: '80%', maxWidth: 400, margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ marginBottom: 12, fontWeight: 500, color: '#fff', fontSize: 16 }}>{label}</div>
+      <div style={{
+        width: '100%',
+        height: 32,
+        borderRadius: 32,
+        display: 'flex',
+        alignItems: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Bar background (always visible, light black/gray) */}
+        <div style={{
+          width: '100%',
+          height: '100%',
+          background: 'rgba(30,30,30,0.7)',
+          borderRadius: 32,
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          zIndex: 0,
+          overflow: 'hidden',
+        }}>
+          {/* Blue animated fill (only the filled portion) */}
+          <div style={{
+            width: `${displayPercent}%`,
+            height: '100%',
+            background: 'linear-gradient(270deg, #6A6CFF, #0194a3, #6A6CFF)',
+            backgroundSize: '400% 400%',
+            animation: 'moveGradient 2s linear infinite',
+            borderTopLeftRadius: 32,
+            borderBottomLeftRadius: 32,
+            borderTopRightRadius: displayPercent > 98 ? 32 : 0,
+            borderBottomRightRadius: displayPercent > 98 ? 32 : 0,
+            transition: 'width 0.5s cubic-bezier(.4,2,.6,1)',
+            zIndex: 1,
+          }} />
+        </div>
+        <style>{`
+          @keyframes moveGradient {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+          }
+        `}</style>
+        <div style={{
+          position: 'absolute',
+          left: 0, right: 0, top: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 600, fontSize: 15,
+          letterSpacing: 0.5,
+          pointerEvents: 'none',
+          zIndex: 2,
+          textShadow: '0 1px 4px #000, 0 0px 2px #fff',
+        }}>
+          {Math.round(displayPercent)}%
+        </div>
+      </div>
+    </div>
+  );
+}

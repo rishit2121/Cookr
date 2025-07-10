@@ -100,14 +100,17 @@ const Navbar = ({ setMobileDimension }) => {
     setIsExpanded(!isExpanded);
   };
 
-  const handleLibraryClick = () => {
+  const handleLibraryClick = (e) => {
     if (isTutorialRunning && tutorialStep === 5) {
+      console.log('Desktop: Tutorial step 5 detected, navigating first then advancing tutorial');
+      e.preventDefault(); // Prevent default navigation
+      // Navigate to library first
       navigate("/library");
+      // Then advance the tutorial after a delay to ensure the target element is available
       setTimeout(() => {
+        console.log('Desktop: Advancing tutorial to step 6...');
         handleNextStep();
-      }, 0);
-    } else {
-      navigate("/library");
+      }, 1);
     }
   };
 
