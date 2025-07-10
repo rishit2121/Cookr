@@ -1444,7 +1444,7 @@ return (
                   setLoadingStage(1); // Making outline (0%)
                   try {
                     // 1. Get the outline
-                    const apiBase = 'https://oclrvuqs21.execute-api.us-east-1.amazonaws.com';
+                    const apiBase = 'https://oclrvuqs21.execute-api.us-east-1.amazonaws.com/genAI';
                     const outlineRes = await fetch(`${apiBase}/generate-study-guide-outline`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
