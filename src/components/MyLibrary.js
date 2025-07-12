@@ -1474,18 +1474,26 @@ return (
                       }
                       return flat;
                     }
+                    console.log(outline);
                     const allTopicNames = flattenTopics(outline);
-                    // 3. Split into chunks (2 chunks as before)
-                    const midPoint = Math.ceil(allTopicNames.length / 2);
-                    const chunks = [allTopicNames.slice(0, midPoint), allTopicNames.slice(midPoint)].filter(c => c.length);
+                    console.log(allTopicNames);
+                    // 3. Split into chunks of max 8 topics each
+                    const chunkSize = 8;
+                    const chunks = [];
+                    for (let i = 0; i < allTopicNames.length; i += chunkSize) {
+                      chunks.push(allTopicNames.slice(i, i + chunkSize));
+                    }
+                    // Remove any empty chunks (shouldn't happen, but for safety)
+                    const filteredChunks = chunks.filter(c => c.length);
                     const summariesMap = new Map();
 
                     // 4. For each chunk, call summaries endpoint
-                    for (let i = 0; i < chunks.length; i++) {
-                      if (i === 0) setLoadingStage(2); // Filling outline (part 1, 30%)
-                      if (i === 1) setLoadingStage(3); // Filling outline (part 2, 60%)
-                      const chunk = chunks[i];
+                    for (let i = 0; i < filteredChunks.length; i++) {
+                      setLoadingStage(i + 2); // Stage 2-6 for chunks 1-5
+                      const chunk = filteredChunks[i];
                       if (!chunk.length) continue;
+                      const startTime = Date.now();
+                      console.log(`Starting summary generation for chunk ${i + 1} of ${filteredChunks.length} (topics:`, chunk, ")");
                       const summariesRes = await fetch(`${apiBase}/generate-study-guide-summaries`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1494,22 +1502,40 @@ return (
                           topicNames: chunk,
                         }),
                       });
+                      const endTime = Date.now();
+                      const durationSec = ((endTime - startTime) / 1000).toFixed(2);
+                      console.log(`Finished summary generation for chunk ${i + 1} in ${durationSec} seconds.`);
                       if (!summariesRes.ok) {
                         const errorData = await summariesRes.json();
                         throw errorData;
                       }
-                      const chunkSummaries = await summariesRes.json();
-                      // Debug: print the result of each summary call
-                      console.log('Summary call result for chunk:', chunk, chunkSummaries);
+                      // Print the raw AI response for this chunk
+                      const rawText = await summariesRes.clone().text();
+                      console.log('Raw AI response for chunk', i + 1, ':', rawText);
+                      let chunkSummaries;
+                      try {
+                        chunkSummaries = await summariesRes.json();
+                      } catch (err) {
+                        const rawText = await summariesRes.text();
+                        console.log('❌ Error parsing JSON for chunk', i + 1, ':', err);
+                        console.log('➡️ Raw response for chunk', i + 1, ':', rawText);
+                        setStudyGuideData({ error: 'Failed to parse summaries JSON', aiRaw: rawText });
+                        throw err;
+                      }
                       for (const [topic, summary] of Object.entries(chunkSummaries)) {
-                        summariesMap.set(topic, summary);
+                        // If summary is an array, join as bullet points
+                        if (Array.isArray(summary)) {
+                          summariesMap.set(topic, summary.map(s => `* ${s}`).join('\n'));
+                        } else {
+                          summariesMap.set(topic, summary);
+                        }
                       }
                     }
 
                     // 5. Retry for missing topics if needed
                     const missingTopics = allTopicNames.filter(name => !summariesMap.has(name));
                     if (missingTopics.length > 0) {
-                      setLoadingStage(4); // Applying final touches (90%)
+                      setLoadingStage(7); // Applying final touches (90%)
                       const retryRes = await fetch(`${apiBase}/generate-study-guide-retry-summaries`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1957,11 +1983,14 @@ export default MyLibrary;
 
 // LoadingBar component for study guide generation
 function LoadingBar({ loadingStage }) {
-  // Stages: 1 = outline, 2 = fill1, 3 = fill2, 4 = final touches
+  // Stages: 1 = outline, 2-6 = 5 chunks, 7 = final touches
   const stages = [
     { label: 'Making outline', percent: 0 },
-    { label: 'Filling outline (part 1)', percent: 30 },
-    { label: 'Filling outline (part 2)', percent: 60 },
+    { label: 'Filling chunk 1', percent: 14 },
+    { label: 'Filling chunk 2', percent: 28 },
+    { label: 'Filling chunk 3', percent: 42 },
+    { label: 'Filling chunk 4', percent: 56 },
+    { label: 'Filling chunk 5', percent: 70 },
     { label: 'Applying final touches', percent: 90 },
   ];
   let current = 0;
