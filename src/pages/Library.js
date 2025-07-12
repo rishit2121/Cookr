@@ -1,12 +1,14 @@
 import MyLibrary from "../components/MyLibrary";
 import Navbar from "../components/Navbar";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { auth, signInWithGoogle, logOut } from "../components/firebase/Firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Bottom from "../components/BottomNav";
+import SharedSetImport from '../components/SharedSetImport';
 
 function Library() {
+  const { shareCode } = useParams();
   const [streak, setStreak] = useState(
     localStorage.getItem("streak")
       ? parseInt(localStorage.getItem("streak"))
@@ -29,6 +31,7 @@ function Library() {
   });
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,6 +40,9 @@ function Library() {
     });
     return () => unsubscribe(); // Cleanup listener
   }, []);
+
+  // Remove the effect that sets localStorage and navigates
+
   return (
     <div
       className="App"
@@ -50,7 +56,6 @@ function Library() {
           flex: 1,
           padding: "10px",
           overflowY: "auto",
-          // justifyContent: mobileDimension && "center",
           display: "flex",
           width: "100%",
           backgroundColor: "black",
@@ -58,62 +63,52 @@ function Library() {
         }}
       >
         {localStorage.getItem("email") ? (
-           <MyLibrary mobileDimension={mobileDimension} />
-      ) : (
-        <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: mobileDimension
-            ? "translate(-50%, -50%)"
-            : "translate(0%, -50%)",
-        }}
-      >
-        <p style={{ fontSize: "21px", color: "white" }}>Hey 👋, welcome to </p>
-        <h1
-          style={{
-            marginLeft: "15px",
-            textShadow: "2px 2px 5px blue",
-            fontSize: "50px",
-            color: "white"
-          }}
-        >
-              C<span style={{ fontStyle: "italic" }}>oo</span>kr
-        </h1>
-        <br></br>
-        <button
-          onClick={async () => navigate("/auth")}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "white",
-            border: "none",
-            color: "black",
-            borderRadius: "100px",
-            cursor: "pointer",
-          }}
-        >
-          Sign In
-        </button>
-        <p style={{ textAlign: "center", marginTop: "20px" }}>
-          to get scrollin'!
-        </p>
-      </div>
+          <MyLibrary mobileDimension={mobileDimension} />
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: mobileDimension
+                ? "translate(-50%, -50%)"
+                : "translate(0%, -50%)",
+            }}
+          >
+            <p style={{ fontSize: "21px", color: "white" }}>Hey 👋, welcome to </p>
+            <h1
+              style={{
+                marginLeft: "15px",
+                textShadow: "2px 2px 5px blue",
+                fontSize: "50px",
+                color: "white"
+              }}
+            >
+                  C<span style={{ fontStyle: "italic" }}>oo</span>kr
+            </h1>
+            <br></br>
+            <button
+              onClick={async () => navigate("/auth")}
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor: "white",
+                border: "none",
+                color: "black",
+                borderRadius: "100px",
+                cursor: "pointer",
+              }}
+            >
+              Sign In
+            </button>
+            <p style={{ textAlign: "center", marginTop: "20px" }}>
+              to get scrollin'!
+            </p>
+          </div>
         )}
-        {mobileDimension && (
-        <Bottom
-          streak={streak}
-          currentPage={'library'}
-          xp={xp}
-          sets={sets}
-          currentSet={currentSet}
-          setCurrentSet={setCurrentSet}
-          mobileDimension={mobileDimension}
-        />
-      )}
+        {mobileDimension && <Bottom />}
+      </div>
     </div>
-    </div >
   );
 }
 

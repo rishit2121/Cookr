@@ -27,6 +27,7 @@ import PaymentConfirmation from './components/PaymentConfirmation';
 import Terms from './pages/Terms';
 import  PrivacyPolicyPopup from './components/Privacy';
 import { TutorialProvider } from './context/TutorialContext';
+import SharedSetImport from "./components/SharedSetImport";
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 
@@ -48,6 +49,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/library/:shareCode" element={<SharedSetImport />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
             {/* <Route path="/affiliate" element={<AffiliatePage />} /> */}

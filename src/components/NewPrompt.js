@@ -126,7 +126,8 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     subtag,
     subtitle,
     subselectedmode,
-    subauthor
+    subauthor,
+    subeditable
   ] = params;
   const [selectedMode, setSelectedMode] = useState(subselectedmode);
   const [title, setTitle] = useState(style === 1 ? subtitle : "");
@@ -148,6 +149,13 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [titleExplicitError, setTitleExplicitError] = useState(false);
   const [contentExplicitError, setContentExplicitError] = useState(false);
   const [subjectExplicitError, setSubjectExplicitError] = useState(false);
+  // Import functionality state
+  const [importCode, setImportCode] = useState("");
+  const [importedSet, setImportedSet] = useState(null);
+  const [importError, setImportError] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  // State for import warnings
+  const [importWarning, setImportWarning] = useState("");
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -178,8 +186,8 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     );
   };
 
-  // Define canEdit based on author
-  const canEdit = !subauthor || subauthor === user;
+  // Define canEdit based on author and editable flag
+  const canEdit = style !== 1 || (style === 1 && (!subauthor || subauthor === user) && subeditable !== false);
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -206,6 +214,40 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     }, 300);
     return () => clearTimeout(timer);
   }, []);
+
+  // Remove all logic related to prefillImportCode, pendingImportCode, and auto-import from URL
+  // Remove the useEffect that checks for prefillImportCode and sets import mode
+  // Remove shouldAutoImport state and its useEffect
+  // Only keep manual import logic for the Import Set tab
+
+  // Check for import warnings when importedSet changes
+  useEffect(() => {
+    if (!importedSet || !user) {
+      setImportWarning("");
+      return;
+    }
+    // Check if user is the author
+    if (
+      importedSet.author === user ||
+      importedSet.sharedBy === user
+    ) {
+      setImportWarning("You cannot import your own set.");
+      return;
+    }
+    // Check if set already exists in user's library
+    const sets = JSON.parse(localStorage.getItem("sets") || "[]");
+    const normalizedImportedContent = Array.isArray(importedSet.content) ? importedSet.content.join('\n') : (importedSet.content || '');
+    const exists = sets.some(
+      (item) =>
+        item.title === importedSet.title &&
+        (Array.isArray(item.content) ? item.content.join('\n') : (item.content || '')) === normalizedImportedContent
+    );
+    if (exists) {
+      setImportWarning("This set already exists in your library.");
+      return;
+    }
+    setImportWarning("");
+  }, [importedSet, user]);
 
   function extractVideoId(url) {
     // Regex to match YouTube URLs
@@ -545,8 +587,8 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
 
       console.log('Current sets:', currentSets);
 
-      // Check if user can edit based on author
-      const canEdit = !subauthor || subauthor === user;
+      // Check if user can edit based on author and editable flag
+      const canEdit = style !== 1 || (style === 1 && (!subauthor || subauthor === user) && subeditable !== false);
 
       if (style === 1) {
         // Find the original set to check if it was public
@@ -754,6 +796,95 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     setShowDeleteConfirmation(false);
   };
 
+  // Handle importing a shared set
+  const handleImportSet = async () => {
+    if (!importCode.trim()) {
+      setImportError("Please enter a valid share code");
+      return;
+    }
+    try {
+      setIsImporting(true);
+      setImportError("");
+      // Fetch the shared set from Firestore
+      const sharedSetRef = doc(db, "sharedSets", importCode.trim());
+      const sharedSetDoc = await getDoc(sharedSetRef);
+      if (!sharedSetDoc.exists()) {
+        setImportError("Invalid share code. Please check and try again.");
+        setIsImporting(false);
+        return;
+      }
+      const sharedSetData = sharedSetDoc.data();
+      // Normalize content to string
+      const normalizedContent = Array.isArray(sharedSetData.setData.content) ? sharedSetData.setData.content.join('\n') : (sharedSetData.setData.content || '');
+      setImportedSet({ ...sharedSetData.setData, content: normalizedContent });
+      setIsImporting(false);
+    } catch (error) {
+      console.error("Error importing set:", error);
+      setImportError("Failed to import set. Please try again.");
+      setIsImporting(false);
+    }
+  };
+
+  // Save imported set to user's library
+  const saveImportedSet = async () => {
+    if (!importedSet || !user) return;
+    
+    try {
+      // Check subscription status before limiting sets
+      const userRef = doc(db, "users", user);
+      const userDoc = await getDoc(userRef);
+      
+      let currentSets = [];
+      if (userDoc.exists()) {
+        currentSets = userDoc.data().sets || [];
+      } else {
+        await setDoc(userRef, { sets: [] });
+      }
+      
+      if (!hasSubscription && currentSets.length >= 10) {
+        setShowLimitDialog(true);
+        return;
+      }
+      
+      // Normalize content to string
+      const normalizedContent = Array.isArray(importedSet.content) ? importedSet.content.join('\n') : (importedSet.content || '');
+      // Create the imported set with editable: false flag
+      const newSet = {
+        ...importedSet,
+        content: normalizedContent,
+        editable: false, // Mark as non-editable
+        importedAt: new Date().toISOString(),
+        importedFrom: importCode,
+        author: importedSet.author || importedSet.sharedBy // Preserve original author
+      };
+      
+      // Remove the shareCode from the imported set to avoid conflicts
+      delete newSet.shareCode;
+      
+      currentSets.push(newSet);
+      
+      // Update Firestore
+      await updateDoc(userRef, { sets: currentSets });
+      
+      // Update localStorage
+      localStorage.setItem('sets', JSON.stringify(currentSets));
+      
+      // Close the modal
+      setOpenNewTopic(false);
+      
+    } catch (error) {
+      console.error("Error saving imported set:", error);
+      setImportError("Failed to save imported set. Please try again.");
+    }
+  };
+
+  // Clear import state
+  const clearImport = () => {
+    setImportCode("");
+    setImportedSet(null);
+    setImportError("");
+  };
+
   return (
     <div
       className="tutorial-new-prompt"
@@ -840,6 +971,20 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         >
           <p style={{ margin: "0px" }}>{t("general")}</p>
         </div>
+        {style === 0 && (
+          <div
+            onClick={() => setPromptMode(3)}
+            style={{
+              borderBottom:
+                promptMode === 3 ? "10px solid #6A6CFF" : "1px solid black",
+              marginRight: "10px",
+              padding: "5px 10px",
+              cursor: "pointer",
+            }}
+          >
+            <p style={{ margin: "0px" }}>Import Set</p>
+          </div>
+        )}
       </div>
       
       {/* Scrollable content area - everything including buttons */}
@@ -852,271 +997,417 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
           boxSizing: "border-box",
         }}
       >
-        <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
-          <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("title")}</p>
-          <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-            {t('setTitleMessage')}
-          </p>
-          <div style={{ width: "100%" }}>
-            <input
-              className="tutorial-title-input"
-              value={title}
-              onChange={handleTitleChange}
-              style={{
-                background: "#28282B",
-                outline: (titleError || titleExplicitError || title.length > 100) ? "1px solid #ff4444" : "1px solid #353935",
-                border: "none",
-                borderRadius: "10px",
-                padding: "12px 10px",
-                width: "100%",
-                boxSizing: "border-box",
-                color: "white",
-                fontSize: "16px",
-                cursor: style === 1 && !canEdit ? "not-allowed" : "text",
-                opacity: style === 1 && !canEdit ? 0.5 : 1
-              }}
-              placeholder={"Chef Shark"}
-              disabled={style === 1 && !canEdit}
-            />
-          </div>
-          {titleError && (
-            <p style={{ 
-              color: "#ff4444", 
-              fontSize: "12px", 
-              margin: "4px 0px 0px 1.5px",
-              opacity: 0.8
-            }}>
-              {t("titleError1")}
-            </p>
-          )}
-          {titleExplicitError && (
-            <p style={{ 
-              color: "#ff4444", 
-              fontSize: "12px", 
-              margin: "4px 0px 0px 1.5px",
-              opacity: 0.8
-            }}>
-              {t("titleError2")}
-            </p>
-          )}
-          {title.length > 100 && (
-            <p style={{
-              color: "#ff4444",
-              fontSize: "12px",
-              margin: "4px 0px 0px 1.5px",
-              opacity: 0.8
-            }}>
-              {t("titleTooLong")}
-            </p>
-          )}
-        </div>
-        
-        {promptMode === 1 ? (
-          <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
-            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t('content')}</p>
-            <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-              {t("setContentMessage")}
-            </p>
-            <div
-              style={{
-                outline: contentError || contentExplicitError ? "1px solid #ff4444" : "1px solid #353935",
-                border: "none",
-                borderRadius: "10px",
-                width: "100%",
-                boxSizing: "border-box",
-                height: "350px",
-                position: "relative",
-                background: "#28282B",
-              }}
-            >
-              <textarea
-                value={content}
-                onChange={handleContentChange}
-                style={{
-                  outline: "none",
-                  border: "none",
-                  borderRadius: "10px",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  resize: "none",
-                  padding: "12px",
-                  paddingBottom: "30px",
-                  height: "100%",
-                  background: "#28282B",
-                  color: "white",
-                  fontSize: "16px",
-                  cursor: style === 1 && !canEdit ? "not-allowed" : "text",
-                  opacity: style === 1 && !canEdit ? 0.5 : 1
-                }}
-                maxLength={hasSubscription ? 15000 : 8000}
-                disabled={style === 1 && !canEdit}
-              />
-              <p
-                style={{
-                  position: "absolute",
-                  bottom: "5px",
-                  right: "10px",
-                  margin: "0",
-                  fontSize: "12px",
-                  color: "gray",
-                }}
-              >
-                {content.length}/{hasSubscription ? 15000 : 8000}
+        {promptMode !== 3 && (
+          <>
+            <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
+              <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("title")}</p>
+              <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
+                {t('setTitleMessage')}
               </p>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {contentError && (
-                  <p style={{ 
-                    color: "#ff4444", 
-                    fontSize: "12px", 
-                    margin: "4px 0px 0px 12px",
-                    opacity: 0.8,
-                    position: "absolute",
-                    bottom: "34px",
-                    left: "-6px",
-                  }}>
-                    {t("contentError1")}
-                  </p>
-                )}
-                {contentExplicitError && (
-                  <p style={{ 
-                    color: "#ff4444", 
-                    fontSize: "12px", 
-                    margin: "4px 0px 0px 12px",
-                    opacity: 0.8,
-                    position: "absolute",
-                    bottom: "34px",
-                    left: "-6px",
-                  }}>
-                    {t("contentError2")}
-                  </p>
-                )}
-                {canEdit && (
-                  <form
-                    style={{ position: "absolute", bottom: "5px", left: "5px" }}
+              <div style={{ width: "100%" }}>
+                <input
+                  className="tutorial-title-input"
+                  value={title}
+                  onChange={handleTitleChange}
+                  style={{
+                    background: "#28282B",
+                    outline: (titleError || titleExplicitError || title.length > 100) ? "1px solid #ff4444" : "1px solid #353935",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "12px 10px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    color: "white",
+                    fontSize: "16px",
+                    cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                    opacity: style === 1 && !canEdit ? 0.5 : 1
+                  }}
+                  placeholder={"Chef Shark"}
+                  disabled={style === 1 && !canEdit}
+                />
+              </div>
+              {titleError && (
+                <p style={{ 
+                  color: "#ff4444", 
+                  fontSize: "12px", 
+                  margin: "4px 0px 0px 1.5px",
+                  opacity: 0.8
+                }}>
+                  {t("titleError1")}
+                </p>
+              )}
+              {titleExplicitError && (
+                <p style={{ 
+                  color: "#ff4444", 
+                  fontSize: "12px", 
+                  margin: "4px 0px 0px 1.5px",
+                  opacity: 0.8
+                }}>
+                  {t("titleError2")}
+                </p>
+              )}
+              {title.length > 100 && (
+                <p style={{
+                  color: "#ff4444",
+                  fontSize: "12px",
+                  margin: "4px 0px 0px 1.5px",
+                  opacity: 0.8
+                }}>
+                  {t("titleTooLong")}
+                </p>
+              )}
+            </div>
+            {promptMode === 1 ? (
+              <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
+                <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t('content')}</p>
+                <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
+                  {t("setContentMessage")}
+                </p>
+                <div
+                  style={{
+                    outline: contentError || contentExplicitError ? "1px solid #ff4444" : "1px solid #353935",
+                    border: "none",
+                    borderRadius: "10px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    height: "350px",
+                    position: "relative",
+                    background: "#28282B",
+                  }}
+                >
+                  <textarea
+                    value={content}
+                    onChange={handleContentChange}
+                    style={{
+                      outline: "none",
+                      border: "none",
+                      borderRadius: "10px",
+                      width: "100%",
+                      boxSizing: "border-box",
+                      resize: "none",
+                      padding: "12px",
+                      paddingBottom: "30px",
+                      height: "100%",
+                      background: "#28282B",
+                      color: "white",
+                      fontSize: "16px",
+                      cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                      opacity: style === 1 && !canEdit ? 0.5 : 1
+                    }}
+                    maxLength={hasSubscription ? 15000 : 8000}
+                    disabled={style === 1 && !canEdit}
+                  />
+                  <p
+                    style={{
+                      position: "absolute",
+                      bottom: "5px",
+                      right: "10px",
+                      margin: "0",
+                      fontSize: "12px",
+                      color: "gray",
+                    }}
                   >
-                    <label
-                      htmlFor="fileUpload"
-                      style={{
-                        display: "inline-block",
-                        padding: "5px 8px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        backgroundColor: "white",
-                        fontSize: "12px",
-                        color: "white",
-                        textAlign: "center",
-                        boxSizing: "border-box",
-                        background: "#6A6CFF",
-                        boxShadow: "0px 2px 0px 0px #484AC3",
-                      }}
-                    >
-                      {t("uploadNotes")}
-                      <input
-                        id="fileUpload"
-                        type="file"
-                        name="file"
-                        accept=".pdf, image/*"
-                        onChange={handleFile}
-                        style={{
-                          display: "none",
-                          background: "#28282B",
-                          outline: "1px solid #353935",
-                        }}
-                      />
-                    </label>
-                  </form>
-                )}
+                    {content.length}/{hasSubscription ? 15000 : 8000}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {contentError && (
+                      <p style={{ 
+                        color: "#ff4444", 
+                        fontSize: "12px", 
+                        margin: "4px 0px 0px 12px",
+                        opacity: 0.8,
+                        position: "absolute",
+                        bottom: "34px",
+                        left: "-6px",
+                      }}>
+                        {t("contentError1")}
+                      </p>
+                    )}
+                    {contentExplicitError && (
+                      <p style={{ 
+                        color: "#ff4444", 
+                        fontSize: "12px", 
+                        margin: "4px 0px 0px 12px",
+                        opacity: 0.8,
+                        position: "absolute",
+                        bottom: "34px",
+                        left: "-6px",
+                      }}>
+                        {t("contentError2")}
+                      </p>
+                    )}
+                    {canEdit && (
+                      <form
+                        style={{ position: "absolute", bottom: "5px", left: "5px" }}
+                      >
+                        <label
+                          htmlFor="fileUpload"
+                          style={{
+                            display: "inline-block",
+                            padding: "5px 8px",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            backgroundColor: "white",
+                            fontSize: "12px",
+                            color: "white",
+                            textAlign: "center",
+                            boxSizing: "border-box",
+                            background: "#6A6CFF",
+                            boxShadow: "0px 2px 0px 0px #484AC3",
+                          }}
+                        >
+                          {t("uploadNotes")}
+                          <input
+                            id="fileUpload"
+                            type="file"
+                            name="file"
+                            accept=".pdf, image/*"
+                            onChange={handleFile}
+                            style={{
+                              display: "none",
+                              background: "#28282B",
+                              outline: "1px solid #353935",
+                            }}
+                          />
+                        </label>
+                      </form>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "2px" }}>
-            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("subject")}</p>
+            ) : (
+              <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "2px" }}>
+                <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>{t("subject")}</p>
+                <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
+                  {t("setSubjectMessage")}
+                </p>
+                <div
+                  style={{
+                    outline: subjectError || subjectExplicitError ? "1px solid #ff4444" : "1px solid #353935",
+                    border: "none",
+                    borderRadius: "10px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    height: "350px",
+                    position: "relative",
+                    background: "#28282B",
+                  }}
+                >
+                  <textarea
+                    value={subject}
+                    onChange={handleSubjectChange}
+                    style={{
+                      outline: "none",
+                      border: "none",
+                      borderRadius: "10px",
+                      width: "100%",
+                      boxSizing: "border-box",
+                      resize: "none",
+                      padding: "12px",
+                      paddingBottom: "30px",
+                      height: "100%",
+                      background: "#28282B",
+                      color: "white",
+                      fontSize: "16px",
+                      cursor: style === 1 && !canEdit ? "not-allowed" : "text",
+                      opacity: style === 1 && !canEdit ? 0.5 : 1
+                    }}
+                    placeholder="Chain rule for AP Calculus BC..."
+                    maxLength={1000}
+                    disabled={style === 1 && !canEdit}
+                  />
+                  <p
+                    style={{
+                      position: "absolute",
+                      bottom: "5px",
+                      right: "10px",
+                      margin: "0",
+                      fontSize: "12px",
+                      color: "gray",
+                    }}
+                  >
+                    {subject.length}/1000
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {subjectError && (
+                      <p style={{ 
+                        color: "#ff4444", 
+                        fontSize: "12px", 
+                        margin: "4px 0px 0px 12px",
+                        opacity: 0.8,
+                        position: "absolute",
+                        bottom: "34px",
+                        left: "-6px"
+                      }}>
+                        {t('subjectError1')}
+                      </p>
+                    )}
+                    {subjectExplicitError && (
+                      <p style={{ 
+                        color: "#ff4444", 
+                        fontSize: "12px", 
+                        margin: "4px 0px 0px 12px",
+                        opacity: 0.8,
+                        position: "absolute",
+                        bottom: "34px",
+                        left: "-6px"
+                      }}>
+                        {t('subjectError2')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        
+        {promptMode === 3 && (
+          <div style={{ width: "100%", marginBottom: "20px", paddingLeft: "1px" }}>
+            <p style={{ fontSize: "22px", margin: "0px 0px 8px 0px" }}>Import Shared Set</p>
             <p style={{ margin: "4px 0px 12px 0px", fontSize: "14px", color: "gray" }}>
-              {t("setSubjectMessage")}
+              Enter a share code to import a study set from another user.
             </p>
-            <div
-              style={{
-                outline: subjectError || subjectExplicitError ? "1px solid #ff4444" : "1px solid #353935",
-                border: "none",
-                borderRadius: "10px",
-                width: "100%",
-                boxSizing: "border-box",
-                height: "350px",
-                position: "relative",
-                background: "#28282B",
-              }}
-            >
-              <textarea
-                value={subject}
-                onChange={handleSubjectChange}
-                style={{
-                  outline: "none",
-                  border: "none",
-                  borderRadius: "10px",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  resize: "none",
-                  padding: "12px",
-                  paddingBottom: "30px",
-                  height: "100%",
-                  background: "#28282B",
-                  color: "white",
-                  fontSize: "16px",
-                  cursor: style === 1 && !canEdit ? "not-allowed" : "text",
-                  opacity: style === 1 && !canEdit ? 0.5 : 1
-                }}
-                placeholder="Chain rule for AP Calculus BC..."
-                maxLength={1000}
-                disabled={style === 1 && !canEdit}
-              />
-              <p
-                style={{
-                  position: "absolute",
-                  bottom: "5px",
-                  right: "10px",
-                  margin: "0",
-                  fontSize: "12px",
-                  color: "gray",
-                }}
-              >
-                {subject.length}/1000
-              </p>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {subjectError && (
+            
+            {!importedSet ? (
+              <div style={{ width: "100%" }}>
+                <div style={{
+                  display: "flex",
+                  gap: "10px",
+                  marginBottom: "10px"
+                }}>
+                  <input
+                    value={importCode}
+                    onChange={(e) => setImportCode(e.target.value)}
+                    placeholder="Enter share code (e.g., Udhd72Hd)"
+                    style={{
+                      flex: 1,
+                      background: "#28282B",
+                      outline: importError ? "1px solid #ff4444" : "1px solid #353935",
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "12px 10px",
+                      color: "white",
+                      fontSize: "16px"
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleImportSet();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleImportSet}
+                    disabled={isImporting || !importCode.trim()}
+                    style={{
+                      background: isImporting || !importCode.trim() ? "#555" : "#6A6CFF",
+                      boxShadow: isImporting || !importCode.trim() ? "none" : "0px 2px 0px 0px #484AC3",
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "12px 20px",
+                      color: "white",
+                      cursor: isImporting || !importCode.trim() ? "not-allowed" : "pointer",
+                      fontSize: "14px",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    {isImporting ? "Importing..." : "Import"}
+                  </button>
+                </div>
+                {importError && (
                   <p style={{ 
                     color: "#ff4444", 
                     fontSize: "12px", 
-                    margin: "4px 0px 0px 12px",
-                    opacity: 0.8,
-                    position: "absolute",
-                    bottom: "34px",
-                    left: "-6px"
+                    margin: "4px 0px 0px 1.5px",
+                    opacity: 0.8
                   }}>
-                    {t('subjectError1')}
-                  </p>
-                )}
-                {subjectExplicitError && (
-                  <p style={{ 
-                    color: "#ff4444", 
-                    fontSize: "12px", 
-                    margin: "4px 0px 0px 12px",
-                    opacity: 0.8,
-                    position: "absolute",
-                    bottom: "34px",
-                    left: "-6px"
-                  }}>
-                    {t('subjectError2')}
+                    {importError}
                   </p>
                 )}
               </div>
-            </div>
+            ) : (
+              <div style={{
+                background: "#1a1a1a",
+                border: "1px solid #444",
+                borderRadius: "10px",
+                padding: "15px",
+                marginBottom: "15px"
+              }}>
+                <h3 style={{ color: "white", margin: "0 0 10px 0", fontSize: "18px" }}>
+                  {importedSet.title}
+                </h3>
+                <p style={{ color: "#ccc", margin: "0 0 8px 0", fontSize: "14px" }}>
+                  <strong>Author:</strong> {importedSet.author || importedSet.sharedBy || "Unknown"}
+                </p>
+                {/* Remove Subject subheading */}
+                <div style={{
+                  background: "#28282B",
+                  border: "1px solid #444",
+                  borderRadius: "8px",
+                  padding: "10px",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                  marginBottom: "15px"
+                }}>
+                  <p style={{ color: "#ccc", margin: "0", fontSize: "14px", lineHeight: "1.4" }}>
+                    {importedSet.content ? 
+                      (importedSet.content.length > 300 ? 
+                        importedSet.content.substring(0, 300) + "..." : 
+                        importedSet.content
+                      ) : 
+                      "No content available"
+                    }
+                  </p>
+                </div>
+                {importWarning && (
+                  <div style={{ color: "#ff4444", marginBottom: "10px", fontWeight: 600, fontSize: "14px" }}>{importWarning}</div>
+                )}
+                <div style={{
+                  display: "flex",
+                  gap: "10px"
+                }}>
+                  <button
+                    onClick={saveImportedSet}
+                    style={{
+                      background: importWarning ? "#888" : "#6A6CFF",
+                      boxShadow: importWarning ? "none" : "0px 2px 0px 0px #484AC3",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "10px 20px",
+                      color: "white",
+                      cursor: importWarning ? "not-allowed" : "pointer",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      flex: 1,
+                      opacity: importWarning ? 0.6 : 1
+                    }}
+                    disabled={!!importWarning}
+                  >
+                    Save to Library
+                  </button>
+                  <button
+                    onClick={clearImport}
+                    style={{
+                      background: "#8B5CF6",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "10px 20px",
+                      color: "white",
+                      cursor: "pointer",
+                      fontSize: "14px"
+                    }}
+                  >
+                    Try Another Code
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
         
         {/* Buttons now inside the scrollable area */}
         <div style={{ width: "100%", marginBottom: "20px" }}>
-          {style === 0 && (
+          {style === 0 && promptMode !== 3 && (
             <button
               className="tutorial-save-btn"
               onClick={() => saveToFirestore(false)}
@@ -1163,7 +1454,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               {t("save")}
             </button>
           )}
-          {style === 1 && (
+          {style === 1 && promptMode !== 3 && (
             <div style={{ 
               display: "flex", 
               flexDirection: "row",

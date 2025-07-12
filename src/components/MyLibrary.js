@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import NewPrompt from "./NewPrompt";
-import { onSnapshot, doc } from "firebase/firestore";
+import { onSnapshot, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase/Firebase";
 import {
   getDoc,
-  updateDoc,
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
@@ -272,6 +271,234 @@ const DeleteConfirmationPopup = ({ onClose, onConfirm }) => {
   );
 };
 
+const SharePopup = ({ onClose, shareCode, item }) => {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const codeBtnRef = useRef(null);
+  const urlBtnRef = useRef(null);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
+
+  const copyUrlToClipboard = () => {
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/#/library/${shareCode}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 1200);
+  };
+
+  return (
+    <>
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 999999999
+      }} onClick={onClose} />
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#28282B',
+        padding: '20px',
+        borderRadius: '10px',
+        boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+        zIndex: 999999999,
+        width: '80%',
+        maxWidth: '400px',
+        border: '1px solid #353935'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '15px'
+        }}>
+          <h3 style={{ margin: 0, color: 'white' }}>Share Study Set</h3>
+          <svg
+            onClick={onClose}
+            style={{
+              cursor: 'pointer'
+            }}
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ color: 'white', marginBottom: '10px', fontSize: '14px' }}>
+            Share this code with others to let them import your study set:
+          </p>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: '#1a1a1a',
+            padding: '12px',
+            borderRadius: '8px',
+            border: '1px solid #444',
+            marginBottom: '30px', // more space for toast
+            position: 'relative',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <code style={{ 
+                color: '#6A6CFF', 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                flex: 1,
+                textAlign: 'center'
+              }}>
+                {shareCode}
+              </code>
+              <button
+                ref={codeBtnRef}
+                onClick={copyToClipboard}
+                style={{
+                  background: '#6A6CFF',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '8px 12px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  position: 'relative'
+                }}
+              >
+                Copy
+              </button>
+            </div>
+            {copied && (
+              <span style={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                top: '100%',
+                marginTop: '8px',
+                background: '#6A6CFF',
+                color: '#fff',
+                padding: '6px 18px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                zIndex: 1001,
+                boxShadow: '0 2px 8px #0008',
+                whiteSpace: 'nowrap',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+              }}>
+                Copied!
+              </span>
+            )}
+          </div>
+          <p style={{ color: 'white', marginBottom: '10px', fontSize: '14px' }}>
+            Or share this direct link:
+          </p>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: '#1a1a1a',
+            padding: '12px',
+            borderRadius: '8px',
+            border: '1px solid #444',
+            position: 'relative',
+            marginBottom: '30px', // more space for toast
+            flexDirection: 'column',
+            alignItems: 'stretch',
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <code style={{ 
+                color: '#6A6CFF', 
+                fontSize: '14px', 
+                flex: 1,
+                wordBreak: 'break-all'
+              }}>
+                {`${window.location.origin}/#/library/${shareCode}`}
+              </code>
+              <button
+                ref={urlBtnRef}
+                onClick={copyUrlToClipboard}
+                style={{
+                  background: '#6A6CFF',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '8px 12px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                  position: 'relative'
+                }}
+              >
+                Copy URL
+              </button>
+            </div>
+            {copiedUrl && (
+              <span style={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                top: '100%',
+                marginTop: '8px',
+                background: '#6A6CFF',
+                color: '#fff',
+                padding: '6px 18px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                zIndex: 1001,
+                boxShadow: '0 2px 8px #0008',
+                whiteSpace: 'nowrap',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+              }}>
+                Copied URL!
+              </span>
+            )}
+          </div>
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '10px',
+          marginTop: '20px', // push close button down
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '5px',
+              border: 'none',
+              background: '#555',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
 function ModeSelectionTutorialAdvance() {
   const { isTutorialRunning, tutorialStep, goToStep } = useTutorial();
   useEffect(() => {
@@ -308,6 +535,10 @@ const MyLibrary = ({ mobileDimension }) => {
   const [isGeneratingStudyGuide, setIsGeneratingStudyGuide] = useState(false);
   const prevSetsLength = useRef(0);
   const [loadingStage, setLoadingStage] = useState(0);
+  // Share functionality state
+  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [shareCode, setShareCode] = useState("");
+  const [shareItem, setShareItem] = useState(null);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
@@ -349,6 +580,19 @@ const MyLibrary = ({ mobileDimension }) => {
       return () => clearInterval(interval);
     }
   }, [isTutorialRunning, tutorialStep, openMode, goToStep]);
+
+  // Check for pending import code from URL
+  useEffect(() => {
+    const pendingImportCode = localStorage.getItem('pendingImportCode');
+    if (pendingImportCode && user) {
+      // Clear the pending import code
+      localStorage.removeItem('pendingImportCode');
+      // Open the import modal with the code pre-filled
+      setOpenNewTopic(true);
+      // We'll need to pass this to NewPrompt component
+      localStorage.setItem('prefillImportCode', pendingImportCode);
+    }
+  }, [user]);
 
   const SummaryRenderer = ({ text }) => {
     // Ensure text is a single string with normalized newlines
@@ -1229,6 +1473,56 @@ const confirmDelete = () => {
   setShowDeleteConfirmation(false);
 };
 
+// Generate a unique share code
+const generateShareCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Handle share button click
+const handleShare = async (item) => {
+  try {
+    // Generate a unique share code
+    const code = generateShareCode();
+    // Normalize content to string
+    const normalizedContent = Array.isArray(item.content) ? item.content.join('\n') : (item.content || '');
+    // Store the shared set in Firestore (with setData wrapper)
+    const sharedSetRef = doc(db, "sharedSets", code);
+    const sharedSetData = {
+      setData: {
+        ...item,
+        content: normalizedContent
+      },
+      shareCode: code,
+      sharedBy: user,
+      sharedAt: new Date().toISOString(),
+      timesShared: 1
+    };
+    await setDoc(sharedSetRef, sharedSetData);
+    // Update the local set with share code
+    const updatedSets = sets.map(set => 
+      set.title === item.title && (Array.isArray(set.content) ? set.content.join('\n') : set.content) === normalizedContent
+        ? { ...set, shareCode: code }
+        : set
+    );
+    setSets(updatedSets);
+    // Update Firestore with the share code
+    const userRef = doc(db, "users", user);
+    await updateDoc(userRef, { sets: updatedSets });
+    // Show share popup
+    setShareCode(code);
+    setShareItem(item);
+    setShowSharePopup(true);
+  } catch (error) {
+    console.error("Error sharing set:", error);
+    alert("Failed to share set. Please try again.");
+  }
+};
+
 // Utility to clean and parse AI JSON output
 function cleanAndParseAIJson(raw) {
   if (!raw || typeof raw !== 'string') throw new Error('No AI output to parse');
@@ -1658,7 +1952,8 @@ return (
                       item.tag,
                       item.title,
                       item.scrollGenerationMode,
-                      item.author
+                      item.author,
+                      item.editable
                     ]);
                     setOpenNewTopic(!openNewTopic);
                   }}
@@ -1666,6 +1961,7 @@ return (
                     fontSize: "14px",
                     fontWeight: "normal",
                     cursor: "pointer",
+                    opacity: 1
                   }}
                 >
                   {t('edit')}
@@ -1677,6 +1973,28 @@ return (
                     height={10}
                   >
                     <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z" />
+                  </svg>
+                </span>
+                <span
+                  onClick={() => handleShare(item)}
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "normal",
+                    cursor: item.author === user ? "pointer" : "not-allowed",
+                    marginTop: "5px",
+                    opacity: item.author === user ? 1 : 0.5,
+                    pointerEvents: item.author === user ? "auto" : "none"
+                  }}
+                >
+                  share
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ marginLeft: "5px" }}
+                    viewBox="0 0 24 24"
+                    fill={"white"}
+                    height={10}
+                  >
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                   </svg>
                 </span>
               </p>
@@ -1970,6 +2288,13 @@ return (
         mobileDimension={mobileDimension}
         guide={studyGuideData}
         isLoading={isGeneratingStudyGuide}
+      />
+    )}
+    {showSharePopup && (
+      <SharePopup
+        onClose={() => setShowSharePopup(false)}
+        shareCode={shareCode}
+        item={shareItem}
       />
     )}
   </div>
