@@ -595,38 +595,38 @@ const MyLibrary = ({ mobileDimension }) => {
   }, [user]);
 
   const SummaryRenderer = ({ text }) => {
-    // Ensure text is a single string with normalized newlines
-    const summaryText = (Array.isArray(text) ? text.join('\n') : text || '').replace(/\\n/g, '\n');
+    // Ensure text is a single string with normalized newlines and clean LaTeX
+    const summaryText = cleanLatexContent((Array.isArray(text) ? text.join('\n') : text || '').replace(/\\n/g, '\n'));
     
     // Split into lines and filter for bullet points
     const lines = summaryText.split('\n').filter(line => line.trim().startsWith('*'));
 
     const renderLine = (line, index) => {
-        // Remove leading '*' and trim
-        const cleanedLine = line.trim().substring(1).trim();
+      // Remove leading '*' and trim
+      const cleanedLine = line.trim().substring(1).trim();
 
-        // Split the line by the bold delimiter, keeping the captured group
-        const parts = cleanedLine.split(/\*\*(.*?)\*\*/g);
+      // Split the line by the bold delimiter, keeping the captured group
+      const parts = cleanedLine.split(/\*\*(.*?)\*\*/g);
 
-        return (
-            <li key={index} style={{ marginBottom: '10px' }}>
-                {parts.map((part, i) => {
-                    if (i % 2 === 1) {
-                        // Odd-indexed parts are the bolded content
-                        return <strong key={i}><Latex>{part}</Latex></strong>;
-                    } else {
-                        // Even-indexed parts are regular text (may contain LaTeX)
-                        return <Latex key={i}>{part}</Latex>;
-                    }
-                })}
-            </li>
-        );
+      return (
+        <li key={index} style={{ marginBottom: '10px' }}>
+          {parts.map((part, i) => {
+            if (i % 2 === 1) {
+              // Odd-indexed parts are the bolded content
+              return <strong key={i}><Latex>{part}</Latex></strong>;
+            } else {
+              // Even-indexed parts are regular text (may contain LaTeX)
+              return <Latex key={i}>{part}</Latex>;
+            }
+          })}
+        </li>
+      );
     };
 
     return (
-        <ul style={{ paddingLeft: '20px', margin: '10px 0', color: '#ccc', lineHeight: '1.6' }}>
-            {lines.map(renderLine)}
-        </ul>
+      <ul style={{ paddingLeft: '20px', margin: '10px 0', color: '#ccc', lineHeight: '1.6' }}>
+        {lines.map(renderLine)}
+      </ul>
     );
   };
 
@@ -1539,6 +1539,21 @@ function cleanAndParseAIJson(raw) {
   } catch (e) {
     throw new Error('Failed to parse AI JSON: ' + e.message);
   }
+}
+
+// Utility to clean LaTeX content from backend
+function cleanLatexContent(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  // Fix double-escaped backslashes that might come from backend
+  // This handles the case where backend escaped \ to \\ but it got double-escaped
+  let cleaned = text.replace(/\\\\/g, '\\');
+  
+  // Ensure LaTeX delimiters are properly spaced
+  cleaned = cleaned.replace(/\$\\/g, '$\\');
+  cleaned = cleaned.replace(/\\\$/g, '\\$');
+  
+  return cleaned;
 }
 
 return (
