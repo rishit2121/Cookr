@@ -47,8 +47,32 @@ const profilePictures = {
   dog: dog
 };
 
+// Place this near the top, outside the component
+const explicitWords = [
+  "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat", "hell", "crap", "prick", "slut", "whore", "sex", "porn", "porno",
+  "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
+  "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
+  "rimjob", "milf", "bdsm", "fetish", "pegging", "stripper", "stripclub",
+  "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
+  "chink", "gook", "nigga", "nigger", "kike","wetback", "towelhead",
+  "rape", "sexy", "marijuana", "cocaine", "meth", "heroin", "lsd",
+  "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
+  "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
+  "p0rn", "n00d","phuck"
+];
 
-
+function findExplicitWords(text) {
+  if (!text) return [];
+  const found = [];
+  for (const word of explicitWords) {
+    // Use word boundaries and case-insensitive matching
+    const regex = new RegExp(`\\b${word}\\b`, 'i');
+    if (regex.test(text)) {
+      found.push(word);
+    }
+  }
+  return found;
+}
 
 const MyProfile = ({ mobileDimension }) => {
   const { t } = useTranslation();
@@ -98,6 +122,8 @@ const MyProfile = ({ mobileDimension }) => {
   // Add state for the random code and user input
   const [deleteConfirmCode, setDeleteConfirmCode] = useState("");
   const [deleteUserInput, setDeleteUserInput] = useState("");
+
+  const [usernameExplicitWords, setUsernameExplicitWords] = useState([]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(link);
@@ -440,38 +466,15 @@ const MyProfile = ({ mobileDimension }) => {
       }
 
       // Check for explicit words
-      const explicitWords = [
-        "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat", 
-        "hell", "crap", "prick", "slut", "whore", "sex", "porn", "porno",
-        "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
-        "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
-        "rimjob", "milf", "bdsm", "fetish", "pegging", "stripper", "stripclub",
-        "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
-        "chink", "gook", "nigga", "nigger", "kike","wetback", "towelhead",
-        "rape", "sex", "sexy",
-        "marijuana", "cocaine", "meth", "heroin", "lsd",
-        "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
-        "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
-        "p0rn", "n00d","phuck"
-      ];
-       
-
-      const containsExplicitWord = explicitWords.some(word => 
-        editedUsername.toLowerCase().includes(word)
-      );
-
-      if (containsExplicitWord) {
-        setErrorMessage(t("usernameError7"));
+      const foundExplicit = findExplicitWords(editedUsername.toLowerCase());
+      if (foundExplicit.length > 0) {
+        setUsernameExplicitWords(foundExplicit);
+        setErrorMessage(
+          <span>{t("usernameError7")}: <b>{foundExplicit.join(', ')}</b></span>
+        );
         return;
-      }
-      // Check for duplicate username
-      const usernamesDoc = await getDoc(doc(db, "usernames", "names"));
-      if (usernamesDoc.exists()) {
-        const usernames = usernamesDoc.data().usernames;
-        if (usernames.includes(editedUsername) && editedUsername !== name) {
-          setErrorMessage(t("usernameError8"));
-          return;
-        }
+      } else {
+        setUsernameExplicitWords([]);
       }
 
       setIsSaving(true);
@@ -480,6 +483,9 @@ const MyProfile = ({ mobileDimension }) => {
         await updateDoc(doc(db, "users", user), {
           name: editedUsername
         });
+
+        // Fetch usernamesDoc from Firestore before using it
+        const usernamesDoc = await getDoc(doc(db, "usernames", "names"));
 
         // Update the usernames collection
         if (usernamesDoc.exists()) {
@@ -543,24 +549,8 @@ const MyProfile = ({ mobileDimension }) => {
     if (value.split('').some(char => specialChars.includes(char))) return t("usernameError5");
     if (value.length < 4 || value.length > 18) return t("usernameError6");
   
-    const explicitWords = [
-      "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "pussy", "cunt", "twat",
-      "damn", "hell", "crap", "prick", "slut", "whore", "sex", "sexy", "porn", "porno",
-      "pornhub", "xxx", "dildo", "anal", "oral", "nude", "boob", "boobs", "tits", "vagina",
-      "penis", "cum", "ejaculate", "jerkoff", "blowjob", "handjob", "threesome", "fingering",
-      "rimjob", "milf", "bdsm", "fetish", "pegging", "squirting", "stripper", "stripclub",
-      "masturbate", "masturbation", "retard", "fag", "faggot", "dyke", "tranny", "coon",
-      "chink", "gook", "nigga", "nigger", "kike", "spic", "wetback", "towelhead", "kill",
-      "murder", "rape", "shoot", "bomb", "terrorist", "suicide", "die", "hang", "slit",
-      "stab", "abuse", "abuser", "weed", "marijuana", "cocaine", "meth", "heroin", "lsd",
-      "ecstasy", "crack", "adderall", "xanax", "opioid", "ketamine", "shrooms", "stoner",
-      "druggie", "dope", "highaf", "420", "casino", "betting", "bet", "poker", "slots",
-      "lotto", "jackpot", "crypto", "scam", "fraud", "hustler", "onlyfans", "fuk", "fck",
-      "sht", "bi7ch", "b1tch", "ass", "a55", "c0ck", "d1ck", "pu55y", "cumslut", "s3x",
-      "p0rn", "n00d", "l0ser", "phuck"
-    ];
-    const containsExplicitWord = explicitWords.some(word => value.toLowerCase().includes(word));
-    if (containsExplicitWord) return t("usernameError7");
+    const foundExplicitVal = findExplicitWords(value.toLowerCase());
+    if (foundExplicitVal.length > 0) return <span>{t("usernameError7")}: <b>{foundExplicitVal.join(', ')}</b></span>;
   
     return ''; // no error
   };

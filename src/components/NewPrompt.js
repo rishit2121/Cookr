@@ -156,6 +156,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
   const [isImporting, setIsImporting] = useState(false);
   // State for import warnings
   const [importWarning, setImportWarning] = useState("");
+  const [titleExplicitWords, setTitleExplicitWords] = useState([]);
+  const [contentExplicitWords, setContentExplicitWords] = useState([]);
+  const [subjectExplicitWords, setSubjectExplicitWords] = useState([]);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -179,12 +182,18 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     "p0rn", "n00d","phuck"
   ];
 
-  const containsExplicitContent = (text) => {
-    if (!text) return false;
-    return explicitWords.some(word => 
-      text.toLowerCase().includes(word.toLowerCase())
-    );
-  };
+  function findExplicitWords(text) {
+    if (!text) return [];
+    const found = [];
+    for (const word of explicitWords) {
+      // Use word boundaries and case-insensitive matching
+      const regex = new RegExp(`\\b${word}\\b`, 'i');
+      if (regex.test(text)) {
+        found.push(word);
+      }
+    }
+    return found;
+  }
 
   // Define canEdit based on author and editable flag
   const canEdit = style !== 1 || (style === 1 && (!subauthor || subauthor === user) && subeditable !== false);
@@ -545,18 +554,15 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
         return;
       }
 
-      if (containsExplicitContent(title)) {
-        setTitleExplicitError(true);
+      if (titleExplicitWords.length > 0) {
         return;
       }
 
-      if (promptMode === 1 && containsExplicitContent(content)) {
-        setContentExplicitError(true);
+      if (promptMode === 1 && contentExplicitWords.length > 0) {
         return;
       }
 
-      if (promptMode === 2 && containsExplicitContent(subject)) {
-        setSubjectExplicitError(true);
+      if (promptMode === 2 && subjectExplicitWords.length > 0) {
         return;
       }
 
@@ -741,21 +747,21 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
     const newTitle = e.target.value;
     setTitle(newTitle);
     setTitleError(false);
-    setTitleExplicitError(containsExplicitContent(newTitle));
+    setTitleExplicitWords(findExplicitWords(newTitle));
   };
 
   const handleContentChange = (e) => {
     const newContent = e.target.value;
     setContent(newContent);
     setContentError(false);
-    setContentExplicitError(containsExplicitContent(newContent));
+    setContentExplicitWords(findExplicitWords(newContent));
   };
 
   const handleSubjectChange = (e) => {
     const newSubject = e.target.value;
     setSubject(newSubject);
     setSubjectError(false);
-    setSubjectExplicitError(containsExplicitContent(newSubject));
+    setSubjectExplicitWords(findExplicitWords(newSubject));
   };
 
   const handleModeClick = (mode) => {
@@ -1011,7 +1017,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   onChange={handleTitleChange}
                   style={{
                     background: "#28282B",
-                    outline: (titleError || titleExplicitError || title.length > 100) ? "1px solid #ff4444" : "1px solid #353935",
+                    outline: (titleError || titleExplicitWords.length > 0 || title.length > 100) ? "1px solid #ff4444" : "1px solid #353935",
                     border: "none",
                     borderRadius: "10px",
                     padding: "12px 10px",
@@ -1036,14 +1042,14 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   {t("titleError1")}
                 </p>
               )}
-              {titleExplicitError && (
+              {titleExplicitWords.length > 0 && (
                 <p style={{ 
                   color: "#ff4444", 
                   fontSize: "12px", 
                   margin: "4px 0px 0px 1.5px",
                   opacity: 0.8
                 }}>
-                  {t("titleError2")}
+                  {t("titleError2")}: <b>{titleExplicitWords.join(', ')}</b>
                 </p>
               )}
               {title.length > 100 && (
@@ -1065,7 +1071,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 </p>
                 <div
                   style={{
-                    outline: contentError || contentExplicitError ? "1px solid #ff4444" : "1px solid #353935",
+                    outline: contentError || contentExplicitWords.length > 0 ? "1px solid #ff4444" : "1px solid #353935",
                     border: "none",
                     borderRadius: "10px",
                     width: "100%",
@@ -1123,7 +1129,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                         {t("contentError1")}
                       </p>
                     )}
-                    {contentExplicitError && (
+                    {contentExplicitWords.length > 0 && (
                       <p style={{ 
                         color: "#ff4444", 
                         fontSize: "12px", 
@@ -1132,8 +1138,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                         position: "absolute",
                         bottom: "34px",
                         left: "-6px",
+                        fontWeight: 'bold'
                       }}>
-                        {t("contentError2")}
+                        {t("contentError2")}: <b>{contentExplicitWords.join(', ')}</b>
                       </p>
                     )}
                     {canEdit && (
@@ -1183,7 +1190,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 </p>
                 <div
                   style={{
-                    outline: subjectError || subjectExplicitError ? "1px solid #ff4444" : "1px solid #353935",
+                    outline: subjectError || subjectExplicitWords.length > 0 ? "1px solid #ff4444" : "1px solid #353935",
                     border: "none",
                     borderRadius: "10px",
                     width: "100%",
@@ -1242,7 +1249,7 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                         {t('subjectError1')}
                       </p>
                     )}
-                    {subjectExplicitError && (
+                    {subjectExplicitWords.length > 0 && (
                       <p style={{ 
                         color: "#ff4444", 
                         fontSize: "12px", 
@@ -1250,9 +1257,10 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                         opacity: 0.8,
                         position: "absolute",
                         bottom: "34px",
-                        left: "-6px"
+                        left: "-6px",
+                        fontWeight: 'bold'
                       }}>
-                        {t('subjectError2')}
+                        {t("subjectError2")}: <b>{subjectExplicitWords.join(', ')}</b>
                       </p>
                     )}
                   </div>
@@ -1413,9 +1421,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
               onClick={() => saveToFirestore(false)}
               disabled={
                 title.length > 100 ||
-                titleError || titleExplicitError ||
-                contentError || contentExplicitError ||
-                subjectError || subjectExplicitError
+                titleError || titleExplicitWords.length > 0 ||
+                contentError || contentExplicitWords.length > 0 ||
+                subjectError || subjectExplicitWords.length > 0
               }
               style={{
                 width: "100%",
@@ -1425,29 +1433,29 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 borderRadius: "10px",
                 cursor: (
                   title.length > 100 ||
-                  titleError || titleExplicitError ||
-                  contentError || contentExplicitError ||
-                  subjectError || subjectExplicitError
+                  titleError || titleExplicitWords.length > 0 ||
+                  contentError || contentExplicitWords.length > 0 ||
+                  subjectError || subjectExplicitWords.length > 0
                 ) ? "not-allowed" : "pointer",
                 color: "white",
                 background: (
                   title.length > 100 ||
-                  titleError || titleExplicitError ||
-                  contentError || contentExplicitError ||
-                  subjectError || subjectExplicitError
+                  titleError || titleExplicitWords.length > 0 ||
+                  contentError || contentExplicitWords.length > 0 ||
+                  subjectError || subjectExplicitWords.length > 0
                 ) ? "#999" : "#6A6CFF",
                 boxShadow: (
                   title.length > 100 ||
-                  titleError || titleExplicitError ||
-                  contentError || contentExplicitError ||
-                  subjectError || subjectExplicitError
+                  titleError || titleExplicitWords.length > 0 ||
+                  contentError || contentExplicitWords.length > 0 ||
+                  subjectError || subjectExplicitWords.length > 0
                 ) ? "none" : "0px 2px 0px 0px #484AC3",
                 fontSize:'15px',
                 opacity: (
                   title.length > 100 ||
-                  titleError || titleExplicitError ||
-                  contentError || contentExplicitError ||
-                  subjectError || subjectExplicitError
+                  titleError || titleExplicitWords.length > 0 ||
+                  contentError || contentExplicitWords.length > 0 ||
+                  subjectError || subjectExplicitWords.length > 0
                 ) ? 0.7 : 1
               }}
             >
@@ -1467,25 +1475,25 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                 disabled={
                   !canEdit ||
                   title.length > 100 ||
-                  titleError || titleExplicitError ||
-                  contentError || contentExplicitError ||
-                  subjectError || subjectExplicitError
+                  titleError || titleExplicitWords.length > 0 ||
+                  contentError || contentExplicitWords.length > 0 ||
+                  subjectError || subjectExplicitWords.length > 0
                 }
                 style={{
                   width: "47%",
                   background: (
                     !canEdit ||
                     title.length > 100 ||
-                    titleError || titleExplicitError ||
-                    contentError || contentExplicitError ||
-                    subjectError || subjectExplicitError
+                    titleError || titleExplicitWords.length > 0 ||
+                    contentError || contentExplicitWords.length > 0 ||
+                    subjectError || subjectExplicitWords.length > 0
                   ) ? "#999" : "#6A6CFF",
                   boxShadow: (
                     !canEdit ||
                     title.length > 100 ||
-                    titleError || titleExplicitError ||
-                    contentError || contentExplicitError ||
-                    subjectError || subjectExplicitError
+                    titleError || titleExplicitWords.length > 0 ||
+                    contentError || contentExplicitWords.length > 0 ||
+                    subjectError || subjectExplicitWords.length > 0
                   ) ? "none" : "0px 5px 0px 0px #484AC3",
                   border: "none",
                   padding: "15px",
@@ -1493,9 +1501,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   cursor: (
                     !canEdit ||
                     title.length > 100 ||
-                    titleError || titleExplicitError ||
-                    contentError || contentExplicitError ||
-                    subjectError || subjectExplicitError
+                    titleError || titleExplicitWords.length > 0 ||
+                    contentError || contentExplicitWords.length > 0 ||
+                    subjectError || subjectExplicitWords.length > 0
                   ) ? "not-allowed" : "pointer",
                   color: "white",
                   fontSize: "16px",
@@ -1503,9 +1511,9 @@ function NewPrompt({ mobileDimension, setOpenNewTopic, style, params, type=1}) {
                   opacity: (
                     !canEdit ||
                     title.length > 100 ||
-                    titleError || titleExplicitError ||
-                    contentError || contentExplicitError ||
-                    subjectError || subjectExplicitError
+                    titleError || titleExplicitWords.length > 0 ||
+                    contentError || contentExplicitWords.length > 0 ||
+                    subjectError || subjectExplicitWords.length > 0
                   ) ? 0.7 : 1
                 }}
               >
