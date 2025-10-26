@@ -19,6 +19,7 @@ import { initializeApp } from "firebase/app";
 import { uploadBytes, getDownloadURL,getStorage, ref, deleteObject } from "firebase/storage";
 import i18n from "../i18n";
 import { useTranslation, Trans } from 'react-i18next';
+import Announcement from './Announcement';
 
 
 
@@ -59,6 +60,12 @@ const explicitWords = [
   "ecstasy","adderall", "xanax", "opioid", "ketamine","stoner","onlyfans", "fuk", "fck",
   "sht", "bi7ch", "b1tch","c0ck", "d1ck", "pu55y", "cumslut", "s3x",
   "p0rn", "n00d","phuck"
+];
+
+// Whitelisted emails that can create announcements
+const WHITELISTED_EMAILS = [
+  'satvik.sharma110@gmail.com',
+  // Add more whitelisted emails here
 ];
 
 function findExplicitWords(text) {
@@ -124,6 +131,7 @@ const MyProfile = ({ mobileDimension }) => {
   const [deleteUserInput, setDeleteUserInput] = useState("");
 
   const [usernameExplicitWords, setUsernameExplicitWords] = useState([]);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(link);
@@ -1764,6 +1772,64 @@ const MyProfile = ({ mobileDimension }) => {
               </div>
               </div>
           </div>
+          
+          {/* Announcement Management Section - Only for whitelisted users */}
+          {WHITELISTED_EMAILS.includes(user) && (
+            <div
+              style={{
+                backgroundColor: "#232323", // Gray background
+                borderRadius: "15px", // Rounded corners
+                width: "90%", // Adjust width as needed
+                height: "12%", // Adjust height as needed
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                color: "white",
+                marginTop:'5%'
+              }}
+            >
+              <div style={{ display:'flex', height:'100%', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%', cursor: 'pointer' }} onClick={() => setShowAnnouncement(true)}>
+                  {/* Icon */}
+                  <div style={{ display: "flex", alignItems: "center", width: '90%', }}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      width="1.5em"
+                      height="1.5em"
+                      style={{marginRight:'7%', marginLeft:'2%'}}
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                      ></path>
+                    </svg>
+                    {/* Title */}
+                    <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Manage Announcements</p>
+                  </div>
+
+                  {/* Arrow */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="1.5em"
+                    height="1.5em"
+                    style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="48"
+                      d="m184 112l144 144l-144 144"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             style={{
               backgroundColor: "#232323", // Gray background
@@ -2030,10 +2096,20 @@ const MyProfile = ({ mobileDimension }) => {
         </div>     
       )
     )}  
+    
+    {/* Announcement Management Component */}
+    {showAnnouncement && (
+      <Announcement 
+        mobileDimension={isMobile} 
+        user={user} 
+        onClose={() => setShowAnnouncement(false)} 
+      />
+    )}
   </>  
   );
 } else {
-  return(
+  return (
+      <>
       <div
         style={{
           display: "flex",
@@ -2575,6 +2651,63 @@ const MyProfile = ({ mobileDimension }) => {
               </div>
             </div>
 
+            {/* Announcement Management Section - Only for whitelisted users */}
+            {WHITELISTED_EMAILS.includes(user) && (
+              <div
+                style={{
+                  backgroundColor: "#232323",
+                  borderRadius: "15px",
+                  width: "90%",
+                  height: "12%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  color: "white",
+                  marginTop:'5%'
+                }}
+              >
+                <div style={{ display:'flex', height:'100%', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ padding: "10px", display: "flex", alignItems: "center",  width:'100%', cursor: 'pointer' }} onClick={() => setShowAnnouncement(true)}>
+                    {/* Icon */}
+                    <div style={{ display: "flex", alignItems: "center", width: '90%', }}>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="1.5em"
+                        height="1.5em"
+                        style={{marginRight:'7%', marginLeft:'2%'}}
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                        ></path>
+                      </svg>
+                      {/* Title */}
+                      <p style={{ color: "white", fontWeight: "bold",width:'80%' }}>Manage Announcements</p>
+                    </div>
+
+                    {/* Arrow */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                      width="1.5em"
+                      height="1.5em"
+                      style={{ color: "white", marginRight: "2%", alignItems: "flex-end", marginLeft: "auto" }}
+                    >
+                      <path
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="48"
+                        d="m184 112l144 144l-144 144"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Logout Section */}
             <div
               style={{
@@ -3063,8 +3196,18 @@ const MyProfile = ({ mobileDimension }) => {
         <Plans planType={planType} />
         </div>
       </div>
-  )
+      
+      {/* Announcement Management Component */}
+      {showAnnouncement && (
+        <Announcement 
+          mobileDimension={isMobile} 
+          user={user} 
+          onClose={() => setShowAnnouncement(false)} 
+        />
+      )}
+      </>
+    );
+  }
 }
-};
 
 export default MyProfile;

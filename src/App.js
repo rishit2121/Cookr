@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './i18n'; 
 import { useTranslation } from 'react-i18next';
 import Navbar from "./components/Navbar";
@@ -28,12 +28,17 @@ import Terms from './pages/Terms';
 import  PrivacyPolicyPopup from './components/Privacy';
 import { TutorialProvider } from './context/TutorialContext';
 import SharedSetImport from "./components/SharedSetImport";
+import AnnouncementDisplay from './components/AnnouncementDisplay';
+import { auth } from './components/firebase/Firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 
 
 function App() {
   const { i18n } = useTranslation();
+  const [user, setUser] = useState(null);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language');
@@ -41,6 +46,20 @@ function App() {
       i18n.changeLanguage(savedLanguage);
     }
   }, [i18n]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser.email);
+        setShowAnnouncement(true);
+      } else {
+        setUser(null);
+        setShowAnnouncement(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="App" style={{overflowY:"hidden"}}>
@@ -81,6 +100,14 @@ function App() {
 
 
           </Routes>
+          
+          {/* Announcement Display - shows once per user */}
+          {showAnnouncement && user && (
+            <AnnouncementDisplay 
+              user={user} 
+              onClose={() => setShowAnnouncement(false)} 
+            />
+          )}
       </TutorialProvider>
     </div>
   );
