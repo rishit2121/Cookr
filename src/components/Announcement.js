@@ -243,7 +243,6 @@ const Announcement = ({ mobileDimension, user, onClose }) => {
                   boxSizing: 'border-box'
                 }}
                 placeholder="Enter announcement title"
-                maxLength={100}
               />
             </div>
 
@@ -265,11 +264,12 @@ const Announcement = ({ mobileDimension, user, onClose }) => {
                   fontSize: '16px',
                   outline: 'none',
                   minHeight: '150px',
+                  maxHeight: '300px',
                   resize: 'vertical',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  overflowY: 'auto'
                 }}
                 placeholder="Enter announcement content"
-                maxLength={1000}
               />
             </div>
 
@@ -463,14 +463,21 @@ const Announcement = ({ mobileDimension, user, onClose }) => {
                     }}>
                       {announcement.title}
                     </h3>
-                    <p style={{
+                    <div style={{
                       color: '#ccc',
                       margin: 0,
                       lineHeight: '1.5',
-                      whiteSpace: 'pre-wrap'
-                    }}>
+                      whiteSpace: 'pre-wrap',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      paddingRight: '8px',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#666 #333'
+                    }}
+                    className="announcement-content-scroll"
+                    >
                       {announcement.content}
-                    </p>
+                    </div>
                   </div>
                 </div>
 

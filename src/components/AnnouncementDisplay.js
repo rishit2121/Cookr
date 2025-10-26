@@ -187,8 +187,15 @@ const AnnouncementDisplay = ({ user, onClose }) => {
           lineHeight: '1.6',
           fontSize: isMobile ? '16px' : '18px',
           marginBottom: '25px',
-          whiteSpace: 'pre-wrap'
-        }}>
+          whiteSpace: 'pre-wrap',
+          maxHeight: '300px',
+          overflowY: 'auto',
+          paddingRight: '8px',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#666 #333'
+        }}
+        className="announcement-content-scroll"
+        >
           {announcement.content}
         </div>
 
