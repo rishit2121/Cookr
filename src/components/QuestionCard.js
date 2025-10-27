@@ -68,6 +68,7 @@ const QuestionCard = ({
   const [textAreaMaxHeight, setTextAreaMaxHeight] = useState(0); // for free response mode text area
   const [textAreaMinHeight, setTextAreaMinHeight] = useState(0); // for free response mode text area
   const [isClosing, setIsClosing] = useState(false); // for free response mode answer container to close
+  const [showProOnlyOverlay, setShowProOnlyOverlay] = useState(false); // for pro-only overlay
   const { t } = useTranslation();
 
   // Icon color for heart and comment (grey)
@@ -507,6 +508,18 @@ const QuestionCard = ({
     }
   };
 
+  const handleCommentClick = () => {
+    if (hasSubscription) {
+      setShowComments(!showComments);
+    } else {
+      setShowProOnlyOverlay(true);
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setShowProOnlyOverlay(false);
+      }, 3000);
+    }
+  };
+
   const isFavorite =
     isFavorites ?? favorites.some((fav) => fav.question === fullJSON.question);
 
@@ -918,6 +931,60 @@ const QuestionCard = ({
               formatBoldText={formatBoldText}
               setShowComments={setShowComments}
             />
+          </div>
+        )}
+        {showProOnlyOverlay && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: mobileDimension ? '100%' : '100%',
+            height: mobileDimension ? '100%' : '100%',
+            maxWidth: mobileDimension ? '100vw' : undefined,
+            zIndex: 100,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+          }}
+          onClick={() => setShowProOnlyOverlay(false)}
+          >
+            <div style={{
+              background: 'rgba(106, 108, 255, 0.1)',
+              border: '2px solid #6A6CFF',
+              borderRadius: '15px',
+              padding: mobileDimension ? '20px 25px' : '25px 30px',
+              textAlign: 'center',
+              color: 'white',
+              fontSize: mobileDimension ? '16px' : '20px',
+              fontWeight: '600',
+              boxShadow: '0 8px 32px rgba(106, 108, 255, 0.3)',
+              maxWidth: mobileDimension ? '70vw' : '320px',
+              width: mobileDimension ? '70vw' : '320px',
+              animation: 'fadeIn 0.3s ease-out',
+            }}>
+              <div style={{
+                fontSize: mobileDimension ? '36px' : '48px',
+                marginBottom: '12px',
+                color: '#6A6CFF',
+              }}>
+                🔒
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                Pro Only Feature
+              </div>
+              <div style={{
+                fontSize: mobileDimension ? '12px' : '14px',
+                color: '#aaa',
+                fontWeight: '400',
+                lineHeight: '1.4',
+              }}>
+                Upgrade to Pro to access comments and discussions
+              </div>
+            </div>
           </div>
         )}
         {
@@ -1599,7 +1666,7 @@ const QuestionCard = ({
                 justifyContent: 'center',
                 boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)',
                 cursor: 'pointer',
-                marginRight: isFRQ || localStorage.getItem("mode") == 2 ? "30px" : hasSubscription ? "0px" : "30px",
+                marginRight: isFRQ || localStorage.getItem("mode") == 2 ? "30px" : "0px",
               }}
               onClick={handleHeartClick}
             >
@@ -1630,8 +1697,8 @@ const QuestionCard = ({
               </i>
             </div>
           )}
-          {/* Comment Button (only if hasSubscription) */}
-          {(fullJSON.choices) && hasSubscription && (
+          {/* Comment Button (always visible) */}
+          {(fullJSON.choices) && (
             <div
               style={{
                 background: '#23232a',
@@ -1661,7 +1728,7 @@ const QuestionCard = ({
                 cursor: 'pointer',
                 marginRight: "30px"
               }}
-              onClick={() => setShowComments(!showComments)}
+              onClick={handleCommentClick}
             >
               <svg
                 fill={iconGrey}
